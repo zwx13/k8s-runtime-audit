@@ -10,11 +10,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/* Purpose of this file is to consume from the audit.node.per.tenant subject (with durable)
- * and send the consumed logs to tlc. Logs should be persistent and when we stop the scripts,
- * and then turn back on again, the index should be preserved so we use
- * a durable consumer
- */
+
 
 public class Main {
     

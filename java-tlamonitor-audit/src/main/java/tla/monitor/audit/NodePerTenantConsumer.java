@@ -13,6 +13,12 @@ import io.nats.client.Message;
 import io.nats.client.Nats;
 import io.nats.client.StreamContext;
 
+/* Purpose of this file is to consume from the audit.node.per.tenant subject (with durable)
+ * and send the consumed logs to tlc. Logs should be persistent and when we stop the scripts,
+ * and then turn back on again, the index should be preserved so we use
+ * a durable consumer
+ */
+
 public class NodePerTenantConsumer {
     public static void consume() throws IOException, InterruptedException, JetStreamApiException {
         String natsURL = System.getenv("NATS_URL");
@@ -35,6 +41,7 @@ public class NodePerTenantConsumer {
             // use instead of hardcoded number
             FetchConsumeOptions fetchConsumeOptions = FetchConsumeOptions.builder().noWait().build();
 
+            
             while (true) {
                 try (FetchConsumer fetchConsumer = durableContext.fetchMessages(50)) {
                     Message msg;
@@ -44,6 +51,7 @@ public class NodePerTenantConsumer {
                         hasMessages = true;
                         byte[] msgData = msg.getData();
                         Utils.parseJson(msgData);
+
                         // send to tlc
                         msg.ack();
                     }
