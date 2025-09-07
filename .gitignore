@@ -1,0 +1,9 @@
+# Java
+target/
+*.class
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
