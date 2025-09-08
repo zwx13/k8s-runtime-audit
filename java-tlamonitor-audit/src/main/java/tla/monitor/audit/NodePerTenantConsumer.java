@@ -13,6 +13,8 @@ import io.nats.client.Message;
 import io.nats.client.Nats;
 import io.nats.client.StreamContext;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /* Purpose of this file is to consume from the audit.node.per.tenant subject (with durable)
  * and send the consumed logs to tlc. Logs should be persistent and when we stop the scripts,
  * and then turn back on again, the index should be preserved so we use
@@ -50,11 +52,13 @@ public class NodePerTenantConsumer {
                     while ((msg = fetchConsumer.nextMessage()) != null) {
                         hasMessages = true;
                         byte[] msgData = msg.getData();
-                        Utils.parseJson(msgData);
-
-                        // send to tlc
+                        JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
+                        LogStore.addLog(jsonMessage);
                         msg.ack();
                     }
+                    
+                    // send logs to TLC
+                    
 
                     if (!hasMessages) {
                         Thread.sleep(100);
