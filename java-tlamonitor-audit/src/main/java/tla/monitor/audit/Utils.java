@@ -2,6 +2,9 @@ package tla.monitor.audit;
 
 import java.io.IOException;
 import java.util.Map;
+
+import org.eclipse.lsp4j.jsonrpc.messages.Tuple;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,7 +15,13 @@ import util.UniqueString;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
@@ -58,12 +67,6 @@ public class Utils {
     };
 }
 
-    // public static JsonNode getJsonFromValue(IValue value){
-    //     if (value instanceof IntValue){
-
-    //     }
-    // }
-
     // iterate over json kids, not root
     // single TupleValue instance is created at the end, that is the array
     public static TupleValue getTupleValue(JsonNode json) throws IOException{
@@ -78,6 +81,9 @@ public class Utils {
 
     }
 
+    // here to note that properties() returns an Collections.emptyset()
+    // which is a Set. Set extends Collection, that extends Iterable
+    // so we can iterate through it
     public static RecordValue getRecordValue(JsonNode json) throws IOException {
         List<UniqueString> keys = new ArrayList<>();
         List<Value> values = new ArrayList<>();
@@ -93,4 +99,45 @@ public class Utils {
 
     }
 
+    public static JsonNode getJsonFromValue(IValue value){
+        if (value instanceof IntValue){
+            return IntNode.valueOf(((IntValue) value).val);
+        }
+        if (value instanceof BoolValue){
+            return BooleanNode.valueOf(((BoolValue) value).val);
+        }
+        if (value instanceof StringValue){
+            return TextNode.valueOf(((StringValue) value).val.toString());
+        }
+        if (value instanceof TupleValue){
+            return getArrayNode((TupleValue) value);
+        }
+        if (value instanceof RecordValue){
+            return getObjectNode((RecordValue) value);
+        }
+        else{
+            throw new IOException("Cannot convert value, it is of unknown type")
+        }
+    }
+
+    public static ArrayNode getArrayNode(TupleValue value){
+        List<JsonNode> elements = new ArrayList<>();
+        for(Value element : value.elems){
+            elements.add(getJsonFromValue(element));
+        }
+        return new ArrayNode(new JsonNodeFactory(false), elements);
+    }
+
+    public static ObjectNode getObjectNode(RecordValue value){
+        ObjectNode obj = JsonNodeFactory.instance.objectNode();
+        String key;
+        JsonNode json;
+        for (int i = 0; i < value.names.length; i++){
+            key = value.names[i].toString();
+            json = (JsonNode) getJsonFromValue(value.values[i]);
+            // this has a return value but we ignore it
+            obj.set(key, json);
+        }
+        return obj;
+    }
 }
