@@ -26,7 +26,7 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
 public class Utils {
-    static JsonNode parseAndGetJson(byte[] msgData) throws IOException, StreamReadException, DatabindException
+    public static JsonNode parseAndGetJson(byte[] msgData) throws IOException, StreamReadException, DatabindException
     {
     // json parser, hold whole Json in root
     ObjectMapper mapper = new ObjectMapper();

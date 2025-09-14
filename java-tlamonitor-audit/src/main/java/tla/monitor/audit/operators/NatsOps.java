@@ -1,6 +1,7 @@
 package tla.monitor.audit.operators;
 
 import tla.monitor.audit.LogStore;
+import tla.monitor.audit.NatsManager;
 import tla.monitor.audit.Utils;
 import tlc2.overrides.TLAPlusOperator;
 import tlc2.value.IValue;
@@ -12,20 +13,26 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-// operator that takes the batch of 50 logs and then transforms it 
-// first the entries, then wraps everything in an ARRAY thingn implementation
-// of IValue an IValue? E.g. Tuple, record
+import io.nats.client.*;
+
+// TLA+ operator that fetches a single log message from NATS JetStream,
+// converts it to an IValue (e.g., TupleValue, RecordValue),
+// and can be called inside a TLA+ specification to iterate through logs in order.
 
 public class NatsOps {
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
-    public static synchronized TupleValue takeFromArray() throws IOException{
-        List<JsonNode> inMemoryNodes = LogStore.getLogs();
-        List<IValue> collected = new ArrayList<>();
-        for (JsonNode element : inMemoryNodes){
-            Value value = (Value) Utils.getValueFromJson(element);
-            collected.add(value);
+    public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
+        try {
+            ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toString(), SUBJECT.toString());
+            FetchConsumer fetchConsumer = durableContext.fetchMessages(1);
+            Message msg = fetchConsumer.nextMessage();
+            byte[] msgData = msg.getData();
+            JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
+            msg.ack(); 
+            return Utils.getValueFromJson(jsonMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new StringValue("ERROR");
         }
-        LogStore.clearLogs();
-        return new TupleValue(collected.toArray(new Value[0]));
     }
 }

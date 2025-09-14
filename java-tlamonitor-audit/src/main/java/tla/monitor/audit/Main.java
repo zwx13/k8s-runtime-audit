@@ -1,16 +1,8 @@
 package tla.monitor.audit;
 
 import io.nats.client.*;
-import io.nats.client.api.ConsumerConfiguration;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, JetStreamApiException{
@@ -18,12 +10,13 @@ public class Main {
             System.out.println("Wrong no. of arguments");
             System.out.println("""
   usage:
-  java -cp java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar Main \
+  java -cp /absolute/path/to/project/jar Main \
      /absolute/path/to/spec.tla \
      /absolute/path/to/template.cfg \
      /absolute/path/to/tla2tools.jar
 
 """);
+           System.exit(1);
         }
         String specFile = args[0];
         String cfgFile = args[1];
@@ -33,6 +26,15 @@ public class Main {
         System.out.println("Config file: " + cfgFile);
         System.out.println("TLC tools path: " + tlaToolsPath);
 
-        RunTLC.runTLC(specFile, cfgFile, tlaToolsPath);
+        try {
+            NatsManager nm = new NatsManager();
+            int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath);
+            System.out.println("TLC finished with code: " + exitCode);
+        }
+        catch (Exception e) {
+            System.out.println("Error running TLC: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(2);
+        }
     }
 }
