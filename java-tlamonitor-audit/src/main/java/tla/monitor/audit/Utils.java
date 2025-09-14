@@ -53,7 +53,7 @@ public class Utils {
     // } 
 
     // call would be like IValue root = getValueFromJson(jsonNodeRoot), sees it s an array
-    public static Value getValueFromJson(JsonNode json) throws IOException {
+    public static IValue getValueFromJson(JsonNode json) throws IOException {
     return switch (json.getNodeType()) {
         case ARRAY   -> getTupleValue(json);
         case OBJECT  -> getRecordValue(json);
@@ -86,7 +86,7 @@ public class Utils {
     // so we can iterate through it
     public static RecordValue getRecordValue(JsonNode json) throws IOException {
         List<UniqueString> keys = new ArrayList<>();
-        List<Value> values = new ArrayList<>();
+        List<IValue> values = new ArrayList<>();
         for (Map.Entry<String, JsonNode> entry : json.properties()) {
             keys.add(UniqueString.uniqueStringOf(entry.getKey()));
             values.add(getValueFromJson(entry.getValue()));
@@ -99,7 +99,7 @@ public class Utils {
 
     }
 
-    public static JsonNode getJsonFromValue(IValue value){
+    public static JsonNode getJsonFromValue(IValue value) throws IOException{
         if (value instanceof IntValue){
             return IntNode.valueOf(((IntValue) value).val);
         }
@@ -116,11 +116,11 @@ public class Utils {
             return getObjectNode((RecordValue) value);
         }
         else{
-            throw new IOException("Cannot convert value, it is of unknown type")
+            throw new IOException("Cannot convert value, it is of unknown type");
         }
     }
 
-    public static ArrayNode getArrayNode(TupleValue value){
+    public static ArrayNode getArrayNode(TupleValue value) throws IOException{
         List<JsonNode> elements = new ArrayList<>();
         for(Value element : value.elems){
             elements.add(getJsonFromValue(element));
@@ -128,7 +128,7 @@ public class Utils {
         return new ArrayNode(new JsonNodeFactory(false), elements);
     }
 
-    public static ObjectNode getObjectNode(RecordValue value){
+    public static ObjectNode getObjectNode(RecordValue value) throws IOException{
         ObjectNode obj = JsonNodeFactory.instance.objectNode();
         String key;
         JsonNode json;

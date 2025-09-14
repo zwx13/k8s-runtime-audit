@@ -3,8 +3,10 @@ package tla.monitor.audit;
 import java.io.File;
 import java.io.IOException;
 
+import io.nats.client.JetStreamApiException;
+
 public class RunTLC {
-    static int runTLC(String specFile, String cfgFile, String tlaToolsPath) throws IOException, InterruptedException{
+    static int runTLC(String specFile, String cfgFile, String tlaToolsPath) throws IOException, InterruptedException, JetStreamApiException{
     ProcessBuilder pb = new ProcessBuilder("java", "-cp", tlaToolsPath, "tlc2.TLC",
             "-continue",
             "-config", new File(cfgFile).getAbsolutePath(),

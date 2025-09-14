@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
  * a durable consumer
  */
 
-public class NodePerTenantConsumer {
-    public static void consume() throws IOException, InterruptedException, JetStreamApiException {
-        String natsURL = System.getenv("NATS_URL");
+public class CreateDurableConsumer {
+    public static void create() throws IOException, InterruptedException, JetStreamApiException {
+        String natsURL = System.getenv("NATS_URL"); 
         if (natsURL == null) {
             natsURL = "nats://127.0.0.1:4222";
         }
@@ -41,33 +41,32 @@ public class NodePerTenantConsumer {
             ConsumerContext durableContext = streamContext.createOrUpdateConsumer(durableConfig);
 
             // use instead of hardcoded number
-            FetchConsumeOptions fetchConsumeOptions = FetchConsumeOptions.builder().noWait().build();
+            // FetchConsumeOptions fetchConsumeOptions = FetchConsumeOptions.builder().noWait().build();
 
             
-            while (true) {
-                try (FetchConsumer fetchConsumer = durableContext.fetchMessages(50)) {
-                    Message msg;
-                    boolean hasMessages = false;
+            // while (true) {
+            //     try (FetchConsumer fetchConsumer = durableContext.fetchMessages(50)) {
+            //         Message msg;
+            //         boolean hasMessages = false;
 
-                    while ((msg = fetchConsumer.nextMessage()) != null) {
-                        hasMessages = true;
-                        byte[] msgData = msg.getData();
-                        JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
-                        LogStore.addLog(jsonMessage);
-                        msg.ack();
-                    }
+            //         while ((msg = fetchConsumer.nextMessage()) != null) {
+            //             hasMessages = true;
+            //             byte[] msgData = msg.getData();
+            //             JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
+            //             LogStore.addLog(jsonMessage);
+            //             msg.ack();
+            //         }
                     
-                    // send logs to TLC
+            //         // send logs to TLC
                     
 
-                    if (!hasMessages) {
-                        Thread.sleep(100);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Thread.sleep(500);
-                }
+            //         if (!hasMessages) {
+            //             Thread.sleep(100);
+            //         }
+            //     } catch (Exception e) {
+            //         e.printStackTrace();
+            //         Thread.sleep(500);
+            //     }
             }
         }
     }
-}
