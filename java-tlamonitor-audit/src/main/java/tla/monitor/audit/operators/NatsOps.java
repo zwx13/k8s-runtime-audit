@@ -1,6 +1,5 @@
 package tla.monitor.audit.operators;
 
-import tla.monitor.audit.LogStore;
 import tla.monitor.audit.NatsManager;
 import tla.monitor.audit.Utils;
 import tlc2.overrides.TLAPlusOperator;
@@ -19,17 +18,24 @@ import io.nats.client.*;
 // converts it to an IValue (e.g., TupleValue, RecordValue),
 // and can be called inside a TLA+ specification to iterate through logs in order.
 
-public class NatsOps {
+ public class NatsOps {
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
     public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
         try {
+            List<IValue> messages = new ArrayList<>();
             ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toString(), SUBJECT.toString());
-            FetchConsumer fetchConsumer = durableContext.fetchMessages(1);
-            Message msg = fetchConsumer.nextMessage();
-            byte[] msgData = msg.getData();
-            JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
-            msg.ack(); 
-            return Utils.getValueFromJson(jsonMessage);
+            FetchConsumer fetchConsumer = durableContext.fetchMessages(50);
+            Message msg;
+            while ((msg = fetchConsumer.nextMessage()) != null)
+            {
+                byte[] msgData = msg.getData();
+                JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
+                IValue tlaValue = Utils.getValueFromJson(jsonMessage);
+                msg.ack();
+                messages.add(tlaValue);
+            }
+            return new TupleValue(messages.toArray(new Value[0]));
+
         } catch (Exception e) {
             e.printStackTrace();
             return new StringValue("ERROR");

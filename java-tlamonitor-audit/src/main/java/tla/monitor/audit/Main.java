@@ -28,8 +28,13 @@ public class Main {
 
         try {
             NatsManager nm = new NatsManager();
-            int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath);
-            System.out.println("TLC finished with code: " + exitCode);
+            while (true)
+            {
+                int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath);
+                System.out.println("TLC finished with code: " + exitCode);
+                Thread.sleep(1000);
+            }
+            
         }
         catch (Exception e) {
             System.out.println("Error running TLC: " + e.getMessage());
