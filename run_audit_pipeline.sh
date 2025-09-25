@@ -20,11 +20,13 @@ PARTITIONING_PID=$!
 # start the Java NATS consumer in the background
 # mvn package should already be done so the jar is built
 echo "[+] Starting Java NATS consumer..."
-java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar" tla.monitor.audit.Main \
+java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
     node_isolation.tla \
     node_isolation.cfg \
     tla2tools.jar &
 JAVA_PID=$!
+
+
 
 # trap Ctrl+C to kill all background processes
 trap "echo; echo '[!] Stopping all services.'; kill $RECEIVER_PID $PARTITIONING_PID $JAVA_PID; exit 0" SIGINT

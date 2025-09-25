@@ -1,11 +1,9 @@
 ------------------------------ MODULE node_isolation ------------------------------
-EXTENDS TLC, Json, Sequences, FiniteSets, Naturals
+EXTENDS TLC, NatsOps, Sequences, FiniteSets, Naturals, Json
 
 CONSTANTS 
   Tenants,   \* e.g. {"tenant1", "tenant2"}
-  LogFile,
-  AllocFile,
-  AlertFile
+  AllocFile
 
 VARIABLES 
   idx,       
@@ -17,24 +15,12 @@ vars == <<idx, alloc>>
 (***************************************************************************)
 (* ndJsonDeserialize for NDJSON: one JSON object per line.                 *)
 (***************************************************************************)
-LogEvents == ndJsonDeserialize(LogFile)
+Traces == NatsConsume("AUDIT", "audit-nodeiso")
 
 \*PrintLogStart == PrintT("=== RAW LOG EVENTS ===")
 \*PrintAllLogs  == PrintT(LogEvents)
 \*PrintFirst    == PrintT(LogEvents[1])
 \*PrintSecond   == PrintT(LogEvents[2])
-
-
-(***************************************************************************)
-(* We only care about "verb=create" for pods in {tenant1,tenant2}, with    *)
-(* responseStatus=201, and there must be a node                            *)
-(***************************************************************************)
-IsRelevant(e) ==
-  /\ e["verb"] = "create"
-  /\ e["objectRef"]["resource"] = "pods"
-  /\ e["objectRef"]["namespace"] \in Tenants
-  /\ e["responseStatus"]["code"] = 201
-  /\ e["requestObject"]["spec"]["nodeSelector"]["kubernetes.io/hostname"] /= ""
 
 (***************************************************************************)
 (* Access to individual node and ns and pods                               *)
@@ -65,9 +51,9 @@ GetAllPods(events) ==
 Init ==
   /\ idx = 1
   /\ allocInit = IF AllocFile = "NONE"
-              THEN [n \in GetAllNodes(LogEvents) |-> ""]
+              THEN [n \in GetAllNodes(Traces) |-> ""]
               ELSE JsonDeserialize(AllocFile)
-  /\ alloc = [n \in GetAllNodes(LogEvents) |-> IF n \in DOMAIN allocInit 
+  /\ alloc = [n \in GetAllNodes(Traces) |-> IF n \in DOMAIN allocInit 
               THEN allocInit[n] 
               ELSE ""]
 
@@ -82,17 +68,15 @@ Init ==
 (* event is "relevant," we assign the node or check for conflicts.         *)
 (***************************************************************************)
 Next ==
-  /\ idx <= Len(LogEvents)
-  /\ LET ev == LogEvents[idx]
-     IN /\ IF IsRelevant(ev) THEN
-              IF alloc[GetNode(ev)] = "" THEN
+  /\ idx <= Len(Traces)
+  /\ LET ev == Traces[idx]
+     IN IF alloc[GetNode(ev)] = "" THEN
                   alloc' = [alloc EXCEPT ![GetNode(ev)] = GetNamespace(ev)]
               ELSE IF alloc[GetNode(ev)] = GetNamespace(ev) THEN
                       UNCHANGED alloc
               ELSE UNCHANGED alloc
-           ELSE UNCHANGED alloc
-        /\ idx' = idx + 1
-        /\ UNCHANGED allocInit
+  /\ idx' = idx + 1
+  /\ UNCHANGED allocInit
         
         
 \*Alert ==
@@ -110,12 +94,11 @@ Next ==
 (* it will violate the property                                            *)
 (***************************************************************************)
 Invariant ==
-  idx <= Len(LogEvents)
-  => LET ev == LogEvents[idx] IN
-       IF /\ IsRelevant(ev)
-          /\ ~(alloc[GetNode(ev)] = "" \/ alloc[GetNode(ev)] = GetNamespace(ev))
+  idx <= Len(Traces)
+  => LET ev == Traces[idx] IN
+       IF  ~(alloc[GetNode(ev)] = "" \/ alloc[GetNode(ev)] = GetNamespace(ev))
        THEN
-         /\ PrintT("ALERT: Invariant violated in batch file: " \o ToString(LogFile))
+         /\ PrintT("ALERT: Invariant violated in batch file")
          /\ PrintT("Namespace: " \o ToString(GetNamespace(ev)))
          /\ PrintT("Node: " \o ToString(GetNode(ev)))
 \*         /\ Alert
@@ -124,7 +107,7 @@ Invariant ==
          TRUE
          
 SerializeAtEnd ==
-  /\ idx > Len(LogEvents)
+  /\ idx > Len(Traces)
   /\ JsonSerialize(AllocFile, alloc)
   /\ UNCHANGED <<allocInit, alloc, idx>>
  
@@ -138,7 +121,7 @@ Spec == Init /\ [][NextButSerialize]_vars
 (* match alloc in the system specification                                 *)
 (***************************************************************************)
 System == INSTANCE NodeIsolationSystem 
-            WITH Nodes <- GetAllNodes(LogEvents), 
+            WITH Nodes <- GetAllNodes(Traces), 
                  alloc <- alloc,
                  Tenants <- Tenants
             
