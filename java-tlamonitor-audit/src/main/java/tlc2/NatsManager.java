@@ -46,4 +46,11 @@ public class NatsManager {
         return streamContext.createOrUpdateConsumer(cfg);
     }
 
+    public static ConsumerContext getEphemeralConsumer(String subject) throws IOException, JetStreamApiException {
+        ConsumerConfiguration cfg = ConsumerConfiguration.builder()
+            .filterSubject(subject)
+            .build();
+        return streamContext.createOrUpdateConsumer(cfg);
+    }
+
 }

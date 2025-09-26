@@ -1,13 +1,11 @@
 import logging
 import asyncio, json, nats
 
-from stream_functions import ensure_stream
-
 NATS_SERVER   = "nats://localhost:4222"
 STREAM        = "AUDIT"
 SOURCE_SUBJ   = "audit.full"
 DEST_SUBJ     = "audit.node.per.tenant"
-DURABLE       = "audit-nodeiso"
+DURABLE       = "audit-nodeiso-src"
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +29,14 @@ async def main():
     # durable pull subscription on audit.full so that we resume
     # we get a PullSubscription obj on which we can call fetch()
     sub = await js.pull_subscribe(SOURCE_SUBJ, durable=DURABLE, stream=STREAM)
+
+    # debug durable for audit.full
+    info = await js.consumer_info(STREAM, DURABLE)
+    print("filter:", info.config.filter_subject)
+    print("deliver_policy:", info.config.deliver_policy)
+
+    # force print to appear before starting the loop
+    print("READY", flush=True)
 
     try:
         while True:

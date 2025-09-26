@@ -15,12 +15,13 @@ vars == <<idx, alloc>>
 (***************************************************************************)
 (* ndJsonDeserialize for NDJSON: one JSON object per line.                 *)
 (***************************************************************************)
-Traces == NatsConsume("AUDIT", "audit-nodeiso")
+Traces == NatsConsume("audit.node.per.tenant", "audit-nodeiso")
 
-\*PrintLogStart == PrintT("=== RAW LOG EVENTS ===")
-\*PrintAllLogs  == PrintT(LogEvents)
-\*PrintFirst    == PrintT(LogEvents[1])
-\*PrintSecond   == PrintT(LogEvents[2])
+PrintLogStart == PrintT("=== RAW LOG EVENTS ===")
+PrintAllLogs  == PrintT(Traces)
+PrintFirst    == PrintT(Traces[1])
+PrintSecond   == PrintT(Traces[2])
+PrintLenTraces == PrintT(Len(Traces))
 
 (***************************************************************************)
 (* Access to individual node and ns and pods                               *)
@@ -50,6 +51,7 @@ GetAllPods(events) ==
 (***************************************************************************)
 Init ==
   /\ idx = 1
+  /\ PrintT("AllocFile is: " \o ToString(AllocFile))
   /\ allocInit = IF AllocFile = "NONE"
               THEN [n \in GetAllNodes(Traces) |-> ""]
               ELSE JsonDeserialize(AllocFile)
@@ -57,18 +59,21 @@ Init ==
               THEN allocInit[n] 
               ELSE ""]
 
-\*  /\ PrintLogStart
-\*  /\ PrintAllLogs
-\*  /\ PrintFirst
-\*  /\ PrintSecond
+  /\ PrintLogStart
+  /\ PrintAllLogs
+  \* /\ PrintFirst
+  \* /\ PrintSecond
+  /\ PrintLenTraces
+
 
 
 (***************************************************************************)
-(* At each step, we move forward in the sequence of LogEvents.  If the new *)
+(* At each step, we move forward in the sequence of Traces.  If the new *)
 (* event is "relevant," we assign the node or check for conflicts.         *)
 (***************************************************************************)
 Next ==
   /\ idx <= Len(Traces)
+  /\ PrintT("Len Traces: " \o ToString(Len(Traces)))
   /\ LET ev == Traces[idx]
      IN IF alloc[GetNode(ev)] = "" THEN
                   alloc' = [alloc EXCEPT ![GetNode(ev)] = GetNamespace(ev)]
@@ -80,7 +85,7 @@ Next ==
         
         
 \*Alert ==
-\*    LET ev == LogEvents[idx]
+\*    LET ev == Traces[idx]
 \*    IN JsonSerialize(AlertFile, 
 \*         [namespace |-> GetNamespace(ev),
 \*          node |-> GetNode(ev),

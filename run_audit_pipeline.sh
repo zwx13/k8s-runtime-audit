@@ -14,7 +14,13 @@ sleep 3
 
 # start the partitioning/filtering script
 echo "[+] Starting partitioning nodes/namespaces script..."
-python3 python_audit/ns-per-node.py &
+python3 python_audit/ns-per-node.py | while read -r line; do
+    echo "$line"
+    if [[ "$line" == "READY" ]]; then
+        echo "[+] Partitioning script is ready."
+        break
+    fi
+done &
 PARTITIONING_PID=$!
 
 # start the Java NATS consumer in the background

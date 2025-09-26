@@ -2,7 +2,6 @@ package tlc2.overrides;
 
 import tlc2.NatsManager;
 import tlc2.Utils;
-import tlc2.overrides.TLAPlusOperator;
 import tlc2.value.IValue;
 import tlc2.value.impl.*;
 
