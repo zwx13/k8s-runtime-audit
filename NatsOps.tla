@@ -1,5 +1,7 @@
 ------------------------------ MODULE NatsOps ------------------------------
 EXTENDS Naturals, Sequences
+LOCAL INSTANCE TLC
+LOCAL INSTANCE Integers
 
 (* 
   Stub for TLC parsing; the actual implementation is in Java.

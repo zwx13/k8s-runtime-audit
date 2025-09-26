@@ -6,11 +6,11 @@ import java.io.IOException;
 import io.nats.client.JetStreamApiException;
 
 public class RunTLC {
-    static int runTLC(String specFile, String cfgFile, String tlaToolsPath) throws IOException, InterruptedException, JetStreamApiException{
+    static int runTLC(String specFile, String cfgFile, String tlaToolsPath, String overridesJar) throws IOException, InterruptedException, JetStreamApiException{
     ProcessBuilder pb = new ProcessBuilder(
     "java",
-    "-cp", tlaToolsPath,
-    "-DTLA-Library=/home/malina/monitoring2k25/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar",
+    "-cp", tlaToolsPath + ":" + overridesJar,
+    "-DTLA-Library=" + overridesJar,
     "tlc2.TLC",
     "-continue",
     "-config", new File(cfgFile).getAbsolutePath(),
