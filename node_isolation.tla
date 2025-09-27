@@ -13,15 +13,19 @@ VARIABLES
 vars == <<idx, alloc>>
 
 (***************************************************************************)
-(* ndJsonDeserialize for NDJSON: one JSON object per line.                 *)
+(* Consume NATS messages and extract relevant information                  *)
 (***************************************************************************)
-Traces == NatsConsume("audit.node.per.tenant", "audit-nodeiso")
+Traces == NatsConsume("audit.node.per.tenant", "audit-nodeiso-filter")
 
-PrintLogStart == PrintT("=== RAW LOG EVENTS ===")
-PrintAllLogs  == PrintT(Traces)
-PrintFirst    == PrintT(Traces[1])
-PrintSecond   == PrintT(Traces[2])
-PrintLenTraces == PrintT(Len(Traces))
+(***************************************************************************)
+(* Debug printing of logs                                                  *)
+(***************************************************************************)
+
+\* PrintLogStart == PrintT("=== RAW LOG EVENTS ===")
+\* PrintAllLogs  == PrintT(Traces)
+\* PrintFirst    == PrintT(Traces[1])
+\* PrintSecond   == PrintT(Traces[2])
+\* PrintLenTraces == PrintT(Len(Traces))
 
 (***************************************************************************)
 (* Access to individual node and ns and pods                               *)
@@ -59,11 +63,11 @@ Init ==
               THEN allocInit[n] 
               ELSE ""]
 
-  /\ PrintLogStart
-  /\ PrintAllLogs
-  \* /\ PrintFirst
-  \* /\ PrintSecond
-  /\ PrintLenTraces
+\*   /\ PrintLogStart
+\*   /\ PrintAllLogs
+\*   \* /\ PrintFirst
+\*   \* /\ PrintSecond
+\*   /\ PrintLenTraces
 
 
 

@@ -32,18 +32,18 @@ public class Utils {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(msgData);
 
-    String verb = root.get("verb").asText();
-    String pod = root.path("objectRef").path("name").asText();
-    String namespace = root.path("requestObject")
-                           .path("spec")
-                           .path("nodeSelector")
-                           .path("kubernetes.io/hostname")
-                           .asText();
+    // String verb = root.get("verb").asText();
+    // String pod = root.path("objectRef").path("name").asText();
+    // String namespace = root.path("requestObject")
+    //                        .path("spec")
+    //                        .path("nodeSelector")
+    //                        .path("kubernetes.io/hostname")
+    //                        .asText();
 
-    System.out.println("***********************************************************");
-    System.out.println("Received node-per-ns log! Woooooooooooooooo~");
-    System.out.printf("Pod %s was %sd in namespace %s\n", pod, verb, namespace);
-    System.out.println("***********************************************************");
+    // System.out.println("***********************************************************");
+    // System.out.println("Received node-per-ns log! Woooooooooooooooo~");
+    // System.out.printf("Pod %s was %sd in namespace %s\n", pod, verb, namespace);
+    // System.out.println("***********************************************************");
 
     return root;
     }
@@ -72,6 +72,10 @@ public class Utils {
     public static TupleValue getTupleValue(JsonNode json) throws IOException{
         List<IValue> elements = new ArrayList<>();
         for (JsonNode element : json) {
+            // null elements destroy the tuple, so we skip them
+            if (element.isNull()){
+                continue;
+            }
             elements.add(getValueFromJson(element));
         }
         //  must take array not list
@@ -88,15 +92,16 @@ public class Utils {
         List<UniqueString> keys = new ArrayList<>();
         List<IValue> values = new ArrayList<>();
         for (Map.Entry<String, JsonNode> entry : json.properties()) {
+            // null values destroy the record, so we skip them
+            if (entry.getValue().isNull()){
+                continue;
+            }
             keys.add(UniqueString.uniqueStringOf(entry.getKey()));
             values.add(getValueFromJson(entry.getValue()));
         }
-
         UniqueString[] stringArr = keys.toArray(new UniqueString[0]);
         Value[] valArr = values.toArray(new Value[0]);
-
         return new RecordValue(stringArr, valArr, false);
-
     }
 
     public static JsonNode getJsonFromValue(IValue value) throws IOException{

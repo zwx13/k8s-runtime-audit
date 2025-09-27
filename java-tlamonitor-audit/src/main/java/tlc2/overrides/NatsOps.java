@@ -22,7 +22,7 @@ import io.nats.client.*;
     public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
         try {
             List<IValue> messages = new ArrayList<>();
-            ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toString(), SUBJECT.toString());
+            ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toUnquotedString(), SUBJECT.toUnquotedString());
             FetchConsumer fetchConsumer = durableContext.fetchMessages(50);
             Message msg;
             while ((msg = fetchConsumer.nextMessage()) != null)
