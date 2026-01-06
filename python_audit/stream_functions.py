@@ -1,29 +1,40 @@
-async def ensure_stream(js, JS_STREAM, WANTED_SUBJECTS):
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
+def normalize_subjects(subjects):
+    if isinstance(subjects, str):
+        return [subjects]
+
+async def ensure_stream(js, *, stream_name: str, subjects: list[str]) -> None:
     """
     Ensure the JetStream stream exists and captures the subjects we want.
     If it exists with different subjects, we update it. If missing, we create it.
     Subject won't show unless it has at least one message.
     """
+    normalized_subjects = normalize_subjects(subjects)
     try:
         # network call
-        info = await js.stream_info(JS_STREAM)  # exists?
-        if isinstance(WANTED_SUBJECTS, str):
-            WANTED_SUBJECTS = [WANTED_SUBJECTS]
-        current = set(info.config.subjects)
-        wanted = set(WANTED_SUBJECTS)
-        if current != wanted:
-            await js.update_stream(name=JS_STREAM, subjects=WANTED_SUBJECTS)
-            print(f"Updated stream '{JS_STREAM}' subjects -> {WANTED_SUBJECTS}")
+        info = await js.stream_info(stream_name)  # exists?
+
+        configured = set(info.config.subjects)
+        desired = set(normalized_subjects)
+
+        if configured != desired:
+            await js.update_stream(name=stream_name, subjects=normalized_subjects)
+            log.info("Updated stream %r subjects -> %s", stream_name, subjects)
         else:
-            print(f"Stream '{JS_STREAM}' is configured ok")
+            log.info("Stream %r already configured", stream_name)
+
     except JetStreamNotFoundError:
-        # not found -> create it
         await js.add_stream(
-            name=JS_STREAM,
-            subjects=WANTED_SUBJECTS,
+            name=stream_name,
+            subjects=normalized_subjects,
             storage="file",
-            max_msgs=0,
-            max_bytes=0,
+            # max_msgs=0,
+            # max_bytes=0,
             # max_age=24*60*60,  # uncomment to limit retention by time (e.g. 24h)
         )
-        print(f"Created stream '{JS_STREAM}' with subjects {WANTED_SUBJECTS}")
+        log.info("Created stream %r with subjects=%s", stream_name, subjects)
