@@ -14,7 +14,7 @@ sleep 3
 
 # start the partitioning/filtering script
 echo "[+] Starting partitioning nodes/namespaces script..."
-python3 python_audit/ns-per-node.py | while read -r line; do
+python3 python_audit/multitenancy.py | while read -r line; do
     echo "$line"
     if [[ "$line" == "READY" ]]; then
         echo "[+] Partitioning script is ready."
