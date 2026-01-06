@@ -51,7 +51,7 @@ async def healthz():
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
-# define the webhook and handle incoming json
+# define the webhook and handle incoming json (POST only)
 @app.post("/")
 async def receive_audit_log(request: Request):
     """
