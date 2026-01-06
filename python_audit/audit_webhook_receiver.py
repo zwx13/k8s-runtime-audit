@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+'''
+Kubernetes audit logs define a total order over API requests as processed by the kube-apiserver
+which we use as the execution trace for our TLA+ specification.
+'''
+
 import os
 import json
 from contextlib import asynccontextmanager

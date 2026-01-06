@@ -17,33 +17,51 @@ Shutdown
 - The `finally` block drains the NATS connection for a clean exit.
 """
 
+import asyncio
+import json
 import logging
-import asyncio, json, nats
+
+import nats
 
 NATS_SERVER   = "nats://localhost:4222"
 STREAM        = "AUDIT"
 SOURCE_SUBJ   = "audit.full"
-DEST_SUBJ     = "audit.node.per.tenant"
-DURABLE       = "audit-nodeiso-src"
+DEST_SUBJ     = "audit.multitenancy"
+DURABLE       = "audit-multitenancy-durable"
 
 
 log = logging.getLogger(__name__)
 
 
-def is_created_pod(ev: dict) -> bool:
-    try:
-        return (
-            ev["objectRef"]["resource"] == "pods" and
-            ev["verb"] == "create" and
-            ev["responseStatus"]["code"] == 201 and
-            ev["requestObject"]["spec"]["nodeSelector"]["kubernetes.io/hostname"] != ""
-        )
-    except KeyError:
-        return False
+def classify(ev: dict) -> str | None:
+    verb = ev.get("verb")
+    obj = ev.get("objectRef") or {}
+    resp = ev.get("responseStatus") or {}
+
+    resource = obj.get("resource")
+    code = resp.get("code")
+
+    if verb == "create" and resource == "namespaces" and code in {200, 201}:
+        return "ns.created"
+
+    if verb == "create" and resource == "roles" and code in {200, 201}:
+        return "role.created"
+
+    if verb == "create" and resource == "rolebindings" and code in {200, 201}:
+        return "rolebinding.created"
+    
+    if verb in {"create", "get", "list", "delete"} and resource == "pods":
+        imp = ev.get("impersonatedUser") or {}
+        user = imp.get("username")
+        if isinstance(user, str) and user != "kubernetes-admin":
+            return "access.attempt"
+    
+    return None
+
 
 # compact json, no extra spaces
 # prepare to send as bytestring
-def encode_compact_json(onj) -> bytes:
+def encode_compact_json(obj) -> bytes:
     json.dumps(obj, separators=(",", ":")).encode("utf-8")
 
 
@@ -79,11 +97,14 @@ async def main() -> None:
                     # to ev == {"verb": "create", "objectRef": {"resource": "pods"}}
                     ev = json.loads(msg.data.decode("utf-8"))
 
-                    if is_created_pod(ev):
-                        await js.publish(DEST_SUBJ, encode_compact_json(ev))
-
+                    ev_type = classify(ev)
+                    if ev_type is not None:
+                        out_ev = dict(ev)
+                        out_ev["tlaType"] = ev_type
+                        await js.publish(DEST_SUBJ, encode_compact_json(out_ev))
 
                     await msg.ack()
+
                 except Exception:
                     log.exception("Failed to process message: %r", msg.data)
                     await msg.nak()
