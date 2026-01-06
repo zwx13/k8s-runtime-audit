@@ -13,10 +13,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import io.nats.client.*;
 
+// 2do: update operator or create a new one, that operates on continuous logs
+// check to see how kafka onos peeps did it
+
 // TLA+ operator that fetches a single log message from NATS JetStream,
 // converts it to an IValue (e.g., TupleValue, RecordValue),
 // and can be called inside a TLA+ specification to iterate through logs in order.
-
  public class NatsOps {
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
     public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{

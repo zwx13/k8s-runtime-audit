@@ -62,7 +62,7 @@ async def receive_audit_log(request: Request):
     # return list of events or event
     items = data.get("items", []) if data.get("kind") == "EventList" else [data]
 
-    #Reuse the connection created at startup
+    # reuse the connection created at startup
     js = request.app.state.js
     published = 0
     errors = 0

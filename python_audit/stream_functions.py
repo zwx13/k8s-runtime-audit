@@ -2,7 +2,7 @@ async def ensure_stream(js, JS_STREAM, WANTED_SUBJECTS):
     """
     Ensure the JetStream stream exists and captures the subjects we want.
     If it exists with different subjects, we update it. If missing, we create it.
-    Note that subject won't show unless it has at least one message.
+    Subject won't show unless it has at least one message.
     """
     try:
         # network call
