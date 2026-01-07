@@ -62,7 +62,7 @@ def classify(ev: dict) -> str | None:
 # compact json, no extra spaces
 # prepare to send as bytestring
 def encode_compact_json(obj) -> bytes:
-    json.dumps(obj, separators=(",", ":")).encode("utf-8")
+    return json.dumps(obj, separators=(",", ":")).encode("utf-8")
 
 
 async def main() -> None:

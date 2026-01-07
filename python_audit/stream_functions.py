@@ -7,6 +7,8 @@ log = logging.getLogger(__name__)
 def normalize_subjects(subjects):
     if isinstance(subjects, str):
         return [subjects]
+    else:
+        return subjects
 
 async def ensure_stream(js, *, stream_name: str, subjects: list[str]) -> None:
     """

@@ -97,6 +97,7 @@ async def receive_audit_log(request: Request):
     Supports:
     - A single audit event object
     - An EventList object (kind == "EventList") with an "items" array
+    - For batching see https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#batching
     """
     try:
         data = await request.json()
@@ -106,7 +107,12 @@ async def receive_audit_log(request: Request):
     if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Expected a JSON object (dict)")
 
-    items = [data]
+    if data.get("kind") == "EventList":
+        items = data.get("items", [])
+        if not isinstance(items, list):
+            raise HTTPException(status_code=400, detail='EventList "items" must be a list')
+    else:
+        items = [data]
 
     # reuse the connection created at startup
     js = request.app.state.js

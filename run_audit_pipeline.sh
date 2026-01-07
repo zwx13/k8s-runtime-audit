@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# before exiting, kill every process in current process group
+trap 'echo; echo "[!] Stopping all services."; kill 0' INT TERM
+
 # start venv
 echo "[+] Activating Python virtual environment..."
 source python_audit/.venv/bin/activate
@@ -8,6 +11,30 @@ source python_audit/.venv/bin/activate
 echo "[+] Starting webhook receiver..."
 python3 python_audit/audit_webhook_receiver.py &
 RECEIVER_PID=$!
+
+RECEIVER_URL="http://127.0.0.1:9770/healthz"
+
+for i in $(seq 1 50); do
+
+    if ! kill -0 "$RECEIVER_PID" 2>/dev/null; then
+        echo "[!] Receiver process exited during startup."
+        exit 1
+    fi
+
+    if curl -sf --max-time 1 "$RECEIVER_URL" >/dev/null 2>&1; then
+        echo "[+] Receiver is healthy."
+        break
+    fi
+
+    sleep 0.1
+done
+
+if ! curl -sfS --max-time 1 "$RECEIVER_URL" >/dev/null; then
+    echo "[!] Receiver did not become healthy."
+    exit 1
+fi
+
+
 
 # wait so FastAPI server is up
 sleep 3
@@ -25,17 +52,12 @@ PARTITIONING_PID=$!
 
 # start the Java NATS consumer in the background
 # mvn package should already be done so the jar is built
-echo "[+] Starting Java NATS consumer..."
-java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
-    node_isolation.tla \
-    node_isolation.cfg \
-    tla2tools.jar &
-JAVA_PID=$!
+# echo "[+] Starting Java NATS consumer..."
+# java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
+#     node_isolation.tla \
+#     node_isolation.cfg \
+#     tla2tools.jar &
+# JAVA_PID=$!
 
-
-
-# trap Ctrl+C to kill all background processes
-trap "echo; echo '[!] Stopping all services.'; kill $RECEIVER_PID $PARTITIONING_PID $JAVA_PID; exit 0" SIGINT
-
-# wait for all background processes
-wait $RECEIVER_PID $PARTITIONING_PID $JAVA_PID
+# keep supervisor script running while services run
+wait
