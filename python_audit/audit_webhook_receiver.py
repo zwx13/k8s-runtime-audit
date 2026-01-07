@@ -129,7 +129,7 @@ async def receive_audit_log(request: Request):
             errors += 1
             log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
 
-    # for debugging, if ever
+    # for debugging, if ever; we can send with curl a log to see the response
     return {"status": "ok", "published": published, "errors": errors}
 
 # -----------------------------------------------------------------------------
