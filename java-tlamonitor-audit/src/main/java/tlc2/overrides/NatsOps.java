@@ -15,17 +15,19 @@ import io.nats.client.*;
 
 // 2do: update operator or create a new one, that operates on continuous logs
 // check to see how kafka onos peeps did it
+// go lower level? kafka peeps: https://github.com/onosproject/tlaplus-monitor/blob/master/src/main/java/tlc2/overrides/Traces.java
 
-// TLA+ operator that fetches a single log message from NATS JetStream,
-// converts it to an IValue (e.g., TupleValue, RecordValue),
-// and can be called inside a TLA+ specification to iterate through logs in order.
+// TLA+ operator that fetches 50 messages from NATS JetStream,
+// converts them to an IValue (e.g., TupleValue, RecordValue),
+// adds them to messages List; at the end, turn this list to a Tuple.
+// can be called inside a TLA+ specification to iterate through logs in order.
  public class NatsOps {
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
-    public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
+    public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE, IntValue MESSAGES_NO) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
         try {
             List<IValue> messages = new ArrayList<>();
             ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toUnquotedString(), SUBJECT.toUnquotedString());
-            FetchConsumer fetchConsumer = durableContext.fetchMessages(50);
+            FetchConsumer fetchConsumer = durableContext.fetchMessages(MESSAGES_NO.val);
             Message msg;
             while ((msg = fetchConsumer.nextMessage()) != null)
             {

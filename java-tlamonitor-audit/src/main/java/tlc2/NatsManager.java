@@ -42,6 +42,9 @@ public class NatsManager {
         ConsumerConfiguration cfg = ConsumerConfiguration.builder()
             .durable(durableName)
             .filterSubject(subject)
+            .ackPolicy(AckPolicy.EXPLICIT)
+            .ackWait(Duration.ofMinutes(5))
+            .maxAckPending(1000)
             .build();
         return streamContext.createOrUpdateConsumer(cfg);
     }

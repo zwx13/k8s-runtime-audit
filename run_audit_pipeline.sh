@@ -1,7 +1,14 @@
 #!/bin/bash
 
 # before exiting, kill every process in current process group
-trap 'echo; echo "[!] Stopping all services."; kill 0' INT TERM
+cleanup() {
+  echo
+  echo "[!] Stopping all services."
+  trap - INT TERM        # prevent re-entry
+  kill 0                 # terminate process group
+}
+
+trap cleanup INT TERM
 
 # start venv
 echo "[+] Activating Python virtual environment..."
@@ -53,11 +60,11 @@ PARTITIONING_PID=$!
 # start the Java NATS consumer in the background
 # mvn package should already be done so the jar is built
 # echo "[+] Starting Java NATS consumer..."
-# java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
-#     node_isolation.tla \
-#     node_isolation.cfg \
-#     tla2tools.jar &
-# JAVA_PID=$!
+java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
+    node_isolation_spec/node_isolation.tla \
+    node_isolation_spec/node_isolation.cfg \
+    tla2tools.jar &
+JAVA_PID=$!
 
 # keep supervisor script running while services run
 wait
