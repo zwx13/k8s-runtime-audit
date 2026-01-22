@@ -1,5 +1,5 @@
 ---- MODULE MT_Audit_RBAC_Trace_Extended ----
-EXTENDS TLC, Json, Sequences, FiniteSets, Naturals, NatsOps
+EXTENDS TLC, Json, Sequences, FiniteSets, Naturals, SequencesExt, NatsOps
 
 \* 2do: 
 \* - handle the tuple case instead of <<v, r>>
@@ -41,22 +41,22 @@ VARIABLES
 vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized >>
 
 \* utils
-TupleToSet(t) == { t[i] : i \in 1..Len(t) }
-SetToTuple(s) == Seq(s)
+SeqToSet(t) == { t[i] : i \in 1..Len(t) }
 
-FunToTuple(f) == Seq({<< k, f[k] >> : k \in DOMAIN f })
+FunToSeq(f) == SetToSeq({<< k, f[k] >> : k \in DOMAIN f })
 \* protect against dupes
-TupleToFun(t) == 
+SeqToFun(t) == 
   LET T == { t[i] : i \in 1..Len(t) }
       Keys == { pair[1] : pair \in T }
+      valuesFor(k) == { pair[2] : pair \in { p \in T : p[1] = k } }
    IN 
-     /\ \A p, q \in T : p[1] = q[1] => p[2] = q[2] 
-     /\ [ key \in Keys |-> CHOOSE value : << key, value>> \in T ]
+    \*  /\ \A p, q \in T : p[1] = q[1] => p[2] = q[2] 
+    [ key \in Keys |-> CHOOSE value \in valuesFor(key) : TRUE ]
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
 \* LogEvents == NatsConsume("audit.multitenancy", "audit-multitenancy-durable")
-LogEvents == JsonDeserialize(LogFile)
+LogEvents == ndJsonDeserialize(LogFile)
 
 \* filter event types by fields
 IsNSCreationLog(l) ==
@@ -103,8 +103,8 @@ RoleRule1(l) == l["requestObject"]["rules"][1]
 
 \* make them sets so we can compare and do not get errors like
 \* Attempted to check equality of string "get" with non-string: <<"list">>
-RoleRuleVerbs(l) == { v \in TupleToSet(RoleRule1(l)["verbs"]) : TRUE }
-RoleRuleResources(l) == { r \in TupleToSet(RoleRule1(l)["resources"]) : TRUE }  \* this is a sequence
+RoleRuleVerbs(l) == { v \in SeqToSet(RoleRule1(l)["verbs"]) : TRUE }
+RoleRuleResources(l) == { r \in SeqToSet(RoleRule1(l)["resources"]) : TRUE }  \* this is a sequence
 
 RolePerms(l) == { << v, r >> : v \in RoleRuleVerbs(l), r \in RoleRuleResources(l) }
 
@@ -177,12 +177,12 @@ Init ==
         /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
         /\ accessAttempts = {}
       ELSE
-          /\ nsTenant = TupleToFun(init.nsTenant)
-          /\ roleBindings = TupleToSet(init.roleBindings)
+          /\ nsTenant = SeqToFun(init.nsTenant)
+          /\ roleBindings = SeqToSet(init.roleBindings)
           /\ roleRules = 
-              LET rr == TupleToFun(init.roleRules) IN 
-              [ key \in DOMAIN rr |-> TupleToSet(rr[key]) ]
-          /\ accessAttempts = TupleToSet(init.accessAttempts)           
+              LET rr == SeqToFun(init.roleRules) IN 
+              [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
+          /\ accessAttempts = SeqToSet(init.accessAttempts)           
 
 Next ==
   /\ idx <= Len(LogEvents)
@@ -190,36 +190,37 @@ Next ==
        IF IsNSCreationLog(l) THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
-         /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
+         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, serialized >>
        ELSE IF IsRoleCreationLog(l) THEN
          /\ roleRules' =
               [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, serialized >>
        ELSE IF IsRBCreationLog(l) THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
          /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
-         /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
+         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, serialized >>
        ELSE IF IsAccessAttemptLog(l) THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
-         /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
+         /\ UNCHANGED << nsTenant, roleBindings, roleRules, serialized >>
        ELSE
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, serialized >>
   /\ idx' = idx + 1
 
 \* we serialize and create a JSON object that contains arrays
 allocOut ==
   [
-    nsTenant |-> FunToTuple(nsTenant),
-    roleBindings |-> SetToTuple(roleBindings),
-    roleRules |-> FunToTuple([ k \in DOMAIN roleRules |-> SetToTuple(roleRules[k] )]),
-    accessAttempts |-> SetToTuple(accessAttempts)
+    nsTenant |-> FunToSeq(nsTenant),
+    roleBindings |-> SetToSeq(roleBindings),
+    roleRules |-> FunToSeq([ k \in DOMAIN roleRules |-> SetToSeq(roleRules[k] )]),
+    accessAttempts |-> SetToSeq(accessAttempts)
   ]
 
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
   /\ ~serialized
   /\ serialized' = TRUE
+  /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ JsonSerialize(AllocFile, allocOut)
   /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts >>
 
@@ -231,7 +232,7 @@ Model == INSTANCE MT_Audit_RBAC_Base
               Namespaces <- NamespacesFromTrace,
               RoleNames <- RoleNamesFromTrace
 
-TraceBehavior == Init /\ [][Next]_vars
+TraceBehavior == Init /\ [][NextAndSerialize]_vars
 
 BaseInv == Model!Inv
 BaseSafety == Model!Safety
