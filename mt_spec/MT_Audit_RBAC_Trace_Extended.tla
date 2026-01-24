@@ -177,12 +177,26 @@ Init ==
         /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
         /\ accessAttempts = {}
       ELSE
-          /\ nsTenant = SeqToFun(init.nsTenant)
-          /\ roleBindings = SeqToSet(init.roleBindings)
-          /\ roleRules = 
-              LET rr == SeqToFun(init.roleRules) IN 
-              [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
-          /\ accessAttempts = SeqToSet(init.accessAttempts)           
+        LET
+           nsT == SeqToFun(init.nsTenant)
+           rb == SeqToSet(init.roleBindings)
+           rr0 == SeqToFun(init.roleRules)
+           rr == [ key \in DOMAIN rr0 |-> SeqToSet(rr0[key]) ]
+           aa == SeqToSet(init.accessAttempts)
+        IN
+         /\ nsTenant = nsT
+         /\ roleBindings = rb
+         /\ roleRules = rr
+         /\ accessAttempts = aa
+         /\ PrintT("init DOMAIN = " \o ToString(DOMAIN init))
+         /\ PrintT("=============================================")
+         /\ PrintT("init raw = " \o ToString(init))
+         /\ PrintT("=============================================")
+         /\ PrintT("Decoded init = " \o ToString(
+                [ nsTenant |-> nsT,
+                  roleBindings |-> rb,
+                  roleRules |-> rr,
+                  accessAttempts |-> aa ]))
 
 Next ==
   /\ idx <= Len(LogEvents)
@@ -235,6 +249,10 @@ Model == INSTANCE MT_Audit_RBAC_Base
 TraceBehavior == Init /\ [][NextAndSerialize]_vars
 
 BaseInv == Model!Inv
+
+\* if we set this property in the cfg file,
+\* we need to change Init to accept mappings that are not empty
+\* in the base spec
 BaseSafety == Model!Safety
 
 \* for every step the trace takes, 
