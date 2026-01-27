@@ -32,13 +32,15 @@ CONSTANTS
     
 VARIABLES
     idx,
+    serialized,
     nsTenant,
     roleBindings,
     accessAttempts,
     roleRules,
-    serialized
+    allocIn
+    
 
-vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized >>
+vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized, allocIn >>
 
 \* utils
 SeqToSet(t) == { t[i] : i \in 1..Len(t) }
@@ -166,59 +168,69 @@ NamespacesFromTrace == GetAllNS(LogEvents)
 RoleNamesFromTrace == GetAllRoleNames(LogEvents)
 TenantsFromTrace == GetAllNSTenants(LogEvents)
 
-      
 Init == 
     /\ idx = 1
+    /\ TLCSet(13, 0)
+    /\ TLCSet(9, 0)
     /\ serialized = FALSE
-    /\ LET init == JsonDeserialize(AllocFile) IN 
-       IF DOMAIN init = {} THEN
+    /\ allocIn= JsonDeserialize(AllocFile)
+    /\  IF DOMAIN allocIn = {} THEN
         /\ nsTenant = [ ns \in NamespacesFromTrace |-> NoTenant ]
         /\ roleBindings = {}
         /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
         /\ accessAttempts = {}
       ELSE
-        LET
-           nsT == SeqToFun(init.nsTenant)
-           rb == SeqToSet(init.roleBindings)
-           rr0 == SeqToFun(init.roleRules)
-           rr == [ key \in DOMAIN rr0 |-> SeqToSet(rr0[key]) ]
-           aa == SeqToSet(init.accessAttempts)
-        IN
-         /\ nsTenant = nsT
-         /\ roleBindings = rb
-         /\ roleRules = rr
-         /\ accessAttempts = aa
-         /\ PrintT("init DOMAIN = " \o ToString(DOMAIN init))
-         /\ PrintT("=============================================")
-         /\ PrintT("init raw = " \o ToString(init))
-         /\ PrintT("=============================================")
-         /\ PrintT("Decoded init = " \o ToString(
-                [ nsTenant |-> nsT,
-                  roleBindings |-> rb,
-                  roleRules |-> rr,
-                  accessAttempts |-> aa ]))
+        /\ nsTenant = SeqToFun(allocIn.nsTenant)
+        /\ roleBindings = SeqToSet(allocIn.roleBindings)
+        /\ roleRules = 
+            LET rr == SeqToFun(allocIn.roleRules)
+            IN [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
+        /\ accessAttempts = SeqToSet(allocIn.accessAttempts)
+        \*  /\ nsTenant = nsT
+        \*  /\ roleBindings = rb
+        \*  /\ roleRules = rr
+        \*  /\ accessAttempts = aa
 
+PrintInitOnce ==
+    IF TLCGet(13) = 42
+      THEN 
+      /\ TRUE
+      /\ UNCHANGED <<vars>>
+      ELSE
+      /\ TLCSet(13, 42)
+      /\ PrintT("idx=" \o ToString(idx))
+      /\ PrintT("init DOMAIN = " \o ToString(DOMAIN allocIn)) 
+      /\ PrintT("=============================================") 
+      /\ PrintT("init raw = " \o ToString(allocIn)) 
+      /\ PrintT("=============================================") 
+      /\ PrintT("nsTenant = " \o ToString(nsTenant))
+      /\ PrintT("roleBindings = " \o ToString(roleBindings))
+      /\ PrintT("roleRules = " \o ToString(roleRules))
+      /\ PrintT("accessAttempts = " \o ToString(accessAttempts))
+      /\ PrintT("=============================================") 
+      /\ UNCHANGED <<vars>>
+---------------------------------------------------------------------------------------------
 Next ==
   /\ idx <= Len(LogEvents)
   /\ LET l == LogEvents[idx] IN
        IF IsNSCreationLog(l) THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
-         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, serialized >>
+         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, serialized, allocIn >>
        ELSE IF IsRoleCreationLog(l) THEN
          /\ roleRules' =
               [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, serialized >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, serialized, allocIn >>
        ELSE IF IsRBCreationLog(l) THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
          /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
-         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, serialized >>
+         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, serialized, allocIn >>
        ELSE IF IsAccessAttemptLog(l) THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
-         /\ UNCHANGED << nsTenant, roleBindings, roleRules, serialized >>
+         /\ UNCHANGED << nsTenant, roleBindings, roleRules, serialized, allocIn >>
        ELSE
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, serialized >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, serialized, allocIn >>
   /\ idx' = idx + 1
 
 \* we serialize and create a JSON object that contains arrays
@@ -236,9 +248,9 @@ SerializeAtEnd ==
   /\ serialized' = TRUE
   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ JsonSerialize(AllocFile, allocOut)
-  /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts >>
+  /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
 
-NextAndSerialize == Next \/ SerializeAtEnd
+NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
 
 Model == INSTANCE MT_Audit_RBAC_Base
          WITH Users <- UsersFromTrace,
@@ -246,9 +258,21 @@ Model == INSTANCE MT_Audit_RBAC_Base
               Namespaces <- NamespacesFromTrace,
               RoleNames <- RoleNamesFromTrace
 
-TraceBehavior == Init /\ [][NextAndSerialize]_vars
+TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
-BaseInv == Model!Inv
+BaseInv == IF Model!Inv
+              THEN TRUE
+           ELSE
+             IF TLCGet(9) = 42 
+               THEN FALSE
+               ELSE 
+                /\ TLCSet(9, 42)
+                /\ PrintT("BaseInv violated at idx=" \o ToString(idx))
+                /\ PrintT("allocOut = " \o ToString(allocOut))
+                /\ JsonSerialize(AllocFile, allocOut)
+                /\ FALSE
+
+\* BaitInv == TLCGet("level") < 14
 
 \* if we set this property in the cfg file,
 \* we need to change Init to accept mappings that are not empty
@@ -261,6 +285,6 @@ BaseSafety == Model!Safety
 
 \* all states reached while replaying
 \* the trace satisfy the base invariants.
-THEOREM TraceBehavior => []Model!Inv
+\* THEOREM TraceBehavior => []Model!Inv
 
 =============================================================================
