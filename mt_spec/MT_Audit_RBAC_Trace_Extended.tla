@@ -191,6 +191,11 @@ Init ==
         \*  /\ roleRules = rr
         \*  /\ accessAttempts = aa
 
+\* TLC replays (at least when hitting Invariant violatins)
+\* this is why we cannot just put the print in Init, or use
+\* a variable like `printed = TRUE/FALSE`, it will always start
+\* from the beginning. However, this TLCGet/TLCSet strategy seems to
+\* work for a whole TLC process
 PrintInitOnce ==
     IF TLCGet(13) = 42
       THEN 
