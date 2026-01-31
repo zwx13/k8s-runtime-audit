@@ -1,5 +1,5 @@
 ---- MODULE MT_Audit_RBAC_Trace_Extended ----
-EXTENDS TLC, Json, Sequences, FiniteSets, Naturals, SequencesExt, NatsOps
+EXTENDS Utils, NatsOps
 
 \* 2do: 
 \* - handle the tuple case instead of <<v, r>>
@@ -41,19 +41,6 @@ VARIABLES
     
 
 vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized, allocIn >>
-
-\* utils
-SeqToSet(t) == { t[i] : i \in 1..Len(t) }
-
-FunToSeq(f) == SetToSeq({<< k, f[k] >> : k \in DOMAIN f })
-\* protect against dupes
-SeqToFun(t) == 
-  LET T == { t[i] : i \in 1..Len(t) }
-      Keys == { pair[1] : pair \in T }
-      valuesFor(k) == { pair[2] : pair \in { p \in T : p[1] = k } }
-   IN 
-    \*  /\ \A p, q \in T : p[1] = q[1] => p[2] = q[2] 
-    [ key \in Keys |-> CHOOSE value \in valuesFor(key) : TRUE ]
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
@@ -186,10 +173,6 @@ Init ==
             LET rr == SeqToFun(allocIn.roleRules)
             IN [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
         /\ accessAttempts = SeqToSet(allocIn.accessAttempts)
-        \*  /\ nsTenant = nsT
-        \*  /\ roleBindings = rb
-        \*  /\ roleRules = rr
-        \*  /\ accessAttempts = aa
 
 \* TLC replays (at least when hitting Invariant violatins)
 \* this is why we cannot just put the print in Init, or use
@@ -255,7 +238,7 @@ SerializeAtEnd ==
   /\ JsonSerialize(AllocFile, allocOut)
   /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
 
-NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
+NextPrintSerialize == Next \/ SerializeAtEnd
 
 Model == INSTANCE MT_Audit_RBAC_Base
          WITH Users <- UsersFromTrace,
@@ -276,6 +259,8 @@ BaseInv == IF Model!Inv
                 /\ PrintT("allocOut = " \o ToString(allocOut))
                 /\ JsonSerialize(AllocFile, allocOut)
                 /\ FALSE
+
+\* BaseInv == Model!Inv
 
 \* BaitInv == TLCGet("level") < 14
 
