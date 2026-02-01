@@ -12,9 +12,10 @@ ConstCodes == {200, 201, 403}
 ConstSuccessCodes == {200, 201}
 ConstFailCodes == ConstCodes \ ConstSuccessCodes
 
-ConstLogFile == "/home/malina/monitoring2k25/mt_spec/trace_nonull.ndjson"
+ConstLogFile == "/home/malina/monitoring2k25/mt_spec/trace_nonull_violation.ndjson"
 
 ConstAllocFile == "/home/malina/monitoring2k25/mt_spec/allocfile.json"
+ConstAlertFile == "/home/malina/monitoring2k25/mt_spec/alertfile.json"
 
 ConstUserTenantMap ==
     [ u \in ConstUsers |->

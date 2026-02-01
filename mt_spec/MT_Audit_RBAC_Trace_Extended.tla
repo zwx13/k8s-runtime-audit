@@ -28,7 +28,8 @@ CONSTANTS
     Codes,
     SuccessCodes,
     FailCodes,
-    AllocFile
+    AllocFile,
+    AlertFile
     
 VARIABLES
     idx,
@@ -248,16 +249,11 @@ Model == INSTANCE MT_Audit_RBAC_Base
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
-BaseInv == IF Model!Inv
-              THEN TRUE
-           ELSE
-             IF TLCGet(9) = 42 
-               THEN FALSE
-               ELSE 
-                /\ TLCSet(9, 42)
-                /\ PrintT("BaseInv violated at idx=" \o ToString(idx))
-                /\ PrintT("allocOut = " \o ToString(allocOut))
-                /\ JsonSerialize(AllocFile, allocOut)
+BaseInv ==  IF Model!Inv THEN
+                TRUE
+            ELSE
+                /\ JsonSerialize(AlertFile, allocOut)
+                /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
                 /\ FALSE
 
 \* BaseInv == Model!Inv
