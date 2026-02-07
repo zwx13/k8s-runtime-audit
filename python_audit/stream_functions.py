@@ -1,42 +1,59 @@
 import logging
+from datetime import timedelta
+from typing import Sequence
+
+from nats.js.errors import NotFoundError as JetStreamNotFoundError
+from nats.js.api import StreamConfig
 
 
 log = logging.getLogger(__name__)
 
 
 def normalize_subjects(subjects):
+    """Make subjects always be a list of subject strings"""
     if isinstance(subjects, str):
         return [subjects]
     else:
-        return subjects
+        return list(subjects)
 
-async def ensure_stream(js, *, stream_name: str, subjects: list[str]) -> None:
+async def ensure_stream(
+    js,
+    *,
+    stream_name: str,
+    subjects: str | Sequence[str],
+    max_age: timedelta = timedelta(days=7)) -> None:
     """
-    Ensure the JetStream stream exists and captures the subjects we want.
-    If it exists with different subjects, we update it. If missing, we create it.
-    Subject won't show unless it has at least one message.
+    Confirm a JetStream stream exists with the desired subjects and retention policy.
+
+    - If missing: create it.
+    - If present but config differs (subjects/max_age/storage): update it.
+
+    Note: a subject may not appear in stream info until at least one message is stored.
     """
     normalized_subjects = normalize_subjects(subjects)
+
+    desired_cfg = StreamConfig(
+        name=stream_name,
+        subjects=normalized_subjects,
+        storage="file",
+        max_age=max_age
+    )
     try:
-        # network call
-        info = await js.stream_info(stream_name)  # exists?
+        info = await js.stream_info(stream_name)
 
-        configured = set(info.config.subjects)
-        desired = set(normalized_subjects)
+        if (
+            set(info.config.subjects) != set(normalized_subjects)
+            or info.config.max_age != desired_cfg.max_age
+           ):
 
-        if configured != desired:
-            await js.update_stream(name=stream_name, subjects=normalized_subjects)
-            log.info("Updated stream %r subjects -> %s", stream_name, subjects)
+            await js.update_stream(desired_cfg)
+            log.info("Updated stream=%s subjects=%s max_age=%s",
+                                 stream_name, normalized_subjects, max_age)
         else:
-            log.info("Stream %r already configured", stream_name)
+            log.info("Stream %r already configured with subjects=%s max_age=%s",
+                                 stream_name, normalized_subjects, max_age)
 
     except JetStreamNotFoundError:
-        await js.add_stream(
-            name=stream_name,
-            subjects=normalized_subjects,
-            storage="file",
-            # max_msgs=0,
-            # max_bytes=0,
-            # max_age=24*60*60,  # uncomment to limit retention by time (e.g. 24h)
-        )
-        log.info("Created stream %r with subjects=%s", stream_name, subjects)
+        await js.add_stream(desired_cfg)
+        log.info("Created stream %r with subjects=%s max_age=%s",
+                                  stream_name, normalized_subjects, max_age)
