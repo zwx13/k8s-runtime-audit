@@ -13,11 +13,8 @@ This service:
 - Exposes /healthz for readiness checks.
 """
 
-from __future__ import annotations
-
 import json
 import logging
-import os
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Final
@@ -25,33 +22,10 @@ from typing import Final
 import nats
 from fastapi import FastAPI, HTTPException, Request
 
+from config_helpers import env_int, env_str, env_duration_sec
 from stream_functions import ensure_stream
 
 log = logging.getLogger(__name__)
-
-# -----------------------------------------------------------------------------
-# Config helpers
-# -----------------------------------------------------------------------------
-def env_str(name: str, default: str) -> str:
-    v = os.environ.get(name, default).strip()
-    return v
-
-def env_int(name: str, default: int) -> int:
-    v = os.environ.get(name)
-    if v is None:
-        return default
-    try:
-        return int(v)
-    except ValueError as e:
-        raise RuntimeError(f"Invalid int for {name}={v!r}") from e
-
-def env_duration_sec(name: str, default_seconds: int) -> timedelta:
-    """Parse duratiopn from env var as seconds
-       Example: RETENTION_SECONDS=86400 (1 day)"""
-    seconds = env_int(name, default_seconds)
-    if seconds < 0:
-        raise RuntimeError(f"{name} must be >= 0")
-    return timedelta(seconds=seconds)
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -64,11 +38,9 @@ RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 # Retention default is 1 day, override with RETENTION_SECONDS
 MAX_AGE: Final[timedelta] = env_duration_sec("RETENTION_SECONDS", 24 * 60 * 60)
 
-# stream subjects we want JetStream to capture (subject appears only after first message).
-# note: this script publishes only to RAW_SUBJECT; other subjects may be published by other scripts
+# stream subjects we want JetStream to capture (subject appears only after first message)
 WANTED_SUBJECTS: Final[list[str]] = [
-    env_str("RAW_SUBJECT", "audit.full"),
-    "audit.multitenancy"
+    env_str("RAW_SUBJECT", "audit.full")
 ]
 
 # -----------------------------------------------------------------------------
@@ -178,4 +150,4 @@ if __name__ == "__main__":
 
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=env_int("PORT", "9770"))
+    uvicorn.run(app, host="0.0.0.0", port=env_int("PORT", 9770))
