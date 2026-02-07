@@ -19,32 +19,56 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import Any
+from datetime import timedelta
+from typing import Final
 
 import nats
 from fastapi import FastAPI, HTTPException, Request
 
 from stream_functions import ensure_stream
 
+log = logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Config helpers
+# -----------------------------------------------------------------------------
+def env_str(name: str, default: str) -> str:
+    v = os.environ.get(name, default).strip()
+    return v
+
+def env_int(name: str, default: int) -> int:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    try:
+        return int(v)
+    except ValueError as e:
+        raise RuntimeError(f"Invalid int for {name}={v!r}") from e
+
+def env_duration_sec(name: str, default_seconds: int) -> timedelta:
+    """Parse duratiopn from env var as seconds
+       Example: RETENTION_SECONDS=86400 (1 day)"""
+    seconds = env_int(name, default_seconds)
+    if seconds < 0:
+        raise RuntimeError(f"{name} must be >= 0")
+    return timedelta(seconds=seconds)
 
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 
-NATS_SERVER = os.environ.get("NATS_URL", "nats://localhost:4222")
-JS_STREAM = os.environ.get("JS_STREAM", "AUDIT")
+NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://localhost:4222")
+JS_STREAM: Final[str] = env_str("JS_STREAM", "AUDIT")
+RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 
-RAW_SUBJECT = os.environ.get("RAW_SUBJECT", "audit.full")
+# Retention default is 1 day, override with RETENTION_SECONDS
+MAX_AGE: Final[timedelta] = env_duration_sec("RETENTION_SECONDS", 24 * 60 * 60)
 
 # stream subjects we want JetStream to capture (subject appears only after first message).
-WANTED_SUBJECTS=["audit.full", "audit.multitenancy"]
-
-# -----------------------------------------------------------------------------
-# Logging
-# -----------------------------------------------------------------------------
-
-log = logging.getLogger(__name__)
-
+WANTED_SUBJECTS: Final[list[str]] = [
+    env_str("RAW_SUBJECT", "audit.full"),
+    "audit.multitenancy"
+]
 
 # -----------------------------------------------------------------------------
 # App lifecycle (connect/disconnect NATS)
@@ -55,17 +79,28 @@ async def lifespan(app: FastAPI):
     nc = await nats.connect(servers=[NATS_SERVER])
     js = nc.jetstream()
 
-    await ensure_stream(js, stream_name=JS_STREAM, subjects=WANTED_SUBJECTS)
+    await ensure_stream(
+        js,
+        stream_name=JS_STREAM, 
+        subjects=WANTED_SUBJECTS,
+        max_age=MAX_AGE
+    )
 
     app.state.nc = nc
     app.state.js = js
     
-    log.info("Connected to NATS JetStream at %s (stream=%s)", NATS_SERVER, JS_STREAM)
+    log.info(
+        "Connected to NATS JetStream server=%s stream=%s subject=%s max_age=%s",
+        NATS_SERVER,
+        JS_STREAM,
+        RAW_SUBJECT,
+        MAX_AGE,
+    )
 
     try:
         yield
     finally:
-        # drain flushes in-flight publishes and closes smoothly
+        # drain flushes in-flight publishes and closes nicely
         await nc.drain()
         log.info("NATS connection drained and closed")
 
@@ -78,13 +113,15 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/healthz")
 async def healthz():
-    """
-    Readiness endpoint,
-    Returns ok if JetStream stream exists and is readable.
-    """
+    """Readiness endpoint: returns ok if JetStream stream exists and is readable."""
     try:
         info = await app.state.js.stream_info(JS_STREAM)
-        return {"status": "ok", "stream": JS_STREAM, "subjects": list(info.config.subjects)}
+        return {
+                "status": "ok", 
+                "stream": JS_STREAM, 
+                "subjects": list(info.config.subjects),
+                "max_age": info.config.max_age
+            }
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
@@ -92,9 +129,7 @@ async def healthz():
 @app.post("/")
 async def receive_audit_log(request: Request):
     """
-    Kubernetes audit webhook handler.
-
-    Supports:
+    Kubernetes audit webhook handler. Supports:
     - A single audit event object
     - An EventList object (kind == "EventList") with an "items" array
     - For batching see https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#batching
@@ -117,7 +152,6 @@ async def receive_audit_log(request: Request):
     # reuse the connection created at startup
     js = request.app.state.js
     published = 0
-    errors = 0
 
     for item in items:
         try:
@@ -126,11 +160,10 @@ async def receive_audit_log(request: Request):
             await js.publish(RAW_SUBJECT, payload)  # returns PubAck; we don't use it here
             published += 1
         except Exception:
-            errors += 1
             log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
 
     # for debugging, if ever; we can send with curl a log to see the response
-    return {"status": "ok", "published": published, "errors": errors}
+    return {"status": "ok", "published": published, "received": len(items), "errors": len(items) - published}
 
 # -----------------------------------------------------------------------------
 # Local dev entrypoint
@@ -144,5 +177,4 @@ if __name__ == "__main__":
 
     import uvicorn
 
-    # default to 9770 if env var not set
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "9770")))
+    uvicorn.run(app, host="0.0.0.0", port=env_int("PORT", "9770"))

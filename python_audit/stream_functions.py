@@ -36,7 +36,7 @@ async def ensure_stream(
         name=stream_name,
         subjects=normalized_subjects,
         storage="file",
-        max_age=max_age
+        max_age=max_age.total_seconds()
     )
     try:
         info = await js.stream_info(stream_name)
