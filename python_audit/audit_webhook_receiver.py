@@ -65,6 +65,7 @@ RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 MAX_AGE: Final[timedelta] = env_duration_sec("RETENTION_SECONDS", 24 * 60 * 60)
 
 # stream subjects we want JetStream to capture (subject appears only after first message).
+# note: this script publishes only to RAW_SUBJECT; other subjects may be published by other scripts
 WANTED_SUBJECTS: Final[list[str]] = [
     env_str("RAW_SUBJECT", "audit.full"),
     "audit.multitenancy"
@@ -94,7 +95,7 @@ async def lifespan(app: FastAPI):
         NATS_SERVER,
         JS_STREAM,
         RAW_SUBJECT,
-        MAX_AGE,
+        MAX_AGE
     )
 
     try:
@@ -171,7 +172,7 @@ async def receive_audit_log(request: Request):
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+        level=env_str("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
