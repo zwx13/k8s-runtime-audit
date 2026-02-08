@@ -87,50 +87,52 @@ def encode_compact_json(obj) -> bytes:
 async def main() -> None:
     nc = await nats.connect(servers=[NATS_SERVER])
     js = nc.jetstream()
-
-    await ensure_stream(
-        js,
-        stream_name=MT_STREAM,
-        subjects=[DEST_SUBJ],
-        duplicate_window=MT_DUPLICATE_WINDOW,
-        max_age=MT_MAX_AGE
-    )
-
-    await ensure_consumer(
-        js,
-        stream_name=RAW_STREAM,
-        durable_name=DURABLE,
-        filter_subject=SOURCE_SUBJ,
-        deliver_policy=DeliverPolicy.ALL,
-        ack_wait_s=ACK_WAIT_S,
-        max_deliver=MAX_DELIVER
-    )
-
-    info = await js.consumer_info(RAW_STREAM, DURABLE)
-    log.info("Consumer state: delivered=%s ack_floor=%s num_pending=%s",
-         info.delivered.stream_seq, info.ack_floor.stream_seq, info.num_pending)
-
-    # subscribe to consumer(DURABLE) bound to a stream
-    sub = await js.pull_subscribe(
-        SOURCE_SUBJ, 
-        durable=DURABLE, 
-        stream=RAW_STREAM
-    )
-
-    log.info(
-        "READY server=%s raw_stream=%s source=%s mt_stream=%s dest=%s durable=%s mt_age=%s",
-        NATS_SERVER,
-        RAW_STREAM,
-        SOURCE_SUBJ,
-        MT_STREAM,
-        DEST_SUBJ,
-        DURABLE,
-        MT_MAX_AGE,
-    )
-
-    print("READY", flush=True)
+    sub = None
 
     try:
+
+        await ensure_stream(
+            js,
+            stream_name=MT_STREAM,
+            subjects=[DEST_SUBJ],
+            duplicate_window=MT_DUPLICATE_WINDOW,
+            max_age=MT_MAX_AGE
+        )
+
+        await ensure_consumer(
+            js,
+            stream_name=RAW_STREAM,
+            durable_name=DURABLE,
+            filter_subject=SOURCE_SUBJ,
+            deliver_policy=DeliverPolicy.ALL,
+            ack_wait_s=ACK_WAIT_S,
+            max_deliver=MAX_DELIVER
+        )
+
+        info = await js.consumer_info(RAW_STREAM, DURABLE)
+        log.info("Consumer state: delivered=%s ack_floor=%s num_pending=%s",
+            info.delivered.stream_seq, info.ack_floor.stream_seq, info.num_pending)
+
+        # subscribe to consumer(DURABLE) bound to a stream
+        sub = await js.pull_subscribe(
+            SOURCE_SUBJ, 
+            durable=DURABLE, 
+            stream=RAW_STREAM
+        )
+
+        log.info(
+            "READY server=%s raw_stream=%s source=%s mt_stream=%s dest=%s durable=%s mt_age=%s",
+            NATS_SERVER,
+            RAW_STREAM,
+            SOURCE_SUBJ,
+            MT_STREAM,
+            DEST_SUBJ,
+            DURABLE,
+            MT_MAX_AGE,
+        )
+
+        print("READY", flush=True)
+
         while True:
             try:
                 # advance the acked sequence, sub object sends the request
@@ -172,14 +174,23 @@ async def main() -> None:
                     except Exception:
                         log.exception("Failed to process message (NAK for retry): %r", msg.data)
                         await asyncio.sleep(0.5)
-
-    # always execute a clean exit
+    # handle shutdown
+    except asyncio.CancelledError:
+        log.info("Shutdown requested (cancelled).")
+        raise
     finally:
-        await nc.drain()
+        try:
+            await nc.drain()
+        except Exception:
+            await nc.close()
+        log.info("NATS connection closed.")
 
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
