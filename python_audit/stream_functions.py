@@ -46,6 +46,7 @@ async def ensure_stream(
         if (
             set(info.config.subjects) != set(normalized_subjects)
             or info.config.max_age != desired_cfg.max_age
+            or info.config.duplicate_window != desired_cfg.duplicate_window
            ):
 
             await js.update_stream(desired_cfg)
