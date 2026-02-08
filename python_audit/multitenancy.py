@@ -36,6 +36,7 @@ DURABLE: Final[str] = env_str("DURABLE", "audit-mt-filter")
 MT_STREAM: Final[str] = env_str("MT_STREAM", "AUDIT_MT")
 DEST_SUBJ: Final[str] = env_str("DEST_SUBJ", "audit.multitenancy")
 MT_MAX_AGE: Final[timedelta] = env_duration_sec("MT_RETENTION_SECONDS", 30 * 24 * 60 * 60)
+MT_DUPLICATE_WINDOW: Final[int] = env_int("MT_DUPLICATE_WINDOW", 180)
 
 # Pool loop
 BATCH_SIZE: Final[int] = env_int("BATCH_SIZE", 50)
@@ -44,6 +45,7 @@ IDLE_SLEEP_S: Final[float] = env_float("IDLE_SLEEP_S", 0.2)
 
 # Consumer behavior
 ACK_WAIT_S: Final[int] = env_int("ACK_WAIT_S", 30)
+# MAX_ACK_PENDING: Final[int] = env_int("MAX_ACK_PENDING", 1)
 MAX_DELIVER: Final[int] = env_int("MAX_DELIVER", 5)
 
 # -----------------------------------------------------------------------------
@@ -90,6 +92,7 @@ async def main() -> None:
         js,
         stream_name=MT_STREAM,
         subjects=[DEST_SUBJ],
+        duplicate_window=MT_DUPLICATE_WINDOW,
         max_age=MT_MAX_AGE
     )
 
@@ -141,28 +144,34 @@ async def main() -> None:
                 continue
 
             for msg in msgs:
-                try:
-                    # from msg.data == b'{"verb": "create", "objectRef": {"resource": "pods"}}'
-                    # to ev == {"verb": "create", "objectRef": {"resource": "pods"}}
-                    ev = json.loads(msg.data.decode("utf-8"))
-                except json.JSONDecodeError:
-                    log.warning("Bad JSON, acking to skip: %r", msg.data[:200])
-                    await msg.ack()
-                    continue
-                
-                try:
-                    ev_type = classify(ev)
-                    if ev_type is not None:
-                        out_ev = dict(ev)
-                        # filter by tlaType in spec instead of classifying there
-                        out_ev["tlaType"] = ev_type
-                        await js.publish(DEST_SUBJ, encode_compact_json(out_ev))
+                while True:
+                    try:
+                        # from msg.data == b'{"verb": "create", "objectRef": {"resource": "pods"}}'
+                        # to ev == {"verb": "create", "objectRef": {"resource": "pods"}}
+                        ev = json.loads(msg.data.decode("utf-8"))
+                    except json.JSONDecodeError:
+                        log.warning("Bad JSON, acking to skip: %r", msg.data[:200])
+                        await msg.ack()
+                        continue
+                    
+                    try:
+                        ev_type = classify(ev)
+                        if ev_type is not None:
+                            # create shallow copy so we do not modify actual log
+                            out_ev = dict(ev)
+                            out_ev["tlaType"] = ev_type
 
-                    await msg.ack()
+                            audit_id = out_ev.get("auditID")
+                            headers = {"Nats-Msg-Id": audit_id} if audit_id else None
+                            # filter by tlaType in spec instead of classifying there
+                            await js.publish(DEST_SUBJ, encode_compact_json(out_ev), headers=headers)
 
-                except Exception:
-                    log.exception("Failed to process message (NAK for retry): %r", msg.data)
-                    await msg.nak()
+                        await msg.ack()
+                        break
+
+                    except Exception:
+                        log.exception("Failed to process message (NAK for retry): %r", msg.data)
+                        await asyncio.sleep(0.5)
 
     # always execute a clean exit
     finally:

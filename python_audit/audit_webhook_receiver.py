@@ -35,7 +35,7 @@ NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://localhost:4222")
 JS_STREAM: Final[str] = env_str("JS_STREAM", "AUDIT")
 RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 
-# Retention default is 1 day, override with RETENTION_SECONDS
+DUPLICATE_WINDOW: Final[int] = env_int("AUDIT_DUPLICATE_WINDOW", 180)
 MAX_AGE: Final[timedelta] = env_duration_sec("RETENTION_SECONDS", 24 * 60 * 60)
 
 # stream subjects we want JetStream to capture (subject appears only after first message)
@@ -54,8 +54,9 @@ async def lifespan(app: FastAPI):
 
     await ensure_stream(
         js,
-        stream_name=JS_STREAM, 
+        stream_name=JS_STREAM,
         subjects=WANTED_SUBJECTS,
+        duplicate_window=DUPLICATE_WINDOW,
         max_age=MAX_AGE
     )
 

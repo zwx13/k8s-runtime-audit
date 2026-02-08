@@ -21,6 +21,7 @@ async def ensure_stream(
     *,
     stream_name: str,
     subjects: str | Sequence[str],
+    duplicate_window: int,
     max_age: timedelta = timedelta(days=7)) -> None:
     """
     Confirm a JetStream stream exists with the desired subjects and retention policy.
@@ -35,6 +36,7 @@ async def ensure_stream(
     desired_cfg = StreamConfig(
         name=stream_name,
         subjects=normalized_subjects,
+        duplicate_window=duplicate_window,
         storage="file",
         max_age=max_age.total_seconds()
     )
