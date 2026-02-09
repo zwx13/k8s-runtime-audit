@@ -1,4 +1,8 @@
 {
+    // 2do: figure out how to pass -DTLA-Library flag, so we put custom operator "stubs" in another folder
     "java.configuration.updateBuildConfiguration": "interactive",
-    "tlaplus.tlc.modelChecker.options": "-workers 1 -coverage 1"
+    "tlaplus.tlc.modelChecker.options": "-workers 1 -coverage 1",
+    "python-envs.pythonProjects": [],
+    // to run tlc with custom jar from VS Code:
+    "tlaplus.java.options": "-XX:+UseParallelGC -cp <custom jar path>"
 }
