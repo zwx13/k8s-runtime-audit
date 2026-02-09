@@ -1,4 +1,4 @@
-package tlc2.overrides;
+zsazuuuupackage tlc2.overrides;
 
 import tlc2.NatsClient;
 import tlc2.Utils;
@@ -8,6 +8,10 @@ import tlc2.value.impl.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -22,26 +26,75 @@ import io.nats.client.*;
 // adds them to messages List; at the end, turn this list to a Tuple.
 // can be called inside a TLA+ specification to iterate through logs in order.
  public class NatsOps {
+
+    private static String DURABLE = Utils.env("TLA_DURABLE", "audit-mt-tla-filter");
+    private static String SUBJECT = Utils.env("TLA_SUBJECT", "audit.multitenancy");
+    private static int MESSAGES_NO = Utils.envInt("TLA_MESSAGES_NO", 50);
+
+    private static boolean fetchedMsgOnce = false;
+    private static boolean ackedOnce = false;
+
+    private static NavigableMap<Long, Message> currentMessages = new TreeMap<>();
+    private static List<IValue> cachedTlaValues = new ArrayList<>();
+
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
-    public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE, IntValue MESSAGES_NO) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
+    public static synchronized IValue consume() throws Exception {
+        if (fetchedMsgOnce) {
+            return new TupleValue(cachedTlaValues.toArray(new Value[0]));
+        }
         try {
-            List<IValue> messages = new ArrayList<>();
-            ConsumerContext durableContext = NatsClient.getDurableConsumer(DURABLE.toUnquotedString(), SUBJECT.toUnquotedString());
-            FetchConsumer fetchConsumer = durableContext.fetchMessages(MESSAGES_NO.val);
+            ConsumerContext durableContext = NatsClient.getDurableConsumer(DURABLE, SUBJECT);
+            FetchConsumer fetchConsumer = durableContext.fetchMessages((MESSAGES_NO));
+
             Message msg;
-            while ((msg = fetchConsumer.nextMessage()) != null)
-            {
+            while ((msg = fetchConsumer.nextMessage()) != null) {
+                currentMessages.put(msg.metaData().streamSequence(), msg);
+            }
+
+            for (Message m : currentMessages.values()) {
                 byte[] msgData = msg.getData();
                 JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
                 IValue tlaValue = Utils.getValueFromJson(jsonMessage);
-                msg.ack();
-                messages.add(tlaValue);
+                cachedTlaValues.add(tlaValue);
             }
-            return new TupleValue(messages.toArray(new Value[0]));
-
-        } catch (Exception e) {
+                fetchedMsgOnce = true;
+                return new TupleValue(cachedTlaValues.toArray(new Value[0]));
+        }
+         catch (Exception e) {
             e.printStackTrace();
+            // reset partial state so that next call can try again cleanly
+            fetchedMsgOnce = false;
+            currentMessages.clear();
+            cachedTlaValues.clear();
             return new StringValue("ERROR");
         }
     }
+ 
+    // we need to set MaxAckPending to max or 50
+    // and ack_wait to max or more
+    @TLAPlusOperator(identifier = "NatsAckBatch", module = "NatsOps")
+    public static synchronized void ackBatch() throws Exception {
+        // idempotence
+        if (ackedOnce) {
+            return;
+        }
+
+        try {
+            if (currentMessages.isEmpty()) {
+                ackedOnce = true;
+                return;
+            }
+                for (Message msg : currentMessages.values()) {
+                    msg.ack();
+                }
+
+                System.out.println("We acked seq " + currentMessages.firstKey() + " to " + currentMessages.lastKey());
+                ackedOnce = true;
+            } catch (Exception e) {
+            e.printStackTrace();
+            // we do not set ackedOnce=true on failure
+            // so next call can try acks
+        }
+    }
+    
 }
