@@ -1,4 +1,4 @@
-zsazuuuupackage tlc2.overrides;
+package tlc2.overrides;
 
 import tlc2.NatsClient;
 import tlc2.Utils;
@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import javax.management.RuntimeErrorException;
+
 import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +41,7 @@ import io.nats.client.*;
     private static List<IValue> cachedTlaValues = new ArrayList<>();
 
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
-    public static synchronized IValue consume() throws Exception {
+    public static synchronized Value consume() throws Exception {
         if (fetchedMsgOnce) {
             return new TupleValue(cachedTlaValues.toArray(new Value[0]));
         }
@@ -52,7 +55,7 @@ import io.nats.client.*;
             }
 
             for (Message m : currentMessages.values()) {
-                byte[] msgData = msg.getData();
+                byte[] msgData = m.getData();
                 JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
                 IValue tlaValue = Utils.getValueFromJson(jsonMessage);
                 cachedTlaValues.add(tlaValue);
@@ -66,23 +69,24 @@ import io.nats.client.*;
             fetchedMsgOnce = false;
             currentMessages.clear();
             cachedTlaValues.clear();
-            return new StringValue("ERROR");
+            // return new StringValue("ERROR");
+            throw new RuntimeException("NatsConsume failed", e);
         }
     }
  
     // we need to set MaxAckPending to max or 50
     // and ack_wait to max or more
     @TLAPlusOperator(identifier = "NatsAckBatch", module = "NatsOps")
-    public static synchronized void ackBatch() throws Exception {
+    public static synchronized Value ackBatch() throws Exception {
         // idempotence
         if (ackedOnce) {
-            return;
+            return BoolValue.ValTrue;
         }
 
         try {
             if (currentMessages.isEmpty()) {
                 ackedOnce = true;
-                return;
+                return BoolValue.ValTrue;
             }
                 for (Message msg : currentMessages.values()) {
                     msg.ack();
@@ -90,10 +94,13 @@ import io.nats.client.*;
 
                 System.out.println("We acked seq " + currentMessages.firstKey() + " to " + currentMessages.lastKey());
                 ackedOnce = true;
+                return BoolValue.ValTrue;
             } catch (Exception e) {
             e.printStackTrace();
             // we do not set ackedOnce=true on failure
             // so next call can try acks
+            throw e;
+            // return BoolValue.ValFalse;
         }
     }
     
