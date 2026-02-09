@@ -8,8 +8,7 @@ import java.io.IOException;
  * Main entry point for running the TLC model checker with a given TLA+ spec and config file.
  * <p>
  * The class parses cmd arguments, validates the inputs, and repeatedly invokes TLC using the 
- * provided {@code tla2tools.jar}. It also initializes the NATS infra
- * used by the monitoring/auditing layer.
+ * provided {@code tla2tools.jar}. It also initializes the NATS infra used by the monitoring layer.
  * </p>
  *
  * <h2>Command-line arguments</h2>

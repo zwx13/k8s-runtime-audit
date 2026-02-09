@@ -76,20 +76,4 @@ public class NatsClient {
         }
     }
 
-    private static String env(String name, String def) {
-        String v = System.getenv(name);
-        return (v == null || v.isBlank()) ? def : v.trim();
-    }
-
-    private static int envInt(String name, int def) {
-        String v = System.getenv(name);
-        if (v == null || v.isBlank()) return def;
-        try {
-            return Integer.parseInt(v.trim());
-        }
-        catch (NumberFormatException e) {
-            throw new RuntimeException("Invalid int env " + name + "=" + v, e);
-        }
-    }
-
 }

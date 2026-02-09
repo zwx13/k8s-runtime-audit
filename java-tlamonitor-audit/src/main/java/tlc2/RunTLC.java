@@ -23,9 +23,13 @@ public class RunTLC {
 );
 
     pb.inheritIO();
+
+    // debug
+    System.out.println(String.join(" ", pb.command()));
+
     Process process = pb.start();
     int exitCode = process.waitFor();
-    
+
     System.out.println("TLC exited with code: " + exitCode);
     return exitCode;
     }

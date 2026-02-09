@@ -26,6 +26,11 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
 public class Utils {
+    /* 
+    ****************************
+    JSON TLA CONVERT PART
+    ****************************
+    */
     public static JsonNode parseAndGetJson(byte[] msgData) throws IOException, StreamReadException, DatabindException
     {
     // json parser, hold whole Json in root
@@ -144,5 +149,27 @@ public class Utils {
             obj.set(key, json);
         }
         return obj;
+    }
+
+    /* 
+    ****************************
+    GET ENV VARS PART
+    ****************************
+    */
+
+    public static String env(String name, String def) {
+        String v = System.getenv(name);
+        return (v == null || v.isBlank()) ? def : v.trim();
+    }
+
+    public static int envInt(String name, int def) {
+        String v = System.getenv(name);
+        if (v == null || v.isBlank()) return def;
+        try {
+            return Integer.parseInt(v.trim());
+        }
+        catch (NumberFormatException e) {
+            throw new RuntimeException("Invalid int env " + name + "=" + v, e);
+        }
     }
 }
