@@ -63,7 +63,6 @@ JAVA_PID=$!
         System.out.println("TLC tools path: " + tlaToolsPath);
 
         try {
-            NatsManager nm = new NatsManager();
             while (true)
             {
                 String overridesJar = "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar";

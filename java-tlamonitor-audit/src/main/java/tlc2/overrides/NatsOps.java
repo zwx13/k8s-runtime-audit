@@ -1,6 +1,6 @@
 package tlc2.overrides;
 
-import tlc2.NatsManager;
+import tlc2.NatsClient;
 import tlc2.Utils;
 import tlc2.value.IValue;
 import tlc2.value.impl.*;
@@ -26,7 +26,7 @@ import io.nats.client.*;
     public static synchronized IValue consume(StringValue SUBJECT, StringValue DURABLE, IntValue MESSAGES_NO) throws IOException, JetStreamApiException, InterruptedException, JetStreamStatusCheckedException{
         try {
             List<IValue> messages = new ArrayList<>();
-            ConsumerContext durableContext = NatsManager.getDurableConsumer(DURABLE.toUnquotedString(), SUBJECT.toUnquotedString());
+            ConsumerContext durableContext = NatsClient.getDurableConsumer(DURABLE.toUnquotedString(), SUBJECT.toUnquotedString());
             FetchConsumer fetchConsumer = durableContext.fetchMessages(MESSAGES_NO.val);
             Message msg;
             while ((msg = fetchConsumer.nextMessage()) != null)
