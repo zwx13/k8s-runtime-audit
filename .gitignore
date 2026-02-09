@@ -11,3 +11,7 @@ __pycache__/
 MT_specs/states/*
 mt_spec/states
 node_isolation_spec/states
+tla_specs/states
+*.tlc
+*.out
+tla_specs/NatsSmokeSpec/states

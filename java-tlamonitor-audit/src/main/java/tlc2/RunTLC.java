@@ -17,7 +17,6 @@ public class RunTLC {
     "-cp", tlaToolsPathAbs + ":" + overridesAbs,
     "-DTLA-Library=" + overridesAbs,
     "tlc2.TLC",
-    "-continue",
     "-config", cfgAbs,
     specAbs
 );
