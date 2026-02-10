@@ -2,10 +2,9 @@ import logging
 from datetime import timedelta
 from typing import Sequence
 
-from nats.js.errors import NotFoundError as JetStreamNotFoundError
-from nats.js.api import StreamConfig, AckPolicy, ConsumerConfig, DeliverPolicy
-
-
+from nats.js.errors import NotFoundError as JetStreamNotFoundError, BucketNotFoundError
+from nats.js.api import StreamConfig, DeliverPolicy, ConsumerConfig, AckPolicy, KeyValueConfig
+from nats.js.kv import KeyValue
 log = logging.getLogger(__name__)
 
 
@@ -99,3 +98,44 @@ async def ensure_consumer(
             info.config.ack_wait,
             info.config.max_deliver,
         )
+
+async def ensure_kv(
+        js,
+        *,
+        bucket_name: str,
+) -> None:
+    """
+    Ensure a kv exists. If new, create it. If existing, use it.
+    If error, raise it.
+    """
+    bucket_cfg = KeyValueConfig(
+        bucket = bucket_name,
+        storage = "file"
+    )
+
+    try:
+        kv: KeyValue = await js.key_value(bucket_name)
+        status: KeyValue.BucketStatus = await kv.status()
+        log.info("Using existing KV bucket=%s stream=%s storage=%s history=%s ttl=%s", 
+                  status.bucket,
+                  status.stream_info.config.name,
+                  status.stream_info.config.storage,
+                  status.history,
+                  status.ttl,
+        )
+    except BucketNotFoundError:
+        log.info("Bucket %s does not exist, we create it.")
+        try:
+            kv = await js.create_key_value(bucket_cfg)
+            status = await kv.status()
+            log.info("Created KV bucket=%s stream=%s storage=%s history=%s ttl=%s", 
+                    status.bucket,
+                    status.stream_info.config.name,
+                    status.stream_info.config.storage,
+                    status.history,
+                    status.ttl
+            )
+        except Exception:
+            log.exception("Failed to create or bind KV bucket=%s", bucket_name)
+            raise
+
