@@ -5,16 +5,11 @@ import tlc2.Utils;
 import tlc2.value.IValue;
 import tlc2.value.impl.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
-import javax.management.RuntimeErrorException;
-
-import java.util.HashMap;
+import java.time.Instant;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -42,6 +37,8 @@ import io.nats.client.*;
 
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
     public static synchronized Value consume() throws Exception {
+        long t0 = System.nanoTime();
+        System.err.println(">>>>>> NatsConsume start " + Instant.now());
         if (fetchedMsgOnce) {
             return new TupleValue(cachedTlaValues.toArray(new Value[0]));
         }
@@ -72,12 +69,18 @@ import io.nats.client.*;
             // return new StringValue("ERROR");
             throw new RuntimeException("NatsConsume failed", e);
         }
+        finally {
+            System.err.println(">>>>>> NatsConsume end " + Instant.now()
+                        + " elapsedMs=" + (System.nanoTime() - t0)/1_000_000);
+        }
     }
  
     // we need to set MaxAckPending to max or 50
     // and ack_wait to max or more
     @TLAPlusOperator(identifier = "NatsAckBatch", module = "NatsOps")
     public static synchronized Value ackBatch() throws Exception {
+        long t0 = System.nanoTime();
+        System.err.println(">>>>>> NatsAckBatch start " + Instant.now());
         // idempotence
         if (ackedOnce) {
             return BoolValue.ValTrue;
@@ -95,12 +98,19 @@ import io.nats.client.*;
                 System.out.println("We acked seq " + currentMessages.firstKey() + " to " + currentMessages.lastKey());
                 ackedOnce = true;
                 return BoolValue.ValTrue;
-            } catch (Exception e) {
+            } 
+        
+        catch (Exception e) {
             e.printStackTrace();
             // we do not set ackedOnce=true on failure
             // so next call can try acks
             throw e;
             // return BoolValue.ValFalse;
+        }
+        
+        finally {
+            System.err.println(">>>>>> NatsAckBatch end " + Instant.now()
+                        + " elapsedMs=" + (System.nanoTime() - t0)/1_000_000);
         }
     }
     
