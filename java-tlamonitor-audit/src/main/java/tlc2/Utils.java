@@ -3,11 +3,8 @@ package tlc2;
 import java.io.IOException;
 import java.util.Map;
 
-import org.eclipse.lsp4j.jsonrpc.messages.Tuple;
-
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import tlc2.value.IValue;
 import tlc2.value.impl.*;
@@ -18,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
