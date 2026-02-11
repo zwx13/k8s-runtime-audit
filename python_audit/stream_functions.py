@@ -5,6 +5,8 @@ from typing import Sequence
 from nats.js.errors import NotFoundError as JetStreamNotFoundError, BucketNotFoundError
 from nats.js.api import StreamConfig, DeliverPolicy, ConsumerConfig, AckPolicy, KeyValueConfig
 from nats.js.kv import KeyValue
+from nats.js.client import JetStreamContext
+
 log = logging.getLogger(__name__)
 
 
@@ -16,7 +18,7 @@ def normalize_subjects(subjects):
         return list(subjects)
 
 async def ensure_stream(
-    js,
+    js: JetStreamContext,
     *,
     stream_name: str,
     subjects: str | Sequence[str],
@@ -61,7 +63,7 @@ async def ensure_stream(
                                   stream_name, normalized_subjects, max_age)
 
 async def ensure_consumer(
-        js,
+        js: JetStreamContext,
         *,
         stream_name: str,
         durable_name: str,
@@ -100,7 +102,7 @@ async def ensure_consumer(
         )
 
 async def ensure_kv(
-        js,
+        js: JetStreamContext,
         *,
         bucket_name: str,
 ) -> None:
@@ -138,4 +140,3 @@ async def ensure_kv(
         except Exception:
             log.exception("Failed to create or bind KV bucket=%s", bucket_name)
             raise
-
