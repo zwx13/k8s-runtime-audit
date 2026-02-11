@@ -116,7 +116,7 @@ async def ensure_kv(
     try:
         kv: KeyValue = await js.key_value(bucket_name)
         status: KeyValue.BucketStatus = await kv.status()
-        log.info("Using existing KV bucket=%s stream=%s storage=%s history=%s ttl=%s", 
+        log.info("Using existing KV bucket=%s stream=%s storage=%s history=%s ttl=%s",
                   status.bucket,
                   status.stream_info.config.name,
                   status.stream_info.config.storage,
@@ -124,7 +124,7 @@ async def ensure_kv(
                   status.ttl,
         )
     except BucketNotFoundError:
-        log.info("Bucket %s does not exist, we create it.")
+        log.info("Bucket %s does not exist, we create it.", status.bucket)
         try:
             kv = await js.create_key_value(bucket_cfg)
             status = await kv.status()
