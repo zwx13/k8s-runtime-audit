@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.time.Instant;
+import java.time.Duration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -18,6 +19,8 @@ import io.nats.client.*;
 // 2do: update operator or create a new one, that operates on continuous logs
 // check to see how kafka onos peeps did it
 // go lower level? kafka peeps: https://github.com/onosproject/tlaplus-monitor/blob/master/src/main/java/tlc2/overrides/Traces.java
+
+// !!!! the consume operator takes as long as we configure ack_wait to be
 
 // TLA+ operator that fetches 50 messages from NATS JetStream,
 // converts them to an IValue (e.g., TupleValue, RecordValue),
@@ -43,8 +46,12 @@ import io.nats.client.*;
             return new TupleValue(cachedTlaValues.toArray(new Value[0]));
         }
         try {
+            FetchConsumeOptions opts = FetchConsumeOptions.builder()
+                .maxMessages(MESSAGES_NO)
+                .expiresIn(1000)
+                .build();
             ConsumerContext durableContext = NatsClient.getDurableConsumer(DURABLE, SUBJECT);
-            FetchConsumer fetchConsumer = durableContext.fetchMessages((MESSAGES_NO));
+            FetchConsumer fetchConsumer = durableContext.fetch(opts);
 
             Message msg;
             while ((msg = fetchConsumer.nextMessage()) != null) {
