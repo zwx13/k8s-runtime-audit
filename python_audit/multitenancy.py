@@ -68,13 +68,13 @@ def classify(ev: dict) -> str | None:
 
     if verb == "create" and resource == "rolebindings" and code in {200, 201}:
         return "rolebinding.created"
-    
+
     if verb in {"create", "get", "list", "delete"} and resource == "pods":
         imp = ev.get("impersonatedUser") or {}
         user = imp.get("username")
         if isinstance(user, str) and user != "kubernetes-admin":
             return "access.attempt"
-    
+
     return None
 
 

@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
 
     app.state.nc = nc
     app.state.js = js
-    
+
     log.info(
         "Connected to NATS JetStream server=%s stream=%s subject=%s max_age=%s",
         NATS_SERVER,
@@ -112,7 +112,7 @@ async def receive_audit_log(request: Request):
         data = await request.json()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid JSON body: {e}")
-    
+
     if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Expected a JSON object (dict)")
 
@@ -137,7 +137,8 @@ async def receive_audit_log(request: Request):
             log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
 
     # for debugging, if ever; we can send with curl a log to see the response
-    return {"status": "ok", "published": published, "received": len(items), "errors": len(items) - published}
+    return {"status": "ok", "published": published, 
+            "received": len(items), "errors": len(items) - published}
 
 # -----------------------------------------------------------------------------
 # Local dev entrypoint

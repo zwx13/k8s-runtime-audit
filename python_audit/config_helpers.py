@@ -17,7 +17,7 @@ def env_int(name: str, default: int) -> int:
         return int(v)
     except ValueError as e:
         raise RuntimeError(f"Invalid int for {name}={v!r}") from e
-    
+
 def env_float(name: str, default: float) -> float:
     v = os.environ.get(name)
     if v is None:
