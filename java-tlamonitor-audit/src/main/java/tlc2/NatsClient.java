@@ -46,7 +46,7 @@ public class NatsClient {
 
     public static StreamContext getStreamContext() { return streamContext; }
 
-    public static ConsumerContext getDurableConsumer(String durableName, String subject) throws IOException, JetStreamApiException {
+    public static ConsumerContext getDurableConsumer(String durableName, String subject) throws Exception {
         ConsumerConfiguration cfg = ConsumerConfiguration.builder()
             .durable(durableName)
             .filterSubject(subject)
@@ -55,7 +55,7 @@ public class NatsClient {
         return streamContext.createOrUpdateConsumer(cfg);
     }
 
-    public static ConsumerContext getEphemeralConsumer(String subject) throws IOException, JetStreamApiException {
+    public static ConsumerContext getEphemeralConsumer(String subject) throws Exception {
         ConsumerConfiguration cfg = ConsumerConfiguration.builder()
             .filterSubject(subject)
             .build();
@@ -73,6 +73,16 @@ public class NatsClient {
         finally {
             try { nc.close(); } catch (Exception ignored) {}
         }
+    }
+
+    public static KeyValue getKVManagement(String kvName) throws Exception{
+        KeyValueManagement kvm = nc.keyValueManagement();
+        KeyValueConfiguration kvc = KeyValueConfiguration.builder()
+            .name(kvName)
+            .build();
+        KeyValueStatus keyValueStatus = kvm.create(kvc);
+        KeyValue kv = nc.keyValue(kvName);
+        return kv;
     }
 
 }
