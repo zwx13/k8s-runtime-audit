@@ -106,6 +106,8 @@ public class Utils {
     }
 
     public static JsonNode getJsonFromValue(IValue value) throws IOException{
+        System.out.println("TLC value class = " + value.getClass().getName()
+        + " ; printed = " + value);
         if (value instanceof IntValue){
             return IntNode.valueOf(((IntValue) value).val);
         }
@@ -117,6 +119,9 @@ public class Utils {
         }
         if (value instanceof TupleValue){
             return getArrayNode((TupleValue) value);
+        }
+        if (value instanceof FcnRcdValue){
+            return getJsonFromFcn((FcnRcdValue) value);
         }
         if (value instanceof RecordValue){
             return getObjectNode((RecordValue) value);
@@ -141,11 +146,44 @@ public class Utils {
         for (int i = 0; i < value.names.length; i++){
             key = value.names[i].toString();
             json = (JsonNode) getJsonFromValue(value.values[i]);
-            // this has a return value but we ignore it
             obj.set(key, json);
         }
         return obj;
     }
+    
+    // 4 FcnRcdValue
+    public static ArrayNode getArrayNode(FcnRcdValue f) throws IOException{
+        List<JsonNode> elements = new ArrayList<>();
+        for(Value element : f.values){
+            elements.add(getJsonFromValue(element));
+        }
+        return new ArrayNode(new JsonNodeFactory(false), elements);
+    }
+
+    public static ObjectNode getObjectNode(FcnRcdValue f) throws IOException{
+        ObjectNode obj = JsonNodeFactory.instance.objectNode();
+        Value k;
+        JsonNode json;
+        for (int i = 0; i < f.domain.length; i++){
+            k = f.domain[i];
+            if (!(k instanceof StringValue)) {
+                throw new IOException("Cannot convert function to JSON object; non-string key:"
+                        + k.getClass().getName() + " printed=" + k);
+            }
+            String key = ((StringValue) k).val.toString();
+            json = (JsonNode) getJsonFromValue((IValue) f.values[i]);
+            obj.set(key, json);
+        }
+        return obj;
+    }
+
+    public static JsonNode getJsonFromFcn(FcnRcdValue f) throws IOException{
+        if (f.intv != null){
+            return getArrayNode(f);
+        }
+        return getObjectNode(f);
+    }
+
 
     /* 
     ****************************
