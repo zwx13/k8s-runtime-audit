@@ -33,7 +33,6 @@ CONSTANTS
     
 VARIABLES
     idx,
-    serialized,
     nsTenant,
     roleBindings,
     accessAttempts,
@@ -41,7 +40,7 @@ VARIABLES
     allocIn
     
 
-vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized, allocIn >>
+vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, allocIn >>
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
@@ -140,8 +139,7 @@ Init ==
     /\ PrintT("RN from Trace: " \o ToString(RoleNamesFromTrace))
     /\ PrintT("Tenants from Trace: " \o ToString(TenantsFromTrace))
     /\ PrintT(LogEvents)
-    /\ serialized = FALSE
-    /\ allocIn= JsonDeserialize(AllocFile)
+    /\ allocIn = NatsLoadCachedState
     \* /\ PrintT("allocIn is: " \o ToString(allocIn))
     /\  IF 
           \/ IsEmpty 
@@ -190,21 +188,21 @@ Next ==
        IF l["tlaType"] = "ns.created" THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
-         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, serialized, allocIn >>
+         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, allocIn >>
        ELSE IF l["tlaType"] = "role.created" THEN
          /\ roleRules' =
               [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, serialized, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, allocIn >>
        ELSE IF l["tlaType"] = "rolebinding.created" THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
          /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
-         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, serialized, allocIn >>
+         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, allocIn >>
        ELSE IF l["tlaType"] = "access.attempt" THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
-         /\ UNCHANGED << nsTenant, roleBindings, roleRules, serialized, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, roleRules, allocIn >>
        ELSE
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, serialized, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, allocIn >>
   /\ idx' = idx + 1
 
 \* we serialize and create a JSON object that contains arrays
@@ -219,10 +217,8 @@ allocOut ==
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
   /\ NatsAckBatch
-  /\ ~serialized
-  /\ serialized' = TRUE
   /\ PrintT("allocOut = " \o ToString(allocOut))
-  /\ JsonSerialize(AllocFile, allocOut)
+  /\ NatsPutCachedState(allocOut)
   /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
 
 NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
@@ -242,6 +238,7 @@ BaseInv ==  IF Model!Inv THEN
                 TRUE
             ELSE
                 /\ NatsAckBatch
+                /\ NatsPutCachedState(allocOut)
                 /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
                 /\ FALSE
 
