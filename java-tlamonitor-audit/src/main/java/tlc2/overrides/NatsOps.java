@@ -16,6 +16,7 @@ import javax.management.RuntimeErrorException;
 import java.time.Instant;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.nats.client.*;
 import io.nats.client.api.*;
@@ -41,6 +42,8 @@ import io.nats.client.api.*;
     private static boolean fetchedMsgOnce = false;
     private static boolean ackedOnce = false;
     private static boolean fetchedStateOnce = false;
+    private static boolean putStateOnce = false;
+    private static boolean publishedAlert = false;
 
     private static NavigableMap<Long, Message> currentMessages = new TreeMap<>();
     private static List<IValue> cachedTlaValues = new ArrayList<>();
@@ -158,5 +161,39 @@ import io.nats.client.api.*;
         return (Value) cachedTlaState;
         
     }
+
+    @TLAPlusOperator(identifier = "NatsPutCachedState", module = "NatsOps")
+    public static synchronized Value putCachedState(RecordValue allocOut) throws Exception {
+        JsonNode allocJson;
+        if (putStateOnce) {
+            return BoolValue.ValTrue;
+        }
+        
+        try {
+            allocJson = Utils.getJsonFromValue(allocOut);
+            kv = NatsClient.getKVManagement(KV_NAME);
+            kv.put("cachedState", new ObjectMapper().writeValueAsBytes(allocJson));
+            System.out.println("We saved the final state in KV");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to put KV pair cachedState in bucket " + KV_NAME, e);
+        }
+
+        putStateOnce = true;
+        
+        return BoolValue.ValTrue;
+        
+    }
+
+    // @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
+    // public static synchronized Value publishAlert() throws Exception {
+    //     if (publishedAlert) {
+    //         return;
+    //     }
+    //     try {
+            
+    //     }
+    // }
     
 }
