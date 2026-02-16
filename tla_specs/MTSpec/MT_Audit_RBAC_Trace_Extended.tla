@@ -45,40 +45,8 @@ vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, serialized, a
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
-\* LogEvents == NatsConsume("audit.multitenancy", "audit-multitenancy-durable")
 LogEvents == NatsConsume
-
-\* filter event types by fields
-IsNSCreationLog(l) ==
-    /\ l["verb"] = "create"
-    /\ l["objectRef"]["resource"] = "namespaces"
-    /\ l["responseStatus"]["code"] \in SuccessCodes
-
-IsRoleCreationLog(l) ==
-    /\ l["verb"] = "create"
-    /\ l["objectRef"]["resource"] = "roles"
-    /\ l["responseStatus"]["code"] \in SuccessCodes
-    
-IsRBCreationLog(l) ==
-    /\ l["verb"] = "create"
-    /\ l["objectRef"]["resource"] = "rolebindings"
-    /\ l["responseStatus"]["code"] \in SuccessCodes
-
-\* IsRBDeletionLog(l) ==
-\*   /\ ...
-    
-HasPath(l, k1, k2) == 
-  /\ k1 \in DOMAIN l 
-  /\ k2 \in DOMAIN l[k1]
-  
-IsAccessAttemptLog(l) ==
-  /\ l["verb"] \in {"create","get","list","delete"}
-  /\ l["objectRef"]["resource"] = "pods"
-  /\ l["responseStatus"]["code"] \in Codes
-  \* must refactor this check
-  \* probably handle it with outside filtering
-  /\ HasPath(l, "impersonatedUser", "username")
-  /\ l["impersonatedUser"]["username"] # "kubernetes-admin"
+\* LogEvents == ndJsonDeserialize(LogFile)
 
 \* Namespace related
 NSName(l) == l["objectRef"]["name"]
@@ -127,25 +95,25 @@ a particular access attempt, we would not know)
 *)
 GetAllNS(logs) ==
   { NSName(logs[i]) :
-      i \in { j \in 1..Len(logs) : IsNSCreationLog(logs[j]) } }
+      i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "ns.created" } }
 
 GetAllNSTenants(logs) ==
   { NSTenantLabel(logs[i]) : 
-      i \in { j \in 1..Len(logs) : IsNSCreationLog(logs[j]) } }
+      i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "ns.created" } }
 
 \* roles should be name mapped to the rules
 \* like {<< role-name, ns >> |-> <<verb, resource ]}
 GetAllRoleNames(logs) ==
   { RoleName(logs[i]) : 
-    i \in { j \in 1..Len(logs) : IsRoleCreationLog(logs[j]) } }
+    i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "role.created" } }
 
 GetAllRBUsers(logs) ==
     {RBSubjectUser(logs[i]) :
-     i \in { j \in 1..Len(logs) : IsRBCreationLog(logs[j]) } }      
+     i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "rolebinding.created" } }      
 
 GetAllAttemptUsers(logs) ==
   { EffUser(logs[i]) :
-    i \in { j \in 1..Len(logs) : IsAccessAttemptLog(logs[j]) } }
+    i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "access.attempt" } }
       
 GetAllUsers(logs) ==
     GetAllAttemptUsers(logs) \cup GetAllRBUsers(logs)
@@ -156,24 +124,40 @@ NamespacesFromTrace == GetAllNS(LogEvents)
 RoleNamesFromTrace == GetAllRoleNames(LogEvents)
 TenantsFromTrace == GetAllNSTenants(LogEvents)
 
+IsEmpty == DOMAIN allocIn = {}
+
+HasEmptyRecords == 
+    /\ DOMAIN allocIn # {}
+    /\ \A k \in DOMAIN allocIn : allocIn[k] = <<>>
+
 Init == 
     /\ idx = 1
-    \* /\ TLCSet(13, 0)
-    \* /\ TLCSet(9, 0)
+    /\ TLCSet(13, 0)
+    /\ TLCSet(9, 0)
+    /\ PrintT(LogEvents)
+    /\ PrintT("Users from Trace: " \o ToString(UsersFromTrace))
+    /\ PrintT("NS from Trace: " \o ToString(NamespacesFromTrace))
+    /\ PrintT("RN from Trace: " \o ToString(RoleNamesFromTrace))
+    /\ PrintT("Tenants from Trace: " \o ToString(TenantsFromTrace))
+    /\ PrintT(LogEvents)
     /\ serialized = FALSE
     /\ allocIn= JsonDeserialize(AllocFile)
-    /\  IF DOMAIN allocIn = {} THEN
-        /\ nsTenant = [ ns \in NamespacesFromTrace |-> NoTenant ]
-        /\ roleBindings = {}
-        /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
-        /\ accessAttempts = {}
-      ELSE
-        /\ nsTenant = SeqToFun(allocIn.nsTenant)
-        /\ roleBindings = SeqToSet(allocIn.roleBindings)
-        /\ roleRules = 
-            LET rr == SeqToFun(allocIn.roleRules)
-            IN [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
-        /\ accessAttempts = SeqToSet(allocIn.accessAttempts)
+    \* /\ PrintT("allocIn is: " \o ToString(allocIn))
+    /\  IF 
+          \/ IsEmpty 
+          \/ HasEmptyRecords
+        THEN    
+            /\ nsTenant = [ ns \in NamespacesFromTrace |-> NoTenant ]
+            /\ roleBindings = {}
+            /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
+            /\ accessAttempts = {}
+        ELSE
+            /\ nsTenant = SeqToFun(allocIn.nsTenant)
+            /\ roleBindings = SeqToSet(allocIn.roleBindings)
+            /\ roleRules = 
+                LET rr == SeqToFun(allocIn.roleRules)
+                IN [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
+            /\ accessAttempts = SeqToSet(allocIn.accessAttempts)
 
 \* TLC replays (at least when hitting Invariant violatins)
 \* this is why we cannot just put the print in Init, or use
@@ -190,7 +174,7 @@ PrintInitOnce ==
       /\ PrintT("idx=" \o ToString(idx))
       /\ PrintT("init DOMAIN = " \o ToString(DOMAIN allocIn)) 
       /\ PrintT("=============================================") 
-      /\ PrintT("init raw = " \o ToString(allocIn)) 
+    \*   /\ PrintT("init raw = " \o ToString(allocIn)) 
       /\ PrintT("=============================================") 
       /\ PrintT("nsTenant = " \o ToString(nsTenant))
       /\ PrintT("roleBindings = " \o ToString(roleBindings))
@@ -203,20 +187,20 @@ Next ==
   /\ idx <= Len(LogEvents)
   /\ PrintT("idx is: " \o ToString(idx))
   /\ LET l == LogEvents[idx] IN
-       IF IsNSCreationLog(l) THEN
+       IF l["tlaType"] = "ns.created" THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
          /\ UNCHANGED << roleBindings, accessAttempts, roleRules, serialized, allocIn >>
-       ELSE IF IsRoleCreationLog(l) THEN
+       ELSE IF l["tlaType"] = "role.created" THEN
          /\ roleRules' =
               [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
          /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, serialized, allocIn >>
-       ELSE IF IsRBCreationLog(l) THEN
+       ELSE IF l["tlaType"] = "rolebinding.created" THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
          /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
          /\ UNCHANGED << nsTenant, accessAttempts, roleRules, serialized, allocIn >>
-       ELSE IF IsAccessAttemptLog(l) THEN
+       ELSE IF l["tlaType"] = "access.attempt" THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
          /\ UNCHANGED << nsTenant, roleBindings, roleRules, serialized, allocIn >>
        ELSE
@@ -234,15 +218,16 @@ allocOut ==
 
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
+  /\ NatsAckBatch
   /\ ~serialized
   /\ serialized' = TRUE
   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ JsonSerialize(AllocFile, allocOut)
-  /\ NatsAckBatch
   /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
 
-NextPrintSerialize == Next \/ SerializeAtEnd
+NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
 
+\* this is the edge case when LogEvents is empty but allocIn is not
 Model == INSTANCE MT_Audit_RBAC_Base
          WITH Users <- UsersFromTrace,
               Tenants <- TenantsFromTrace,
@@ -251,12 +236,15 @@ Model == INSTANCE MT_Audit_RBAC_Base
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
+\* BaseInv == Model!Inv
+
 BaseInv ==  IF Model!Inv THEN
                 TRUE
             ELSE
-                /\ JsonSerialize(AlertFile, allocOut)
+                /\ NatsAckBatch
                 /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
                 /\ FALSE
+
 
 \* BaseInv == Model!Inv
 
