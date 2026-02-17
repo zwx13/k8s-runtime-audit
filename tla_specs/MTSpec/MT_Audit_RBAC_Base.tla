@@ -92,17 +92,28 @@ UserInRBExists ==
 
 \* if a RB refers to a role key, that role must be defined
 \* so far this forbids empty roles, which is fine (for now?)
-\* NoDanglingBindings ==
-\*   \A u \in Users, ns \in Namespaces, rn \in RoleNames :
-\*     (<<u, ns, rn>> \in roleBindings) =>
-\*       roleRules[<<ns, rn>>] # {}
+NoDanglingBindings ==
+  \A u \in Users, ns \in Namespaces, rn \in RoleNames :
+    (<<u, ns, rn>> \in roleBindings) =>
+      roleRules[<<ns, rn>>] # {}
+
+(**************4ALERTS****************)
+BindingsRespectMTSet ==
+    { << u, ns, rn >> \in roleBindings : SameTenant(u, ns) }
+
+CrossTenantSuccessSet ==
+    { <<u, ns, v, r, code>> \in accessAttempts : code \in SuccessCodes /\ SameTenant(u, ns) }
+
+NoDanglingBindingsSet ==
+    { <<u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] # {} }
+(**************4ALERTS****************)
 
 TypeOK ==
   /\ nsTenant \in [Namespaces -> (Tenants \cup {NoTenant})]
   \* we cannot model roleBindings as a function because
   \* for the same input we might get multiple outputs
   /\  roleBindings \in SUBSET (Users \X Namespaces \X RoleNames)
-  \* roles are namespaced and define a set of rules
+\*   \* roles are namespaced and define a set of rules
   /\ roleRules \in [Namespaces \X RoleNames -> SUBSET Permission]
   /\ accessAttempts \in SUBSET (Users \X Namespaces \X Verbs \X Resources \X Codes)
     
@@ -154,11 +165,11 @@ AttemptedAccess(u, ns, v, r, code) ==
   /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
 
 Inv == 
-\*   /\ UserInRBExists
+  /\ UserInRBExists
   /\ TypeOK
   /\ BindingsRespectMT
   /\ NoCrossTenantSuccess
-\*   /\ NoDanglingBindings
+  /\ NoDanglingBindings
 
 Next ==
   \E admin \in Admins, u \in Users, ns \in Namespaces, t \in Tenants,

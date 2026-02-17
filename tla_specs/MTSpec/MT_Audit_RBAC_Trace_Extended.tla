@@ -221,7 +221,6 @@ SerializeAtEnd ==
   /\ NatsPutCachedState(allocOut)
   /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
 
-NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
 
 \* this is the edge case when LogEvents is empty but allocIn is not
 Model == INSTANCE MT_Audit_RBAC_Base
@@ -229,6 +228,30 @@ Model == INSTANCE MT_Audit_RBAC_Base
               Tenants <- TenantsFromTrace,
               Namespaces <- NamespacesFromTrace,
               RoleNames <- RoleNamesFromTrace
+
+(*********4ALERTS***********)
+\* 2do: publish the actual set too
+AlertIfBindingsBad == 
+    LET bindingsBad == Model!BindingsRespectMTSet' \ Model!BindingsRespectMTSet IN
+        IF bindingsBad = {} THEN TRUE
+        ELSE PublishAlert(LogEvents[idx], allocOut')
+
+AlertIfCrossTenantBad ==
+    LET crossTenantBad == Model!CrossTenantSuccessSet' \ Model!CrossTenantSuccessSet IN
+        IF crossTenantBad = {} THEN TRUE
+        ELSE PublishAlert(LogEvents[idx], allocOut')
+
+AlertIfDanglingBindings ==
+    LET danglingBindings == Model!NoDanglingBindingsSet' \ Model!NoDanglingBindingsSet IN
+        IF danglingBindings = {} THEN TRUE
+        ELSE PublishAlert(LogEvents[idx], allocOut')
+(*********4ALERTS***********)
+
+
+AlertIfBadState == AlertIfBindingsBad \/ AlertIfCrossTenantBad \/ AlertIfDanglingBindings
+
+
+NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 

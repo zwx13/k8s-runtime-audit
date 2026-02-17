@@ -9,6 +9,7 @@ import util.UniqueString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.management.RuntimeErrorException;
@@ -38,6 +39,9 @@ import io.nats.client.api.*;
     private static int MESSAGES_NO = Utils.envInt("TLA_MESSAGES_NO", 50);
 
     private static String KV_NAME = Utils.env("TLA_KV_NAME", "audit-mt-tla-state");
+
+    private static String ALERTS_SUBJECT = Utils.env("ALERTS_SUBJECT", "audit.mt.alerts");
+    
 
     private static boolean fetchedMsgOnce = false;
     private static boolean ackedOnce = false;
@@ -186,14 +190,17 @@ import io.nats.client.api.*;
         
     }
 
-    // @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
-    // public static synchronized Value publishAlert() throws Exception {
-    //     if (publishedAlert) {
-    //         return;
-    //     }
-    //     try {
-            
-    //     }
-    // }
+    @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
+    public static synchronized Value publishAlert(RecordValue allocOut, IntValue idx) throws Exception {
+        JetStream js;
+        PublishAck pa;
+        if (publishedAlert) {
+            return BoolValue.ValTrue;
+        }
+        try {
+            js = NatsClient.getJetStream();
+            pa = js.publish(null)
+        }
+    }
     
 }
