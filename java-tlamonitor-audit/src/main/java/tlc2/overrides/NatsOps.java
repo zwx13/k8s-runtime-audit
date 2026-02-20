@@ -14,6 +14,7 @@ import java.util.TreeMap;
 
 import javax.management.RuntimeErrorException;
 
+import java.nio.ByteBuffer;
 import java.time.Instant;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -191,16 +192,32 @@ import io.nats.client.api.*;
     }
 
     @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
-    public static synchronized Value publishAlert(RecordValue allocOut, IntValue idx) throws Exception {
+    public static synchronized Value publishAlert(IntValue idx, RecordValue allocOut) throws Exception {
         JetStream js;
         PublishAck pa;
+        byte[]allocBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(allocOut));
+        byte idxByte = Integer.valueOf(idx.val).byteValue();
+        byte[] idxBytes = ByteBuffer.allocate(4).putInt(idxByte).array();
+
+        byte[] concat = new byte[allocBytes.length + idxBytes.length];
+        System.arraycopy(idxBytes, 0, concat, 0, idxBytes.length);
+        System.arraycopy(allocBytes, 0, concat, idxBytes.length, allocBytes.length);
+
         if (publishedAlert) {
             return BoolValue.ValTrue;
         }
         try {
             js = NatsClient.getJetStream();
-            pa = js.publish(null)
+            pa = js.publish(ALERTS_SUBJECT, concat);
+            System.out.println("Publish sequence: " + pa.getSeqno());
         }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to publish state " + Utils.getJsonFromValue(allocOut) + " in " + ALERTS_SUBJECT);
+        }
+
+        publishedAlert = true;
+        return BoolValue.ValTrue;
     }
     
 }
