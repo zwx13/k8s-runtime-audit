@@ -232,38 +232,51 @@ Model == INSTANCE MT_Audit_RBAC_Base
 (*********4ALERTS***********)
 \* 2do: publish the actual set too
 AlertIfBindingsBad == 
-    LET bindingsBad == Model!BindingsRespectMTSet' \ Model!BindingsRespectMTSet IN
-        IF bindingsBad = {} THEN TRUE
-        ELSE PublishAlert(LogEvents[idx], allocOut')
+    LET bindingsBad == roleBindings' \ roleBindings IN
+        IF bindingsBad = {} THEN
+            /\ PrintT("Binding is: " \o ToString(Model!BindingsRespectMTSet))
+            /\ PrintT("Binding' is: " \o ToString(Model!BindingsRespectMTSet))
+            /\ TRUE
+        ELSE 
+            /\ NatsPublishAlert(LogEvents[idx], allocOut')
+            /\ PrintT("LOOOOOOL")
 
 AlertIfCrossTenantBad ==
     LET crossTenantBad == Model!CrossTenantSuccessSet' \ Model!CrossTenantSuccessSet IN
-        IF crossTenantBad = {} THEN TRUE
-        ELSE PublishAlert(LogEvents[idx], allocOut')
+        IF crossTenantBad = {} THEN 
+            /\ PrintT("How?")
+            /\ TRUE
+        ELSE 
+            /\ NatsPublishAlert(LogEvents[idx], allocOut')
+            /\ PrintT("LOOOOOOL")
 
 AlertIfDanglingBindings ==
     LET danglingBindings == Model!NoDanglingBindingsSet' \ Model!NoDanglingBindingsSet IN
-        IF danglingBindings = {} THEN TRUE
-        ELSE PublishAlert(LogEvents[idx], allocOut')
+        IF danglingBindings = {} THEN
+            /\ PrintT("How?")
+            /\ TRUE
+        ELSE 
+            /\ NatsPublishAlert(LogEvents[idx], allocOut')
+            /\ PrintT("LOOOOOOL")
 (*********4ALERTS***********)
 
 
 AlertIfBadState == AlertIfBindingsBad \/ AlertIfCrossTenantBad \/ AlertIfDanglingBindings
 
 
-NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
+NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
-\* BaseInv == Model!Inv
+BaseInv == Model!Inv
 
-BaseInv ==  IF Model!Inv THEN
-                TRUE
-            ELSE
-                /\ NatsAckBatch
-                /\ NatsPutCachedState(allocOut)
-                /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
-                /\ FALSE
+\* BaseInv ==  IF Model!Inv THEN
+\*                 TRUE
+\*             ELSE
+\*                 /\ NatsAckBatch
+\*                 /\ NatsPutCachedState(allocOut)
+\*                 /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
+\*                 /\ FALSE
 
 
 \* BaseInv == Model!Inv

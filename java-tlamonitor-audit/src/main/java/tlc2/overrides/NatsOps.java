@@ -192,17 +192,16 @@ import io.nats.client.api.*;
     }
 
     @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
-    public static synchronized Value publishAlert(IntValue idx, RecordValue allocOut) throws Exception {
+    public static synchronized Value publishAlert(RecordValue log, RecordValue allocOut) throws Exception {
         JetStream js;
         PublishAck pa;
         byte[]allocBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(allocOut));
-        byte idxByte = Integer.valueOf(idx.val).byteValue();
-        byte[] idxBytes = ByteBuffer.allocate(4).putInt(idxByte).array();
+        byte[]logBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(log));
 
-        byte[] concat = new byte[allocBytes.length + idxBytes.length];
-        System.arraycopy(idxBytes, 0, concat, 0, idxBytes.length);
-        System.arraycopy(allocBytes, 0, concat, idxBytes.length, allocBytes.length);
-
+        byte[] concat = new byte[allocBytes.length + logBytes.length];
+        System.arraycopy(allocBytes, 0, concat, 0, allocBytes.length);
+        System.arraycopy(logBytes, 0, concat, allocBytes.length, logBytes.length);
+        
         if (publishedAlert) {
             return BoolValue.ValTrue;
         }

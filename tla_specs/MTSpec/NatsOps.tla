@@ -13,6 +13,12 @@ NatsConsume == TRUE
 
 NatsAckBatch == TRUE
 
+NatsLoadCachedState == TRUE
+
+NatsPutCachedState(allocOut) == TRUE
+
+NatsPublishAlert(log, allocOut) == TRUE
+
 =============================================================================
 \* Modification History
 \* Last modified Tue Sep 23 09:50:58 EEST 2025 by malina

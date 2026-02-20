@@ -106,8 +106,8 @@ public class Utils {
     }
 
     public static JsonNode getJsonFromValue(IValue value) throws IOException{
-        System.out.println("TLC value class = " + value.getClass().getName()
-        + " ; printed = " + value);
+        // System.out.println("TLC value class = " + value.getClass().getName()
+        // + " ; printed = " + value);
         if (value instanceof IntValue){
             return IntNode.valueOf(((IntValue) value).val);
         }
