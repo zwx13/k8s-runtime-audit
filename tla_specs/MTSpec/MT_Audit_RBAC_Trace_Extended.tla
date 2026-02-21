@@ -10,8 +10,7 @@ EXTENDS Utils, NatsOps
 \*   if we do observational trace (as we have now, just assignments; then we check Inv?)
 \* - fix Is*Log predicate safety; if they reference fields that are missing we will have issues:
 \*   The exception was a java.lang.RuntimeException: Attempted to access nonexistent field 'impersonatedUser' of record
-\* - get rid of allocIn variable
-\* - create alertOut, only send one alert per batch wtih every log
+\* - create alertedEvents, only send one alert per batch wtih every log
 
 \* - refinement on resouces (deletion, configuration)
 \* - refinement on roles (can have multiple rules)
@@ -38,10 +37,11 @@ VARIABLES
     nsTenant,
     roleBindings,
     accessAttempts,
-    roleRules
+    roleRules,
+    alertedEvents
     
 
-vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules >>
+vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, alertedEvents >>
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
@@ -153,14 +153,15 @@ HasEmptyRecords ==
 
 Init == 
     /\ idx = 1
+    /\ alertedEvents = {}
     /\ TLCSet(13, 0)
     /\ TLCSet(9, 0)
-    /\ PrintT(LogEvents)
+    /\ PrintT("Len of events is " \o ToString(Len(LogEvents)))
     /\ PrintT("Users: " \o ToString(AllUsers))
     /\ PrintT("NS: " \o ToString(AllNamespaces))
     /\ PrintT("RN: " \o ToString(AllRoleNames))
     /\ PrintT("Tenants: " \o ToString(AllTenants))
-    /\ PrintT(LogEvents)
+    \* /\ PrintT(LogEvents)
     \* /\ PrintT("allocIn is: " \o ToString(allocIn))
     /\  IF 
           \/ IsEmpty 
@@ -237,10 +238,16 @@ allocOut ==
 
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
+  /\ PrintT("Len of events is " \o ToString(Len(LogEvents)))
+  /\ PrintT("We are in serialize at end, idx: " \o ToString(idx))
   /\ NatsAckBatch
-  /\ PrintT("allocOut = " \o ToString(allocOut))
+\*   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ NatsPutCachedState(allocOut)
-  /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts >>
+  /\ IF alertedEvents # {} THEN 
+        NatsPublishAlert(SetToSeq(alertedEvents))
+     ELSE
+        TRUE
+  /\ UNCHANGED << vars >>
 
 
 \* this is the edge case when LogEvents is empty but allocIn is not
@@ -255,39 +262,35 @@ Model == INSTANCE MT_Audit_RBAC_Base
 AlertIfBindingsBad == 
     LET bindingsBad == Model!BadRoleBindings' \ Model!BadRoleBindings IN
         IF bindingsBad = {} THEN
-            /\ PrintT("Binding is: " \o ToString(Model!BadRoleBindings))
-            /\ PrintT("Binding' is: " \o ToString(Model!BadRoleBindings'))
+            /\ PrintT("Good Binding is: " \o ToString(Model!BadRoleBindings'))
             /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
+            /\ UNCHANGED << alertedEvents >>
             /\ TRUE
         ELSE 
-            /\ NatsPublishAlert(LogEvents[idx], allocOut')
-            /\ PrintT("Binding is: " \o ToString(Model!BadRoleBindings))
-            /\ PrintT("Binding' is: " \o ToString(Model!BadRoleBindings'))
-            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
-            
+            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("AlertedEvents is: " \o ToString(alertedEvents))
+            /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
+            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))            
 
 AlertIfCrossTenantBad ==
     LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
         IF crossTenantBad = {} THEN 
-            /\ PrintT("How?")
             /\ TRUE
         ELSE 
-            /\ NatsPublishAlert(LogEvents[idx], allocOut')
+            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("LOOOOOOL")
 
 AlertIfDanglingBindings ==
     LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
         IF danglingBindings = {} THEN
-            /\ PrintT("How?")
             /\ TRUE
         ELSE 
-            /\ NatsPublishAlert(LogEvents[idx], allocOut')
+            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("LOOOOOOL")
 (*********4ALERTS***********)
 
 
-AlertIfBadState == AlertIfBindingsBad
-
+AlertIfBadState == AlertIfBindingsBad /\ AlertIfCrossTenantBad /\ AlertIfDanglingBindings
 
 NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
 

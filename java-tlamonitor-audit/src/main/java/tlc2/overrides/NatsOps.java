@@ -14,6 +14,8 @@ import java.util.TreeMap;
 
 import javax.management.RuntimeErrorException;
 
+import org.eclipse.lsp4j.jsonrpc.messages.Tuple;
+
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
@@ -192,27 +194,22 @@ import io.nats.client.api.*;
     }
 
     @TLAPlusOperator(identifier = "NatsPublishAlert", module = "NatsOps")
-    public static synchronized Value publishAlert(RecordValue log, RecordValue allocOut) throws Exception {
+    public static synchronized Value publishAlert(Value alertSet) throws Exception {
         JetStream js;
         PublishAck pa;
-        byte[]allocBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(allocOut));
-        byte[]logBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(log));
-
-        byte[] concat = new byte[allocBytes.length + logBytes.length];
-        System.arraycopy(allocBytes, 0, concat, 0, allocBytes.length);
-        System.arraycopy(logBytes, 0, concat, allocBytes.length, logBytes.length);
+        byte[]alertBytes = new ObjectMapper().writeValueAsBytes(Utils.getJsonFromValue(alertSet));
         
         if (publishedAlert) {
             return BoolValue.ValTrue;
         }
         try {
             js = NatsClient.getJetStream();
-            pa = js.publish(ALERTS_SUBJECT, concat);
+            pa = js.publish(ALERTS_SUBJECT, alertBytes);
             System.out.println("Publish sequence: " + pa.getSeqno());
         }
         catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to publish state " + Utils.getJsonFromValue(allocOut) + " in " + ALERTS_SUBJECT);
+            throw new RuntimeException("Failed to publish state " + Utils.getJsonFromValue(alertSet) + " in " + ALERTS_SUBJECT);
         }
 
         publishedAlert = true;
