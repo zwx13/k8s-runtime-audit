@@ -38,11 +38,10 @@ VARIABLES
     nsTenant,
     roleBindings,
     accessAttempts,
-    roleRules,
-    allocIn
+    roleRules
     
 
-vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, allocIn >>
+vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules >>
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
@@ -146,11 +145,11 @@ AllNamespaces == NamespacesFromTrace \cup NamespacesFromAllocIn
 AllRoleNames == RoleNamesFromTrace \cup RoleNamesFromAllocIn
 AllTenants == TenantsFromTrace \cup TenantsFromAllocIn
 
-IsEmpty == DOMAIN allocIn = {} 
+IsEmpty == DOMAIN AllocIn = {} 
 
 HasEmptyRecords == 
-    /\ DOMAIN allocIn # {}
-    /\ \A k \in DOMAIN allocIn : allocIn[k] = <<>>
+    /\ DOMAIN AllocIn # {}
+    /\ \A k \in DOMAIN AllocIn : AllocIn[k] = <<>>
 
 Init == 
     /\ idx = 1
@@ -162,7 +161,6 @@ Init ==
     /\ PrintT("RN: " \o ToString(AllRoleNames))
     /\ PrintT("Tenants: " \o ToString(AllTenants))
     /\ PrintT(LogEvents)
-    /\ allocIn = AllocIn
     \* /\ PrintT("allocIn is: " \o ToString(allocIn))
     /\  IF 
           \/ IsEmpty 
@@ -173,12 +171,12 @@ Init ==
             /\ roleRules = [k \in (NamespacesFromTrace \X RoleNamesFromTrace) |-> {}]
             /\ accessAttempts = {}
         ELSE
-            /\ nsTenant = SeqToFun(allocIn.nsTenant)
-            /\ roleBindings = SeqToSet(allocIn.roleBindings)
+            /\ nsTenant = SeqToFun(AllocIn.nsTenant)
+            /\ roleBindings = SeqToSet(AllocIn.roleBindings)
             /\ roleRules = 
-                LET rr == SeqToFun(allocIn.roleRules)
+                LET rr == SeqToFun(AllocIn.roleRules)
                 IN [ key \in DOMAIN rr |-> SeqToSet(rr[key]) ]
-            /\ accessAttempts = SeqToSet(allocIn.accessAttempts)
+            /\ accessAttempts = SeqToSet(AllocIn.accessAttempts)
 
 \* TLC replays (at least when hitting Invariant violatins)
 \* this is why we cannot just put the print in Init, or use
@@ -193,7 +191,7 @@ PrintInitOnce ==
       ELSE
       /\ TLCSet(13, 42)
       /\ PrintT("idx=" \o ToString(idx))
-      /\ PrintT("init DOMAIN = " \o ToString(DOMAIN allocIn)) 
+      /\ PrintT("init DOMAIN = " \o ToString(DOMAIN AllocIn)) 
       /\ PrintT("=============================================") 
     \*   /\ PrintT("init raw = " \o ToString(allocIn)) 
       /\ PrintT("=============================================") 
@@ -211,21 +209,21 @@ Next ==
        IF l["tlaType"] = "ns.created" THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
-         /\ UNCHANGED << roleBindings, accessAttempts, roleRules, allocIn >>
+         /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
        ELSE IF l["tlaType"] = "role.created" THEN
          /\ roleRules' =
               [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
        ELSE IF l["tlaType"] = "rolebinding.created" THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
          /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
-         /\ UNCHANGED << nsTenant, accessAttempts, roleRules, allocIn >>
+         /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
        ELSE IF l["tlaType"] = "access.attempt" THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
-         /\ UNCHANGED << nsTenant, roleBindings, roleRules, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
        ELSE
-         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules, allocIn >>
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules >>
   /\ idx' = idx + 1
 
 \* we serialize and create a JSON object that contains arrays
@@ -242,7 +240,7 @@ SerializeAtEnd ==
   /\ NatsAckBatch
   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ NatsPutCachedState(allocOut)
-  /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts, allocIn >>
+  /\ UNCHANGED << idx, nsTenant, roleBindings, roleRules, accessAttempts >>
 
 
 \* this is the edge case when LogEvents is empty but allocIn is not
