@@ -10,6 +10,8 @@ EXTENDS Utils, NatsOps
 \*   if we do observational trace (as we have now, just assignments; then we check Inv?)
 \* - fix Is*Log predicate safety; if they reference fields that are missing we will have issues:
 \*   The exception was a java.lang.RuntimeException: Attempted to access nonexistent field 'impersonatedUser' of record
+\* - get rid of allocIn variable
+\* - create alertOut, only send one alert per batch wtih every log
 
 \* - refinement on resouces (deletion, configuration)
 \* - refinement on roles (can have multiple rules)
@@ -123,7 +125,28 @@ NamespacesFromTrace == GetAllNS(LogEvents)
 RoleNamesFromTrace == GetAllRoleNames(LogEvents)
 TenantsFromTrace == GetAllNSTenants(LogEvents)
 
-IsEmpty == DOMAIN allocIn = {}
+\* precomputing from loaded state
+AllocIn == NatsLoadCachedState
+
+UsersFromAllocIn ==
+    IF DOMAIN AllocIn = {} THEN {} ELSE
+      { rb[1] : rb \in SeqToSet(AllocIn.roleBindings) } \cup 
+        { aa[1] : aa \in SeqToSet(AllocIn.accessAttempts) }
+NamespacesFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
+      DOMAIN SeqToFun(AllocIn.nsTenant)
+RoleNamesFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
+      LET rr0 == SeqToFun(AllocIn.roleRules) IN
+        { key[2] : key \in DOMAIN rr0 }
+TenantsFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
+      { SeqToFun(AllocIn.nsTenant)[ns] : ns \in DOMAIN SeqToFun(AllocIn.nsTenant) }
+        
+\* create "full" compute of constants
+AllUsers == UsersFromTrace \cup UsersFromAllocIn
+AllNamespaces == NamespacesFromTrace \cup NamespacesFromAllocIn
+AllRoleNames == RoleNamesFromTrace \cup RoleNamesFromAllocIn
+AllTenants == TenantsFromTrace \cup TenantsFromAllocIn
+
+IsEmpty == DOMAIN allocIn = {} 
 
 HasEmptyRecords == 
     /\ DOMAIN allocIn # {}
@@ -134,12 +157,12 @@ Init ==
     /\ TLCSet(13, 0)
     /\ TLCSet(9, 0)
     /\ PrintT(LogEvents)
-    /\ PrintT("Users from Trace: " \o ToString(UsersFromTrace))
-    /\ PrintT("NS from Trace: " \o ToString(NamespacesFromTrace))
-    /\ PrintT("RN from Trace: " \o ToString(RoleNamesFromTrace))
-    /\ PrintT("Tenants from Trace: " \o ToString(TenantsFromTrace))
+    /\ PrintT("Users: " \o ToString(AllUsers))
+    /\ PrintT("NS: " \o ToString(AllNamespaces))
+    /\ PrintT("RN: " \o ToString(AllRoleNames))
+    /\ PrintT("Tenants: " \o ToString(AllTenants))
     /\ PrintT(LogEvents)
-    /\ allocIn = NatsLoadCachedState
+    /\ allocIn = AllocIn
     \* /\ PrintT("allocIn is: " \o ToString(allocIn))
     /\  IF 
           \/ IsEmpty 
@@ -232,17 +255,21 @@ Model == INSTANCE MT_Audit_RBAC_Base
 (*********4ALERTS***********)
 \* 2do: publish the actual set too
 AlertIfBindingsBad == 
-    LET bindingsBad == roleBindings' \ roleBindings IN
+    LET bindingsBad == Model!BadRoleBindings' \ Model!BadRoleBindings IN
         IF bindingsBad = {} THEN
-            /\ PrintT("Binding is: " \o ToString(Model!BindingsRespectMTSet))
-            /\ PrintT("Binding' is: " \o ToString(Model!BindingsRespectMTSet))
+            /\ PrintT("Binding is: " \o ToString(Model!BadRoleBindings))
+            /\ PrintT("Binding' is: " \o ToString(Model!BadRoleBindings'))
+            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
             /\ TRUE
         ELSE 
             /\ NatsPublishAlert(LogEvents[idx], allocOut')
-            /\ PrintT("LOOOOOOL")
+            /\ PrintT("Binding is: " \o ToString(Model!BadRoleBindings))
+            /\ PrintT("Binding' is: " \o ToString(Model!BadRoleBindings'))
+            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
+            
 
 AlertIfCrossTenantBad ==
-    LET crossTenantBad == Model!CrossTenantSuccessSet' \ Model!CrossTenantSuccessSet IN
+    LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
         IF crossTenantBad = {} THEN 
             /\ PrintT("How?")
             /\ TRUE
@@ -251,7 +278,7 @@ AlertIfCrossTenantBad ==
             /\ PrintT("LOOOOOOL")
 
 AlertIfDanglingBindings ==
-    LET danglingBindings == Model!NoDanglingBindingsSet' \ Model!NoDanglingBindingsSet IN
+    LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
         IF danglingBindings = {} THEN
             /\ PrintT("How?")
             /\ TRUE
@@ -261,14 +288,14 @@ AlertIfDanglingBindings ==
 (*********4ALERTS***********)
 
 
-AlertIfBadState == AlertIfBindingsBad \/ AlertIfCrossTenantBad \/ AlertIfDanglingBindings
+AlertIfBadState == AlertIfBindingsBad
 
 
 NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
-BaseInv == Model!Inv
+\* BaseInv == Model!Inv
 
 \* BaseInv ==  IF Model!Inv THEN
 \*                 TRUE

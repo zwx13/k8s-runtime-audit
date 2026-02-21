@@ -98,14 +98,14 @@ NoDanglingBindings ==
       roleRules[<<ns, rn>>] # {}
 
 (**************4ALERTS****************)
-BindingsRespectMTSet ==
-    { << u, ns, rn >> \in roleBindings : SameTenant(u, ns) }
+BadRoleBindings ==
+    { << u, ns, rn >> \in roleBindings : ~SameTenant(u, ns) }
 
-CrossTenantSuccessSet ==
-    { <<u, ns, v, r, code>> \in accessAttempts : code \in SuccessCodes /\ SameTenant(u, ns) }
+BadCrossTenantSuccessSet ==
+    { <<u, ns, v, r, code>> \in accessAttempts : code \in SuccessCodes /\ ~SameTenant(u, ns) }
 
-NoDanglingBindingsSet ==
-    { <<u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] # {} }
+BadDanglingBindingsSet ==
+    { <<u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] = {} }
 (**************4ALERTS****************)
 
 TypeOK ==
