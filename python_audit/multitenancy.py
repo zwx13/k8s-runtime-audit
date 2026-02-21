@@ -74,6 +74,15 @@ def classify(ev: dict) -> str | None:
         user = imp.get("username")
         if isinstance(user, str) and user != "kubernetes-admin":
             return "access.attempt"
+        
+    if verb == "delete" and resource == "namespaces" and code in {200, 201}:
+        return "ns.created"
+
+    if verb == "delete" and resource == "roles" and code in {200, 201}:
+        return "role.created"
+
+    if verb == "delete" and resource == "rolebindings" and code in {200, 201}:
+        return "rolebinding.deleted"
 
     return None
 
