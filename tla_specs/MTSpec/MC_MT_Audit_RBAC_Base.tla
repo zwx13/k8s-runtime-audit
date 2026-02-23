@@ -5,8 +5,9 @@ ConstUsers == {"tenant-a-user", "tenant-b-user", "kubernetes-admin"}
 ConstAdmins == {"kubernetes-admin"}
 ConstTenants == {"tenant-a", "tenant-b"}
 ConstNamespaces == {"tenant-a", "tenant-b"}
+ConstRBNames == {"tenant-a-binding", "tenant-b-binding"}
 ConstRoleNames == {"tenant-basic"}
-ConstVerbs == {"get", "create", "list"}
+ConstVerbs == {"get"}
 ConstResources == {"pods"}
 ConstNoTenant == "NO_TENANT"
 ConstCodes == {200, 201, 403}

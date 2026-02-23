@@ -28,12 +28,12 @@ EXTENDS Naturals, FiniteSets
 (* - instead of <<v, r>> use p then unpack if necessary                     *)
 (* - decide if we keep NoRole or {                                          *)
 (* - decide on NoDanglingBinding invariant, or def in GrantAccess           *)
-(* - add NetworkPolicy, resourceQuotas, TT, AntiAffinity?                                                   *)
+(* - add NetworkPolicy, resourceQuotas, TT, AntiAffinity?                  *)
 (***************************************************************************)
 
 
 \* constants are k8s resources and the UserTenantMap that we use as absolute truth
-CONSTANTS Users, Tenants, NoTenant, Namespaces, RoleNames,
+CONSTANTS Users, Tenants, NoTenant, Namespaces, RBNames, RoleNames,
  Admins, Verbs, Resources, UserTenantMap, Codes, SuccessCodes, FailCodes
 \* assume statements are for constants, 
 \* typeOK is for variables
@@ -62,7 +62,10 @@ SameTenant(u, ns) ==
 
 MatchRole(u, ns, v, r) ==
   \E rn \in RoleNames :
-      /\ << u, ns, rn >> \in roleBindings
+      /\ \E rb \in roleBindings :
+          /\ rb[2] = u
+          /\ rb[3] = ns
+          /\ rb[4] = rn
       /\ <<v, r>> \in roleRules[<<ns, rn>>]
 
 ShouldAllow(u, ns, v, r) ==
@@ -73,8 +76,8 @@ ShouldAllow(u, ns, v, r) ==
 \* we want role bindings to always abide by the absolute truth
 \* that we define as a constant
 BindingsRespectMT ==
-    \A u \in Users, ns \in Namespaces, rn \in RoleNames :
-      << u, ns, rn >> \in roleBindings => SameTenant(u, ns)
+    \A rbName \in RBNames, u \in Users, ns \in Namespaces, rn \in RoleNames :
+      <<rbName, u, ns, rn >> \in roleBindings => SameTenant(u, ns)
 
 \* Access results consistent with RBs
 \* Should allow:
@@ -88,31 +91,31 @@ NoCrossTenantSuccess ==
 
 \* debug
 UserInRBExists ==
-    \A <<u, ns, rn>> \in roleBindings : u \in Users
+    \A <<rbName, u, ns, rn>> \in roleBindings : u \in Users
 
 \* if a RB refers to a role key, that role must be defined
 \* so far this forbids empty roles, which is fine (for now?)
 NoDanglingBindings ==
-  \A u \in Users, ns \in Namespaces, rn \in RoleNames :
-    (<<u, ns, rn>> \in roleBindings) =>
+  \A rbName \in RBNames, u \in Users, ns \in Namespaces, rn \in RoleNames :
+    (<<rbName, u, ns, rn>> \in roleBindings) =>
       roleRules[<<ns, rn>>] # {}
 
 (**************4ALERTS****************)
 BadRoleBindings ==
-    { << u, ns, rn >> \in roleBindings : ~SameTenant(u, ns) }
+    { <<rbName, u, ns, rn >> \in roleBindings : ~SameTenant(u, ns) }
 
 BadCrossTenantSuccessSet ==
     { <<u, ns, v, r, code>> \in accessAttempts : code \in SuccessCodes /\ ~SameTenant(u, ns) }
 
 BadDanglingBindingsSet ==
-    { <<u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] = {} }
+    { <<rbName, u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] = {} }
 (**************4ALERTS****************)
 
 TypeOK ==
   /\ nsTenant \in [Namespaces -> (Tenants \cup {NoTenant})]
   \* we cannot model roleBindings as a function because
   \* for the same input we might get multiple outputs
-  /\  roleBindings \in SUBSET (Users \X Namespaces \X RoleNames)
+  /\  roleBindings \in SUBSET (RBNames \X Users \X Namespaces \X RoleNames)
 \*   \* roles are namespaced and define a set of rules
   /\ roleRules \in [Namespaces \X RoleNames -> SUBSET Permission]
   /\ accessAttempts \in SUBSET (Users \X Namespaces \X Verbs \X Resources \X Codes)
@@ -128,10 +131,19 @@ CreateNamespace(admin, ns, t) ==
     /\ nsTenant[ns] = NoTenant
     /\ nsTenant' = [nsTenant EXCEPT ![ns] = t]
     /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
+    
+DeleteNamespace(admin, ns, t) ==
+    /\ nsTenant[ns] # NoTenant
+    /\ nsTenant' = [nsTenant EXCEPT ![ns] = NoTenant]
+    /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
 
 CreateRole(admin, rn, ns, v, r) ==
     /\ nsTenant[ns] # NoTenant
     /\ roleRules' = [roleRules EXCEPT ![<<ns, rn>>] = @ \cup { <<v, r>> }]
+    /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
+
+DeleteRole(admin, rn, ns, v, r) ==
+    /\ roleRules' = [roleRules EXCEPT ![<<ns, rn>>] = @ \ { <<v, r>> }]
     /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
 
 \* admin grants/revokes access primarily by creating/deleting RoleBindings 
@@ -139,16 +151,16 @@ CreateRole(admin, rn, ns, v, r) ==
 \* roles/ClusterRoles define the permission sets and 
 \* are similar to templates
 
-GrantAccess(admin, u, ns, rn) ==
+GrantAccess(admin, rbName, u, ns, rn) ==
     /\ nsTenant[ns] # NoTenant
     /\ UserTenantMap[u] = nsTenant[ns]
     /\ roleRules[<<ns, rn>>] # {}     \* 2keep, delete?
-    /\ roleBindings' = roleBindings \cup {<<u, ns, rn>>}
+    /\ roleBindings' = roleBindings \cup {<<rbName, u, ns, rn>>}
     /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
 
-RevokeAccess(admin, u, ns, rn) ==
+RevokeAccess(admin, rbName, u, ns, rn) ==
     /\ nsTenant[ns] # NoTenant
-    /\ roleBindings' = roleBindings \ {<<u, ns, rn>>}
+    /\ roleBindings' = roleBindings \ {<<rbName, u, ns, rn>>}
     /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
 
 \* Any authenticated user may attempt access to any namespace.
@@ -171,13 +183,15 @@ Inv ==
   /\ NoCrossTenantSuccess
   /\ NoDanglingBindings
 
+LenConstraints == Cardinality(accessAttempts) <= 2
+
 Next ==
-  \E admin \in Admins, u \in Users, ns \in Namespaces, t \in Tenants,
+  \E admin \in Admins, rbName \in RBNames, u \in Users, ns \in Namespaces, t \in Tenants,
   v \in Verbs, r \in Resources, rn \in RoleNames, code \in Codes :
     \/ CreateNamespace(admin, ns, t)
     \/ CreateRole(admin, rn, ns, v, r)
-    \/ GrantAccess(admin, u, ns, rn)
-    \/ RevokeAccess(admin, u, ns, rn)
+    \/ GrantAccess(admin, rbName, u, ns, rn)
+    \/ RevokeAccess(admin, rbName, u, ns, rn)
     \/ AttemptedAccess(u, ns, v, r, code)
 
 Safety == Init /\ [][Next]_vars
