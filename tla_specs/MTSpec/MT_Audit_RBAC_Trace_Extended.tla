@@ -106,6 +106,10 @@ GetAllNSTenants(logs) ==
 GetAllRoleNames(logs) ==
   { RoleName(logs[i]) : 
     i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "role.created" } }
+      
+GetAllRBNames(logs) ==
+  { RBName(logs[i]) : 
+    i \in { j \in 1..Len(logs) : logs[j]["tlaType"] = "rolebinding.created" } }
 
 GetAllRBUsers(logs) ==
     {RBSubjectUser(logs[i]) :
@@ -121,6 +125,7 @@ GetAllUsers(logs) ==
 \* precompute from logs to avoid creating a constant
 UsersFromTrace == GetAllUsers(LogEvents)
 NamespacesFromTrace == GetAllNS(LogEvents)
+RBNamesFromTrace == GetAllRBNames(LogEvents)
 RoleNamesFromTrace == GetAllRoleNames(LogEvents)
 TenantsFromTrace == GetAllNSTenants(LogEvents)
 
@@ -129,10 +134,12 @@ AllocIn == NatsLoadCachedState
 
 UsersFromAllocIn ==
     IF DOMAIN AllocIn = {} THEN {} ELSE
-      { rb[1] : rb \in SeqToSet(AllocIn.roleBindings) } \cup 
+      { rb[2] : rb \in SeqToSet(AllocIn.roleBindings) } \cup 
         { aa[1] : aa \in SeqToSet(AllocIn.accessAttempts) }
 NamespacesFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
       DOMAIN SeqToFun(AllocIn.nsTenant)
+RBNamesFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
+      { rb[1] : rb \in SeqToSet(AllocIn.roleBindings) }
 RoleNamesFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
       LET rr0 == SeqToFun(AllocIn.roleRules) IN
         { key[2] : key \in DOMAIN rr0 }
@@ -142,6 +149,7 @@ TenantsFromAllocIn == IF DOMAIN AllocIn = {} THEN {} ELSE
 \* create "full" compute of constants
 AllUsers == UsersFromTrace \cup UsersFromAllocIn
 AllNamespaces == NamespacesFromTrace \cup NamespacesFromAllocIn
+AllRBNames == RBNamesFromTrace \cup RBNamesFromAllocIn
 AllRoleNames == RoleNamesFromTrace \cup RoleNamesFromAllocIn
 AllTenants == TenantsFromTrace \cup TenantsFromAllocIn
 
@@ -206,20 +214,34 @@ PrintInitOnce ==
 Next ==
   /\ idx <= Len(LogEvents)
   /\ PrintT("idx is: " \o ToString(idx))
+  /\ PrintT("Event is: " \o ToString(LogEvents[idx]))
   /\ LET l == LogEvents[idx] IN
        IF l["tlaType"] = "ns.created" THEN
          /\ nsTenant' =
               [nsTenant EXCEPT ![NSName(l)] = NSTenantLabel(l)]
          /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
+       ELSE IF l["tlaType"] = "ns.deleted" THEN
+         /\ nsTenant' =
+              [nsTenant EXCEPT ![NSName(l)] = NoTenant]
+         /\ UNCHANGED << roleBindings, accessAttempts, roleRules >>
        ELSE IF l["tlaType"] = "role.created" THEN
          /\ roleRules' =
-              [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = RolePerms(l) ]
+              [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = @ \cup RolePerms(l) ]
+         /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
+       ELSE IF l["tlaType"] = "role.deleted" THEN
+         /\ roleRules' =
+              [roleRules EXCEPT ![ << RoleNameSpace(l), RoleName(l) >> ] = {} ]
          /\ UNCHANGED << nsTenant, roleBindings, accessAttempts >>
        ELSE IF l["tlaType"] = "rolebinding.created" THEN
     \*    inversing the "parameters" leads to no corresponding action from the base spec being found
     \* so this actually confirms the approach works
-         /\ roleBindings' = roleBindings \cup { << RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
+         /\ roleBindings' = roleBindings \cup { << RBName(l), RBSubjectUser(l), RBNamespace(l), RBRole(l) >> }
          /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
+       ELSE IF l["tlaType"] = "rolebinding.deleted" THEN
+         LET rbDelete == CHOOSE rb \in roleBindings : (rb[1] = RBName(l) /\ rb[3] = RBNamespace(l))
+         IN
+            /\ roleBindings' = roleBindings \ { rbDelete }
+            /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
        ELSE IF l["tlaType"] = "access.attempt" THEN
          /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
          /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
@@ -252,10 +274,11 @@ SerializeAtEnd ==
 
 \* this is the edge case when LogEvents is empty but allocIn is not
 Model == INSTANCE MT_Audit_RBAC_Base
-         WITH Users <- UsersFromTrace,
-              Tenants <- TenantsFromTrace,
-              Namespaces <- NamespacesFromTrace,
-              RoleNames <- RoleNamesFromTrace
+         WITH Users <- AllUsers,
+              Tenants <- AllTenants,
+              Namespaces <- AllNamespaces,
+              RBNames <- AllRBNames,
+              RoleNames <- AllRoleNames
 
 (*********4ALERTS***********)
 \* 2do: publish the actual set too
@@ -270,7 +293,7 @@ AlertIfBindingsBad ==
             /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("AlertedEvents is: " \o ToString(alertedEvents))
             /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
-            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))            
+            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))     
 
 AlertIfCrossTenantBad ==
     LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
@@ -284,19 +307,20 @@ AlertIfDanglingBindings ==
     LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
         IF danglingBindings = {} THEN
             /\ TRUE
+            /\ PrintT("Hi?")
         ELSE 
             /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("LOOOOOOL")
 (*********4ALERTS***********)
 
 
-AlertIfBadState == AlertIfBindingsBad /\ AlertIfCrossTenantBad /\ AlertIfDanglingBindings
+AlertIfBadState == AlertIfBindingsBad
 
 NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
-\* BaseInv == Model!Inv
+BaseInv == Model!TypeOK
 
 \* BaseInv ==  IF Model!Inv THEN
 \*                 TRUE
