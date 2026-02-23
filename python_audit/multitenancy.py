@@ -76,10 +76,10 @@ def classify(ev: dict) -> str | None:
             return "access.attempt"
         
     if verb == "delete" and resource == "namespaces" and code in {200, 201}:
-        return "ns.created"
+        return "ns.deleted"
 
     if verb == "delete" and resource == "roles" and code in {200, 201}:
-        return "role.created"
+        return "role.deleted"
 
     if verb == "delete" and resource == "rolebindings" and code in {200, 201}:
         return "rolebinding.deleted"
