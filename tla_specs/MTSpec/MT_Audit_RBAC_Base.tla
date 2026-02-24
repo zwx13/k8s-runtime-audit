@@ -117,7 +117,7 @@ TypeOK ==
   \* for the same input we might get multiple outputs
   /\  roleBindings \in SUBSET (RBNames \X Users \X Namespaces \X RoleNames)
 \*   \* roles are namespaced and define a set of rules
-  /\ roleRules \in [Namespaces \X RoleNames -> SUBSET Permission]
+  /\ roleRules \in [Namespaces \X RoleNames -> SUBSET (Permission \cup {})]
   /\ accessAttempts \in SUBSET (Users \X Namespaces \X Verbs \X Resources \X Codes)
     
 Init == 

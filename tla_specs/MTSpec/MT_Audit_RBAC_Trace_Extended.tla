@@ -38,10 +38,12 @@ VARIABLES
     roleBindings,
     accessAttempts,
     roleRules,
-    alertedEvents
+    rbAlerts,
+    danglingRBAlerts,
+    crossTenantAlerts
     
 
-vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, alertedEvents >>
+vars == << idx, nsTenant, roleBindings, accessAttempts, roleRules, rbAlerts, danglingRBAlerts, crossTenantAlerts >>
 
 \* JSON objects will be deserialized to records,
 \* and arrays will be deserialized to tuples
@@ -161,7 +163,9 @@ HasEmptyRecords ==
 
 Init == 
     /\ idx = 1
-    /\ alertedEvents = {}
+    /\ rbAlerts = {}
+    /\ danglingRBAlerts = {}
+    /\ crossTenantAlerts = {}
     /\ TLCSet(13, 0)
     /\ TLCSet(9, 0)
     /\ PrintT("Len of events is " \o ToString(Len(LogEvents)))
@@ -249,6 +253,55 @@ Next ==
          /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules >>
   /\ idx' = idx + 1
 
+\* this is the edge case when LogEvents is empty but allocIn is not
+Model == INSTANCE MT_Audit_RBAC_Base
+         WITH Users <- AllUsers,
+              Tenants <- AllTenants,
+              Namespaces <- AllNamespaces,
+              RBNames <- AllRBNames,
+              RoleNames <- AllRoleNames
+
+(*********4ALERTS***********)
+\* 2do: publish the actual set too
+AlertIfBindingsBad == 
+    LET bindingsBad == Model!BadRoleBindings' \ Model!BadRoleBindings IN
+        IF bindingsBad = {} THEN
+            /\ PrintT("Good Binding is: " \o ToString(Model!BadRoleBindings'))
+            /\ TRUE
+            /\ UNCHANGED << rbAlerts >>
+        ELSE 
+            /\ rbAlerts' = rbAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("AlertedEvents is: " \o ToString(rbAlerts))
+            /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
+            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
+            /\ UNCHANGED << danglingRBAlerts, crossTenantAlerts >>
+
+AlertIfCrossTenantBad ==
+    LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
+        IF crossTenantBad = {} THEN 
+            /\ TRUE
+            /\ UNCHANGED << crossTenantAlerts >>
+        ELSE 
+            /\ crossTenantAlerts' = crossTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("Cross tenant bad!!!!")
+            /\ UNCHANGED << danglingRBAlerts, rbAlerts >>
+
+
+AlertIfDanglingBindings ==
+    LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
+        IF danglingBindings = {} THEN
+            /\ TRUE
+            /\ UNCHANGED << danglingRBAlerts >>
+        ELSE 
+            /\ danglingRBAlerts' = danglingRBAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("Dangling binding!!!")
+            /\ UNCHANGED << crossTenantAlerts, rbAlerts >>
+
+alertOut == rbAlerts \cup crossTenantAlerts \cup danglingRBAlerts
+(*********4ALERTS***********)
+
+AlertIfBadState == AlertIfBindingsBad /\ AlertIfCrossTenantBad /\ AlertIfDanglingBindings
+
 \* we serialize and create a JSON object that contains arrays
 allocOut ==
   [
@@ -265,56 +318,11 @@ SerializeAtEnd ==
   /\ NatsAckBatch
 \*   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ NatsPutCachedState(allocOut)
-  /\ IF alertedEvents # {} THEN 
-        NatsPublishAlert(SetToSeq(alertedEvents))
+  /\ IF alertOut # {} THEN 
+        NatsPublishAlert(SetToSeq(alertOut))
      ELSE
         TRUE
   /\ UNCHANGED << vars >>
-
-
-\* this is the edge case when LogEvents is empty but allocIn is not
-Model == INSTANCE MT_Audit_RBAC_Base
-         WITH Users <- AllUsers,
-              Tenants <- AllTenants,
-              Namespaces <- AllNamespaces,
-              RBNames <- AllRBNames,
-              RoleNames <- AllRoleNames
-
-(*********4ALERTS***********)
-\* 2do: publish the actual set too
-AlertIfBindingsBad == 
-    LET bindingsBad == Model!BadRoleBindings' \ Model!BadRoleBindings IN
-        IF bindingsBad = {} THEN
-            /\ PrintT("Good Binding is: " \o ToString(Model!BadRoleBindings'))
-            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
-            /\ UNCHANGED << alertedEvents >>
-            /\ TRUE
-        ELSE 
-            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-            /\ PrintT("AlertedEvents is: " \o ToString(alertedEvents))
-            /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
-            /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))     
-
-AlertIfCrossTenantBad ==
-    LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
-        IF crossTenantBad = {} THEN 
-            /\ TRUE
-        ELSE 
-            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-            /\ PrintT("LOOOOOOL")
-
-AlertIfDanglingBindings ==
-    LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
-        IF danglingBindings = {} THEN
-            /\ TRUE
-            /\ PrintT("Hi?")
-        ELSE 
-            /\ alertedEvents' = alertedEvents \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-            /\ PrintT("LOOOOOOL")
-(*********4ALERTS***********)
-
-
-AlertIfBadState == AlertIfBindingsBad
 
 NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
 
