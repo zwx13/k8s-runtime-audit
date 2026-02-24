@@ -10,10 +10,8 @@ import java.util.ArrayList;
 import io.nats.client.*;
 import tlc2.Utils;
 import tlc2.value.IValue;
-import tlc2.value.impl.TupleValue;
-import tlc2.value.impl.Value;
 
-// @Ignore("Disabled during packaging")
+@Ignore("Disabled during packaging")
 
 public class AppTest {
     private static final String subject = "audit.multitenancy";
@@ -26,11 +24,12 @@ public class AppTest {
             Message msg;
 
             while ((msg = fetchConsumer.nextMessage()) != null) {
+                System.out.println(msg.metaData().streamSequence()); 
                 byte[] msgData = msg.getData();
-                System.out.println("Msgdata size=" + msgData.length);
+                // System.out.println("Msgdata size=" + msgData.length);
                 JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
-                System.out.println("Json message: " + jsonMessage.toString());
-                System.out.println("Json type: " + jsonMessage.getNodeType());
+                // System.out.println("Json message: " + jsonMessage.toString());
+                // System.out.println("Json type: " + jsonMessage.getNodeType());
                 IValue tlaValue = Utils.getValueFromJson(jsonMessage);
                 System.out.println("TLA+ value: " + tlaValue.toString());
                 String tlaType = jsonMessage.path("tlaType").asText(null);
