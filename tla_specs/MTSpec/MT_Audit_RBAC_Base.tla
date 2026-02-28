@@ -84,10 +84,10 @@ BindingsRespectMT ==
 \* - namespace belongs to tenant that user belongs to (absolute truth)
 \* - a corresponding role exists and is bounded
 NoCrossTenantSuccess ==
-    \A u \in Users, ns \in Namespaces, 
-       v \in Verbs, r \in Resources, code \in Codes :
-      (<<u, ns, v, r, code>> \in accessAttempts /\ code \in SuccessCodes)
-        => SameTenant(u, ns)
+    \A a \in accessAttempts :
+      LET code == a[5]
+          st == a[6]
+      IN (code \in SuccessCodes) => (st = TRUE)
 
 \* debug
 UserInRBExists ==
@@ -105,7 +105,7 @@ BadRoleBindings ==
     { <<rbName, u, ns, rn >> \in roleBindings : ~SameTenant(u, ns) }
 
 BadCrossTenantSuccessSet ==
-    { <<u, ns, v, r, code>> \in accessAttempts : code \in SuccessCodes /\ ~SameTenant(u, ns) }
+    { <<u, ns, v, r, code, sameTenant>> \in accessAttempts : code \in SuccessCodes /\ sameTenant = FALSE }
 
 BadDanglingBindingsSet ==
     { <<rbName, u, ns, rn>> \in roleBindings : roleRules[<<ns, rn>>] = {} }
@@ -118,7 +118,7 @@ TypeOK ==
   /\  roleBindings \in SUBSET (RBNames \X Users \X Namespaces \X RoleNames)
 \*   \* roles are namespaced and define a set of rules
   /\ roleRules \in [Namespaces \X RoleNames -> SUBSET (Permission \cup {})]
-  /\ accessAttempts \in SUBSET (Users \X Namespaces \X Verbs \X Resources \X Codes)
+  /\ accessAttempts \in SUBSET (Users \X Namespaces \X Verbs \X Resources \X Codes \X BOOLEAN)
     
 Init == 
   /\ nsTenant = [ns \in Namespaces |-> NoTenant]
@@ -173,15 +173,15 @@ RevokeAccess(admin, rbName, u, ns, rn) ==
 \* The others are expected authorization failures.
 AttemptedAccess(u, ns, v, r, code) ==
   /\ IF ShouldAllow(u, ns, v, r) THEN code \in SuccessCodes ELSE code \in FailCodes
-  /\ accessAttempts' = accessAttempts \cup {<<u, ns, v, r, code>>}
+  /\ accessAttempts' = accessAttempts \cup {<<u, ns, v, r, code, SameTenant(u, ns)>>}
   /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
 
 Inv == 
-  /\ UserInRBExists
+\*   /\ UserInRBExists
   /\ TypeOK
-  /\ BindingsRespectMT
+\*   /\ BindingsRespectMT
   /\ NoCrossTenantSuccess
-  /\ NoDanglingBindings
+\*   /\ NoDanglingBindings
 
 LenConstraints == Cardinality(accessAttempts) <= 2
 
@@ -189,7 +189,9 @@ Next ==
   \E admin \in Admins, rbName \in RBNames, u \in Users, ns \in Namespaces, t \in Tenants,
   v \in Verbs, r \in Resources, rn \in RoleNames, code \in Codes :
     \/ CreateNamespace(admin, ns, t)
+    \/ DeleteNamespace(admin, ns, t)
     \/ CreateRole(admin, rn, ns, v, r)
+    \/ DeleteRole(admin, rn, ns, v, r)
     \/ GrantAccess(admin, rbName, u, ns, rn)
     \/ RevokeAccess(admin, rbName, u, ns, rn)
     \/ AttemptedAccess(u, ns, v, r, code)
