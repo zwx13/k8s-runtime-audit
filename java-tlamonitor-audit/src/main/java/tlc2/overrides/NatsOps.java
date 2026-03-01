@@ -62,7 +62,7 @@ import io.nats.client.api.*;
         try {
             FetchConsumeOptions opts = FetchConsumeOptions.builder()
                 .maxMessages(MESSAGES_NO)
-                .expiresIn(3000)
+                .expiresIn(4500)
                 .build();
             ConsumerContext durableContext = NatsClient.getDurableConsumer(DURABLE, SUBJECT);
             FetchConsumer fetchConsumer = durableContext.fetch(opts);

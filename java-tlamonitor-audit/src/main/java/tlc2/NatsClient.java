@@ -1,6 +1,5 @@
 package tlc2;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.nats.client.*;

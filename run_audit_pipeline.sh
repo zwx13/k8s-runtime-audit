@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # before exiting, kill every process in current process group
 cleanup() {
   echo
@@ -41,8 +43,6 @@ if ! curl -sfS --max-time 1 "$RECEIVER_URL" >/dev/null; then
     exit 1
 fi
 
-
-
 # wait so FastAPI server is up
 sleep 3
 
@@ -55,15 +55,39 @@ python3 python_audit/multitenancy.py | while read -r line; do
         break
     fi
 done &
-PARTITIONING_PID=$!
+PARTITIONING_PI1=$!
+
+# start the kv script
+echo "[+] Starting saving t o kv script..."
+python3 python_audit/mt_state_store.py | while read -r line; do
+    echo "$line"
+    if [[ "$line" == "READY" ]]; then
+        echo "[+] KV script is ready."
+        break
+    fi
+done &
+PARTITIONING_PID2=$!
+
+# start the alert script
+echo "[+] Starting partitioning nodes/namespaces script..."
+python3 python_audit/alerts.py | while read -r line; do
+    echo "$line"
+    if [[ "$line" == "READY" ]]; then
+        echo "[+] Alerts script is ready."
+        break
+    fi
+done &
+PARTITIONING_PID3=$!
 
 # start the Java NATS consumer in the background
 # mvn package should already be done so the jar is built
-# echo "[+] Starting Java NATS consumer..."
-java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:tla2tools.jar" tlc2.Main \
-    node_isolation_spec/node_isolation.tla \
-    node_isolation_spec/node_isolation.cfg \
-    tla2tools.jar &
+echo "[+] Starting Java NATS consumer..."
+java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:CommunityModules.jar:tla2tools.jar" tlc2.Main \
+    tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.tla \
+    tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.cfg \
+    CommunityModules.jar \
+    tla2tools.jar \
+&
 JAVA_PID=$!
 
 # keep supervisor script running while services run

@@ -15,6 +15,7 @@ import java.io.IOException;
  * <ol>
  *   <li>Absolute path to the TLA+ specification file ({@code .tla})</li>
  *   <li>Absolute path to the TLC configuration file ({@code .cfg})</li>
+ *   <li>Absolute path to {@code CommunityModules.jar}</li>
  *   <li>Absolute path to {@code tla2tools.jar}</li>
  * </ol>
  *
@@ -24,6 +25,7 @@ import java.io.IOException;
  *   tlc2.Main \
  *   /path/to/spec.tla \
  *   /path/to/spec.cfg \
+ *   /path/to/CommunityModules.jar \
  *   /path/to/tla2tools.jar
  * }</pre>
  *
@@ -35,37 +37,41 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, JetStreamApiException{
-        if (args.length != 3){
+        if (args.length != 4){
             System.out.println("Wrong no. of arguments");
             System.out.println("""
   usage:
   java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT-shaded.jar:/absolute/path/to/tla2tools.jar" tla.monitor.audit.Main \
-    /absolute/path/to/node_isolation.tla \
-    /absolute/path/to/node_isolation.cfg \
+    /absolute/path/to/*.tla \
+    /absolute/path/to/*.cfg \
+    /absolute/path/to/CommunityModules.jar \
     /absolute/path/to/tla2tools.jar &
 JAVA_PID=$!
     """);
             System.out.println("""
     where:
-        - first argument is the TLA+ spec file
-        - second argument is the TLA+ config file
-        - third argument is the path to tla2tools.jar (needed for TLC)
+        - 1st argument is the TLA+ spec file
+        - 2nd argument is the TLA+ config file
+        - 3rd argument is the path to CommunityModules.jar
+        - 4th argument is the path to tla2tools.jar (needed for TLC)
 """);
            System.exit(1);
         }
         String specFile = args[0];
         String cfgFile = args[1];
-        String tlaToolsPath = args[2];
+        String communityModules = args[2];
+        String tlaToolsPath = args[3];
 
         System.out.println("Spec file: " + specFile);
         System.out.println("Config file: " + cfgFile);
+        System.out.println("Community Modules path: " + communityModules);
         System.out.println("TLC tools path: " + tlaToolsPath);
 
         try {
             while (true)
             {
                 String overridesJar = "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar";
-                int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath, overridesJar);
+                int exitCode = RunTLC.runTLC(specFile, cfgFile, communityModules, tlaToolsPath, overridesJar);
                 Thread.sleep(1000);
             }
             
