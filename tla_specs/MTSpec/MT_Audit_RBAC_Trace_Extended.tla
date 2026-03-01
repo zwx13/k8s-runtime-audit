@@ -215,6 +215,14 @@ PrintInitOnce ==
       /\ PrintT("=============================================") 
       /\ UNCHANGED <<vars>>
 ---------------------------------------------------------------------------------------------
+\* this is the edge case when LogEvents is empty but allocIn is not
+Model == INSTANCE MT_Audit_RBAC_Base
+         WITH Users <- AllUsers,
+              Tenants <- AllTenants,
+              Namespaces <- AllNamespaces,
+              RBNames <- AllRBNames,
+              RoleNames <- AllRoleNames
+---------------------------------------------------------------------------------------------
 Next ==
   /\ idx <= Len(LogEvents)
   /\ PrintT("idx is: " \o ToString(idx))
@@ -247,19 +255,11 @@ Next ==
             /\ roleBindings' = roleBindings \ { rbDelete }
             /\ UNCHANGED << nsTenant, accessAttempts, roleRules >>
        ELSE IF l["tlaType"] = "access.attempt" THEN
-         /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l) >> }
+         /\ accessAttempts' = accessAttempts \cup {<< EffUser(l), TargetNS(l), Verb(l), Resource(l), Code(l), Model!SameTenant(EffUser(l), TargetNS(l)) >> }
          /\ UNCHANGED << nsTenant, roleBindings, roleRules >>
        ELSE
          /\ UNCHANGED << nsTenant, roleBindings, accessAttempts, roleRules >>
   /\ idx' = idx + 1
-
-\* this is the edge case when LogEvents is empty but allocIn is not
-Model == INSTANCE MT_Audit_RBAC_Base
-         WITH Users <- AllUsers,
-              Tenants <- AllTenants,
-              Namespaces <- AllNamespaces,
-              RBNames <- AllRBNames,
-              RoleNames <- AllRoleNames
 
 (*********4ALERTS***********)
 \* 2do: publish the actual set too

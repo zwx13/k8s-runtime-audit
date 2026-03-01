@@ -17,7 +17,7 @@ NatsLoadCachedState == TRUE
 
 NatsPutCachedState(allocOut) == TRUE
 
-NatsPublishAlert(log, allocOut) == TRUE
+NatsPublishAlert(alertSet) == TRUE
 
 =============================================================================
 \* Modification History
