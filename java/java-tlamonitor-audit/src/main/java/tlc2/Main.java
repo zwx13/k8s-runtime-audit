@@ -1,5 +1,7 @@
 package tlc2;
 
+import tlc2.Utils;
+
 import io.nats.client.*;
 
 import java.io.IOException;
@@ -70,8 +72,12 @@ JAVA_PID=$!
         try {
             while (true)
             {
-                // maybe get rid of this hardcoding
-                String overridesJar = "java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar";
+                String selfDetectPath = Main.class.getProtectionDomain()
+                                            .getCodeSource().getLocation().getPath();
+                selfDetectPath = java.net.URLDecoder.decode(selfDetectPath, "UTF-8");
+
+                String overridesJar = Utils.env("MONITOR_JAR_PATH", selfDetectPath);
+
                 int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath, communityModules, overridesJar);
                 Thread.sleep(1000);
             }
