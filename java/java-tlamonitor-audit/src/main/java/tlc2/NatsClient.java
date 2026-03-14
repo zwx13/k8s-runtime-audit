@@ -21,7 +21,7 @@ public class NatsClient {
     // fields of the class are accessed
     static {
         try {
-            NATS_URL = Utils.env("NATS_URL", "nats://127.0.0.1:4222");
+            NATS_URL = Utils.env("NATS_URL", "nats://nats:4222");
             STREAM = Utils.env("JS_STREAM", "AUDIT_MT");
 
             Options opts = new Options.Builder()
