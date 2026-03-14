@@ -126,7 +126,7 @@ async def ensure_kv(
                   status.ttl,
         )
     except BucketNotFoundError:
-        log.info("Bucket %s does not exist, we create it.", status.bucket)
+        log.info("Bucket %s does not exist, we create it.", bucket_name)
         try:
             kv = await js.create_key_value(bucket_cfg)
             status = await kv.status()
