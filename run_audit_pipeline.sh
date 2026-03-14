@@ -14,11 +14,11 @@ trap cleanup INT TERM
 
 # start venv
 echo "[+] Activating Python virtual environment..."
-source python_audit/.venv/bin/activate
+source python/python_audit/.venv/bin/activate
 
 # start the webhook receiver in the background
 echo "[+] Starting webhook receiver..."
-python3 python_audit/audit_webhook_receiver.py &
+python3 python/python_audit/audit_webhook_receiver.py &
 RECEIVER_PID=$!
 
 RECEIVER_URL="http://127.0.0.1:9770/healthz"
@@ -48,7 +48,7 @@ sleep 3
 
 # start the partitioning/filtering script
 echo "[+] Starting partitioning nodes/namespaces script..."
-python3 python_audit/multitenancy.py | while read -r line; do
+python3 python/python_audit/multitenancy.py | while read -r line; do
     echo "$line"
     if [[ "$line" == "READY" ]]; then
         echo "[+] Partitioning script is ready."
@@ -59,7 +59,7 @@ PARTITIONING_PI1=$!
 
 # start the kv script
 echo "[+] Starting saving t o kv script..."
-python3 python_audit/mt_state_store.py | while read -r line; do
+python3 python/python_audit/mt_state_store.py | while read -r line; do
     echo "$line"
     if [[ "$line" == "READY" ]]; then
         echo "[+] KV script is ready."
@@ -70,7 +70,7 @@ PARTITIONING_PID2=$!
 
 # start the alert script
 echo "[+] Starting partitioning nodes/namespaces script..."
-python3 python_audit/alerts.py | while read -r line; do
+python3 python/python_audit/alerts.py | while read -r line; do
     echo "$line"
     if [[ "$line" == "READY" ]]; then
         echo "[+] Alerts script is ready."
@@ -82,7 +82,7 @@ PARTITIONING_PID3=$!
 # start the Java NATS consumer in the background
 # mvn package should already be done so the jar is built
 echo "[+] Starting Java NATS consumer..."
-java -cp "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:CommunityModules.jar:tla2tools.jar" tlc2.Main \
+java -cp "java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:CommunityModules.jar:tla2tools.jar" tlc2.Main \
     tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.tla \
     tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.cfg \
     CommunityModules.jar \
