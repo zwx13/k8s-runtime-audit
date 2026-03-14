@@ -70,8 +70,8 @@ JAVA_PID=$!
         try {
             while (true)
             {
-                String overridesJar = "java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar";
-                int exitCode = RunTLC.runTLC(specFile, cfgFile, communityModules, tlaToolsPath, overridesJar);
+                String overridesJar = "java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar";
+                int exitCode = RunTLC.runTLC(specFile, cfgFile, tlaToolsPath, communityModules, overridesJar);
                 Thread.sleep(1000);
             }
             
