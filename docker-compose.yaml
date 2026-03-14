@@ -1,0 +1,109 @@
+services:
+  nats:
+    image: nats:alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "--store_dir", "/data", "-m", "8222"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://127.0.0.1:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - nats-data:/data
+  
+  audit-webhook-receiver:
+    image: audit-python:dev
+    ports:
+      - "9770:9770"
+    depends_on:
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9770/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./python/python_audit:/app/python_audit
+    
+  multitenancy:
+    image: audit-python:dev
+    depends_on:
+      nats:
+        condition: service_healthy
+      audit-webhook-receiver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./python/python_audit:/app/python_audit
+    command: ["python3", "python_audit/multitenancy.py"]
+
+  mt_state_store:
+    image: audit-python:dev
+    depends_on:
+      nats:
+        condition: service_healthy
+      audit-webhook-receiver:
+        condition: service_healthy
+      multitenancy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./python/python_audit:/app/python_audit
+    command: ["python3", "python_audit/mt_state_store.py"]
+
+  alerts:
+    image: audit-python:dev
+    depends_on:
+      nats:
+        condition: service_healthy
+      audit-webhook-receiver:
+        condition: service_healthy
+      multitenancy:
+        condition: service_healthy
+      mt_state_store:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./python/python_audit:/app/python_audit
+    command: ["python3", "python_audit/alerts.py"]
+
+  java-tla-monitor:
+    image: audit-java:dev
+    depends_on:
+      nats:
+        condition: service_healthy
+      audit-webhook-receiver:
+        condition: service_healthy
+      multitenancy:
+        condition: service_healthy
+      mt_state_store:
+        condition: service_healthy
+      alerts:
+        condition: service_healthy
+    volumes:
+      - ./java/java-tlamonitor-audit/target:/app/target
+    command: >
+      java -cp "/app/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:/app/CommunityModules.jar:/app/tla2tools.jar"
+      tlc2.Main
+      tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.tla
+      tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.cfg
+      CommunityModules.jar
+      tla2tools.jar
+
+volumes:
+  nats-data:
