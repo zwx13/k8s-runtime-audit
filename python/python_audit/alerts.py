@@ -6,6 +6,8 @@ Then, we can inspect them manually.
 """
 
 import asyncio
+import os
+from pathlib import Path
 import logging
 from typing import Final
 from datetime import timedelta
@@ -23,7 +25,7 @@ log = logging.getLogger(__name__)
 # Configuration
 # -----------------------------------------------------------------------------
 
-NATS_SERVER: Final[str] = env_str("NATS_URL","nats://localhost:4222")
+NATS_SERVER: Final[str] = env_str("NATS_URL","nats://nats:4222")
 ALERTS_STREAM: Final[str] = env_str("ALERTS_STREAM", "MT_ALERTS")
 ALERTS_SUBJ: Final[str] = env_str("ALERTS_SUBJ", "audit.mt.alerts")
 ALERTS_MAX_AGE: Final[timedelta] = env_duration_sec("ALERTS_RETENTION_SECONDS", 30 * 24 * 60 * 60)
@@ -49,7 +51,8 @@ async def main() -> None:
             max_age=ALERTS_MAX_AGE
         )
 
-        print("READY", flush=True)
+        print(f"{os.path.basename(__file__)} is READY", flush=True)
+        Path('/tmp/ready').touch()
 
         # run till cancelled
         await asyncio.Future()

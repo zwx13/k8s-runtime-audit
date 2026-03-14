@@ -6,6 +6,8 @@ NATS JetStream forwarder: AUDIT(audit.full) -> AUDIT_MT(audit.multitenancy)
 """
 
 import asyncio
+import os
+from pathlib import Path
 import json
 import logging
 from typing import Final
@@ -27,7 +29,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 # Source
-NATS_SERVER: Final[str] = env_str("NATS_URL","nats://localhost:4222")
+NATS_SERVER: Final[str] = env_str("NATS_URL","nats://nats:4222")
 RAW_STREAM: Final[str] = env_str("RAW_STREAM", "AUDIT")
 SOURCE_SUBJ: Final[str] = env_str("SOURCE_SUBJ", "audit.full")
 DURABLE: Final[str] = env_str("DURABLE", "audit-mt-filter")
@@ -140,7 +142,8 @@ async def main() -> None:
             MT_MAX_AGE,
         )
 
-        print("READY", flush=True)
+        print(f"{os.path.basename(__file__)} is READY", flush=True)
+        Path('/tmp/ready').touch()
 
         while True:
             try:
