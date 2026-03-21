@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Config
+clusters:
+  - name: python-audit-webhook
+    cluster:
+      server: http://<YOUR_WEBHOOK_CLUSTER_IP>:9770
+      insecure-skip-tls-verify: true
+contexts:
+  - context:
+      cluster: python-audit-webhook
+      user: webhook
+    name: webhook
+current-context: webhook
+users:
+  - name: webhook
+    user: {}
+

@@ -1,0 +1,75 @@
+apiVersion: audit.k8s.io/v1
+kind: Policy
+
+omitStages:
+  - "RequestReceived"
+
+rules:
+  # A) Drop non-resource endpoints (kube-probe)
+  - level: None
+    nonResourceURLs:
+      - "/readyz*"
+      - "/livez*"
+      - "/healthz*"
+      - "/version"
+      - "/metrics"
+    verbs: ["get"]
+
+  # B) Drop all watches
+  - level: None
+    verbs: ["watch"]
+
+  # C) Drop lease stuff (kubelet heartbeats) + node status polling
+  - level: None
+    resources:
+      - group: "coordination.k8s.io"
+        resources: ["leases"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  - level: None
+    resources:
+      - group: ""
+        resources: ["nodes", "nodes/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # D) Drop routine controller/scheduler GET/LIST/UPDATE noise (keep their creates/deletes if any)
+  - level: None
+    users:
+      - "system:kube-scheduler"
+      - "system:kube-controller-manager"
+      - "system:kube-proxy"
+      - "system:apiserver"
+      - "system:kubelet"
+      - "system:serviceaccount:kube-system:coredns"
+    verbs: ["get", "list", "update"]
+
+  # E) RBAC for user entry in RBs & for detailed role info
+  - level: Request
+    resources:
+      - group: "rbac.authorization.k8s.io"
+        resouces: ["rolebindings", "clusterrolebindings", "roles", "clusterroles"]
+    verbs: ["create", "update", "patch", "delete"]
+
+  # F) Secrets (high signal)
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["secrets"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+
+  # G) Pod subresources (exec/log/portforward/attach)
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["pods/exec", "pods/attach", "pods/portforward", "pods/log"]
+    verbs: ["create", "get"]
+
+  # H) We need "Request" to capture namespace labels
+  - level: Request
+    resources:
+      - group: ""
+        resources: ["namespaces"]
+    verbs: ["create", "update", "patch", "delete"]
+
+  # I) Default: keep Metadata for everything else (so we still see denials etc.)
+  - level: Metadata
