@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-webhook
+spec:
+  selector:
+    app: audit-webhook
+  ports:
+    - protocol: TCP
+      port: 9770
+      targetPort: 9770

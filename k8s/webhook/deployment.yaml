@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-webhook
+  labels:
+    app: audit-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-webhook
+  template:
+    metadata:
+      labels:
+        app: audit-webhook
+    spec:
+      containers:
+      - name: audit-webhook
+        image: zwx13/audit-python:dev
+        imagePullPolicy: Always
+        env:
+          - name: NATS_URL
+            value: "nats://nats:4222"
+          - name: JS_STREAM
+            value: "AUDIT"
+          - name: RAW_SUBJECT
+            value: "audit.full"
+          - name: AUDIT_DUPLICATE_WINDOW
+            value: "180"
+          - name: RETENTION_SECONDS
+            value: "86400"
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 9770
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: 9770
+          initialDelaySeconds: 10
+          periodSeconds: 20
+          timeoutSeconds: 2
+          failureThreshold: 3
+        ports:
+        - containerPort: 9770
