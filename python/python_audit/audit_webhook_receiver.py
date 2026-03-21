@@ -10,7 +10,7 @@ trace for downstream analysis (TLA+).
 This service:
 - Accepts Kubernetes audit webhook POSTs (single event or EventList),
 - Publishes each event to a JetStream subject (default: audit.full) in a configured stream,
-- Exposes /healthz for readiness checks.
+- Exposes /readyz for readiness checks and /livez for liveness ones.
 """
 
 import json
@@ -85,8 +85,8 @@ app = FastAPI(lifespan=lifespan)
 # Routes
 # -----------------------------------------------------------------------------
 
-@app.get("/healthz")
-async def healthz():
+@app.get("/readyz")
+async def readyz():
     """Readiness endpoint: returns ok if JetStream stream exists and is readable."""
     try:
         info = await app.state.js.stream_info(JS_STREAM)
@@ -98,6 +98,12 @@ async def healthz():
             }
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+@app.get("/livez")
+async def livez():
+    """Liveness endpoint: returns ok if app is alive."""
+    return {"status": "ok"}
+    
 
 
 @app.post("/")
