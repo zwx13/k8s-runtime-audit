@@ -37,6 +37,16 @@ ALERTS_DUPLICATE_WINDOW: Final[int] = env_int("ALERTS_DUPLICATE_WINDOW", 180)
 # Logic
 # -----------------------------------------------------------------------------
 
+async def keep_alive():
+    """Background task to continuously update liveness file."""
+    try:
+        while True:
+            Path('/tmp/livez').touch()
+            # give control back to main loop
+            await asyncio.sleep(10)
+    except asyncio.CancelledError:
+        pass
+
 async def main() -> None:
     nc = await nats.connect(servers=[NATS_SERVER])
     js = nc.jetstream()
@@ -54,6 +64,8 @@ async def main() -> None:
         print(f"{os.path.basename(__file__)} is READY", flush=True)
         Path('/tmp/readyz').touch()
 
+        liveness_task = asyncio.create_task(keep_alive())
+
         # run till cancelled
         await asyncio.Future()
 
@@ -62,9 +74,14 @@ async def main() -> None:
         log.info("Shutdown requested (cancelled).")
         raise
     finally:
+        log.info("Cleaning up liveness task")
+        if liveness_task:
+            liveness_task.cancel()
+
         try:
             await nc.drain()
         except Exception:
+            log.error("Drain failed ({e}), forcing close.")
             await nc.close()
         log.info("NATS connection closed.")
 
