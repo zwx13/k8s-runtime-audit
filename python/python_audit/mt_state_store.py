@@ -50,7 +50,7 @@ async def main() -> None:
         Path('/tmp/readyz').touch()
 
         # run till cancelled
-        await asyncio.Event().wait()
+        await asyncio.Future()
 
     # handle shutdown
     except asyncio.CancelledError:
