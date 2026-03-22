@@ -5,6 +5,7 @@ import tlc2.Utils;
 import io.nats.client.*;
 
 import java.io.IOException;
+import java.io.File;
 
 /**
  * Main entry point for running the TLC model checker with a given TLA+ spec and config file.
@@ -68,6 +69,29 @@ JAVA_PID=$!
         System.out.println("Config file: " + cfgFile);
         System.out.println("Community Modules path: " + communityModules);
         System.out.println("TLC tools path: " + tlaToolsPath);
+
+        File readyFile = new File("/tmp/readyz");
+        readyFile.createNewFile();
+
+        // start daemon thread that dies
+        // when main dies
+        Thread.startVirtualThread(() -> {
+            File liveFile = new File("/tmp/livez");
+            while (true) {
+                try {
+                    if (!liveFile.exists()) {
+                        liveFile.createNewFile();
+                    }
+                    liveFile.setLastModified(System.currentTimeMillis());
+
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         try {
             while (true)
