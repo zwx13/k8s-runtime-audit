@@ -27,12 +27,6 @@ spec:
             value: "MT_ALERTS"
           - name: ALERTS_SUBJ
             value: "audit.mt.alerts"
-          - name: DURABLE
-            value: "audit-alerts-filter"
-          - name: ALERTS_STREAM
-            value: "AUDIT_alerts"
-          - name: DEST_SUBJ
-            value: "audit.multitenancy"
           - name: ALERTS_DUPLICATE_WINDOW
             value: "180"
           - name: ALERTS_RETENTION_SECONDS
