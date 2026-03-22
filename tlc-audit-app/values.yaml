@@ -1,0 +1,25 @@
+# TLC audit app
+
+# webhook
+replicaCount: 1
+image:
+  repository: zwx13/
+  tag: dev
+
+# multitenancy
+
+# alerts
+
+# kv
+
+# java tlc runner
+
+# Nats dependency
+nats:
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        pvc:
+          enabled: true
+          size: 1Gi

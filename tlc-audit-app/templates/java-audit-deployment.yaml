@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-tlc-runner
+  labels:
+    app: audit-tlc-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-tlc-runner
+  template:
+    metadata:
+      labels:
+        app: audit-tlc-runner
+    spec:
+      containers:
+      - name: audit-tlc-runner
+        image: zwx13/audit-java:dev
+        imagePullPolicy: Always
+        env:
+          - name: NATS_URL
+            value: "nats://nats:4222"
+          - name: JS_STREAM
+            value: "AUDIT_MT"
+          - name: TLA_DURABLE
+            value: "audit-mt-tla-filter"
+          - name: TLA_SUBJECT
+            value: "audit.multitenancy"
+          - name: TLA_MESSAGES_NO
+            value: "50"
+          - name: TLA_KV_NAME
+            value: "audit-mt-tla-state"
+          - name: ALERTS_SUBJECT
+            value: "audit.mt.alerts"
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/readyz
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - '[ $(expr $(date +%s) - $(stat -c %Y /tmp/livez)) -lt 30 ]'
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
