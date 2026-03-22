@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-mt
+  labels:
+    app: audit-mt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-mt
+  template:
+    metadata:
+      labels:
+        app: audit-mt
+    spec:
+      containers:
+      - name: audit-mt
+        image: zwx13/audit-python:dev
+        imagePullPolicy: Always
+        command: ["python3"]
+        args: ["python_audit/multitenancy.py"]
+        env:
+          - name: NATS_URL
+            value: "nats://nats:4222"
+          - name: RAW_STREAM
+            value: "AUDIT"
+          - name: SOURCE_SUBJ
+            value: "audit.full"
+          - name: DURABLE
+            value: "audit-mt-filter"
+          - name: MT_STREAM
+            value: "AUDIT_MT"
+          - name: DEST_SUBJ
+            value: "audit.multitenancy"
+          - name: MT_DUPLICATE_WINDOW
+            value: "180"
+          - name: MT_RETENTION_SECONDS
+            value: "2592000"
+          - name: BATCH_SIZE
+            value: "50"
+          - name: FETCH_TIMEOUT_S
+            value: "1.0"
+          - name: IDLE_SLEEP_S
+            value: "0.2"
+          - name: ACK_WAIT_S
+            value: "30"
+          - name: MAX_DELIVER
+            value: "5"
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/readyz
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - python3
+            - -c
+            - "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 15 else 1)"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
