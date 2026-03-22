@@ -156,6 +156,8 @@ async def main() -> None:
                 log.exception("Fetch failed (connection/server issue?)")
                 await asyncio.sleep(1.0)
                 continue
+            finally:
+                Path('/tmp/livez').touch()
 
             for msg in msgs:
                 while True:
