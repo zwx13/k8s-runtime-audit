@@ -29,7 +29,7 @@ spec:
             value: "audit.mt.alerts"
           - name: DURABLE
             value: "audit-alerts-filter"
-          - name: alerts_STREAM
+          - name: ALERTS_STREAM
             value: "AUDIT_alerts"
           - name: DEST_SUBJ
             value: "audit.multitenancy"
