@@ -52,7 +52,7 @@ async def main() -> None:
         )
 
         print(f"{os.path.basename(__file__)} is READY", flush=True)
-        Path('/tmp/ready').touch()
+        Path('/tmp/readyz').touch()
 
         # run till cancelled
         await asyncio.Future()

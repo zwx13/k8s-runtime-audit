@@ -15,7 +15,7 @@ services:
       - nats-data:/data
   
   audit-webhook-receiver:
-    image: audit-python:dev
+    image: zwx13/audit-python:dev
     ports:
       - "9770:9770"
     depends_on:
@@ -30,14 +30,14 @@ services:
       - ./python/python_audit:/app/python_audit
     
   multitenancy:
-    image: audit-python:dev
+    image: zwx13/audit-python:dev
     depends_on:
       nats:
         condition: service_healthy
       audit-webhook-receiver:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      test: ["CMD", "test", "-f", "/tmp/readyz"]    
       interval: 10s
       timeout: 5s
       retries: 3
@@ -46,7 +46,7 @@ services:
     command: ["python3", "python_audit/multitenancy.py"]
 
   mt_state_store:
-    image: audit-python:dev
+    image: zwx13/audit-python:dev
     depends_on:
       nats:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
       multitenancy:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      test: ["CMD", "test", "-f", "/tmp/readyz"]    
       interval: 10s
       timeout: 5s
       retries: 3
@@ -64,7 +64,7 @@ services:
     command: ["python3", "python_audit/mt_state_store.py"]
 
   alerts:
-    image: audit-python:dev
+    image: zwx13/audit-python:dev
     depends_on:
       nats:
         condition: service_healthy
@@ -75,7 +75,7 @@ services:
       mt_state_store:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/ready"]    
+      test: ["CMD", "test", "-f", "/tmp/readyz"]    
       interval: 10s
       timeout: 5s
       retries: 3
@@ -84,7 +84,7 @@ services:
     command: ["python3", "python_audit/alerts.py"]
 
   java-tla-monitor:
-    image: audit-java:dev
+    image: zwx13/audit-java:dev
     depends_on:
       nats:
         condition: service_healthy
