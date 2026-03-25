@@ -16,6 +16,7 @@ image:
 
 # Nats dependency
 nats:
+  fullnameOverride: "nats"
   config:
     jetstream:
       enabled: true
