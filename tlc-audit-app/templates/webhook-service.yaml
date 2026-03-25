@@ -1,11 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: audit-webhook
+  name: {{ .Values.webhook.name }}
+  labels:
+    app: {{ .Values.webhook.name }}
 spec:
   selector:
-    app: audit-webhook
+    app: {{ .Values.webhook.name }}
   ports:
     - protocol: TCP
-      port: 9770
-      targetPort: 9770
+      port: {{ .Values.webhook.port }}
+      targetPort: {{ .Values.webhook.port }}

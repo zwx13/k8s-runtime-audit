@@ -1,49 +1,49 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: audit-webhook
+  name: {{ .Values.webhook.name }}
   labels:
-    app: audit-webhook
+    app: {{ .Values.webhook.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: audit-webhook
+      app: {{ .Values.webhook.name }}
   template:
     metadata:
       labels:
-        app: audit-webhook
+        app: {{ .Values.webhook.name }}
     spec:
       containers:
-      - name: audit-webhook
-        image: zwx13/audit-python:dev
-        imagePullPolicy: Always
+      - name: {{ .Values.webhook.name }}
+        image: {{ .Values.webhook.image.repository }}:{{ .Values.webhook.image.tag }}
+        imagePullPolicy: {{ .Values.webhook.image.imagePullPolicy }}
         env:
           - name: NATS_URL
-            value: "nats://nats:4222"
+            value: {{ .Values.webhook.auditSettings.natsUrl | quote }}
           - name: JS_STREAM
-            value: "AUDIT"
+            value: {{ .Values.webhook.auditSettings.jsStream | quote }}
           - name: RAW_SUBJECT
-            value: "audit.full"
+            value: {{ .Values.webhook.auditSettings.rawSubject | quote }}
           - name: AUDIT_DUPLICATE_WINDOW
-            value: "180"
+            value: {{ .Values.webhook.auditSettings.duplicateWindow | quote }}
           - name: RETENTION_SECONDS
-            value: "86400"
+            value: {{ .Values.webhook.auditSettings.retentionSeconds | quote }}
         readinessProbe:
           httpGet:
-            path: /readyz
-            port: 9770
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            path: {{ .Values.webhook.probes.readiness.path }}
+            port: {{ .Values.webhook.port }}
+          initialDelaySeconds: {{ .Values.webhook.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webhook.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.webhook.probes.timeoutSeconds }}
+          failureThreshold: {{ .Values.webhook.probes.readiness.failureThreshold }}
         livenessProbe:
           httpGet:
-            path: /livez
-            port: 9770
-          initialDelaySeconds: 10
-          periodSeconds: 20
-          timeoutSeconds: 2
-          failureThreshold: 3
+            path: {{ .Values.webhook.probes.liveness.path }}
+            port: {{ .Values.webhook.port }}
+          initialDelaySeconds: {{ .Values.webhook.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webhook.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.webhook.probes.timeoutSeconds }}
+          failureThreshold: {{ .Values.webhook.probes.liveness.failureThreshold }}
         ports:
-        - containerPort: 9770
+        - containerPort: {{ .Values.webhook.port }}

@@ -1,10 +1,32 @@
-# TLC audit app
+# --------------- TLC audit app -------------------
 
 # webhook
-replicaCount: 1
-image:
-  repository: zwx13/
-  tag: dev
+webhook:
+  name: audit-webhook
+  auditSettings:
+    natsUrl: "nats://nats:4222"
+    jsStream: "AUDIT"
+    rawSubject: "audit.full"
+    duplicateWindow: "180"
+    retentionSeconds: 86400
+  replicaCount: 1
+  image:
+    repository: zwx13/audit-python
+    tag: dev
+    imagePullPolicy: Always
+  port: 9770
+  probes:
+    readiness:
+      path: /readyz
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    liveness:
+      path: /livez
+      initialDelaySeconds: 10
+      periodSeconds: 20
+      failureThreshold: 3
+    timeoutSeconds: 2
 
 # multitenancy
 
@@ -14,7 +36,7 @@ image:
 
 # java tlc runner
 
-# Nats dependency
+# ---------------- Nats dependency ---------------------
 nats:
   fullnameOverride: "nats"
   config:
