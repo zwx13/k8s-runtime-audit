@@ -28,7 +28,3 @@ __pycache__/
 *.pyc
 # Java
 target/
-*.jar
-# Helm
-charts/*.tgz
-charts/
