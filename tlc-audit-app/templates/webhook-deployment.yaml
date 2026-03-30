@@ -16,11 +16,11 @@ spec:
     spec:
       containers:
       - name: {{ .Values.webhook.name }}
-        image: {{ .Values.webhook.image.repository }}:{{ .Values.webhook.image.tag }}
-        imagePullPolicy: {{ .Values.webhook.image.imagePullPolicy }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         env:
           - name: NATS_URL
-            value: {{ .Values.webhook.auditSettings.natsUrl | quote }}
+            value: {{ .Values.envVars.natsUrl | quote }}
           - name: JS_STREAM
             value: {{ .Values.webhook.auditSettings.jsStream | quote }}
           - name: RAW_SUBJECT
