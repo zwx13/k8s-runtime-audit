@@ -1,68 +1,63 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: audit-mt
+  name: {{ .Values.multitenancy.name }}
   labels:
-    app: audit-mt
+    app: {{ .Values.multitenancy.name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: audit-mt
+      app: {{ .Values.multitenancy.name }}
   template:
     metadata:
       labels:
-        app: audit-mt
+        app: {{ .Values.multitenancy.name }}
     spec:
       containers:
-      - name: audit-mt
-        image: zwx13/audit-python:dev
-        imagePullPolicy: Always
+      - name: {{ .Values.multitenancy.name }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/multitenancy.py"]
         env:
           - name: NATS_URL
-            value: "nats://nats:4222"
+            value: {{ .Values.envVars.natsUrl | quote }}
           - name: RAW_STREAM
-            value: "AUDIT"
+            value: {{ .Values.multitenancy.mtSettings.rawStream | quote }}
           - name: SOURCE_SUBJ
-            value: "audit.full"
+            value: {{ .Values.multitenancy.mtSettings.sourceSubj | quote }}
           - name: DURABLE
-            value: "audit-mt-filter"
+            value: {{ .Values.multitenancy.mtSettings.durable | quote }}
           - name: MT_STREAM
-            value: "AUDIT_MT"
+            value: {{ .Values.multitenancy.mtSettings.mtStream | quote }}
           - name: DEST_SUBJ
-            value: "audit.multitenancy"
+            value: {{ .Values.multitenancy.mtSettings.destSubj | quote }}
           - name: MT_DUPLICATE_WINDOW
-            value: "180"
+            value: {{ .Values.multitenancy.mtSettings.duplicateWindow | quote }}
           - name: MT_RETENTION_SECONDS
-            value: "2592000"
+            value: {{ .Values.multitenancy.mtSettings.retentionSeconds | quote }}
           - name: BATCH_SIZE
-            value: "50"
+            value: {{ .Values.multitenancy.mtSettings.batchSize | quote }}
           - name: FETCH_TIMEOUT_S
-            value: "1.0"
+            value: {{ .Values.multitenancy.mtSettings.fetchWindowS | quote }}
           - name: IDLE_SLEEP_S
-            value: "0.2"
+            value: {{ .Values.multitenancy.mtSettings.idleSleepS | quote }}
           - name: ACK_WAIT_S
-            value: "30"
+            value: {{ .Values.multitenancy.mtSettings.ackWaitS | quote }}
           - name: MAX_DELIVER
-            value: "5"
+            value: {{ .Values.multitenancy.mtSettings.maxDeliver | quote }}
         readinessProbe:
           exec:
-            command:
-            - cat
-            - /tmp/readyz
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.multitenancy.probes.readiness.command | toJson }}
+          initialDelaySeconds: {{ .Values.multitenancy.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.multitenancy.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.multitenancy.probes.readiness.timeoutSeconds }}
+          failureThreshold: {{ .Values.multitenancy.probes.readiness.failureThreshold }}
         livenessProbe:
           exec:
-            command:
-            - python3
-            - -c
-            - "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 15 else 1)"
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.multitenancy.probes.liveness.command | toJson }}
+          initialDelaySeconds: {{ .Values.multitenancy.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.multitenancy.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.multitenancy.probes.liveness.timeoutSeconds }}
+          failureThreshold: {{ .Values.multitenancy.probes.liveness.failureThreshold }}
