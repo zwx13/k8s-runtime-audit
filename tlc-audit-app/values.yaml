@@ -1,19 +1,22 @@
 # --------------- TLC audit app -------------------
 
+# general
+image:
+  repository: zwx13/audit-python
+  tag: dev
+  imagePullPolicy: Always
+envVars:
+  natsUrl: "nats://nats:4222"
+
 # webhook
 webhook:
   name: audit-webhook
   auditSettings:
-    natsUrl: "nats://nats:4222"
     jsStream: "AUDIT"
     rawSubject: "audit.full"
     duplicateWindow: "180"
-    retentionSeconds: 86400
+    retentionSeconds: "86400"
   replicaCount: 1
-  image:
-    repository: zwx13/audit-python
-    tag: dev
-    imagePullPolicy: Always
   port: 9770
   probes:
     readiness:
@@ -29,7 +32,34 @@ webhook:
     timeoutSeconds: 2
 
 # multitenancy
-
+multitenancy:
+  name: audit-mt
+  mtSettings:
+    rawStream: "AUDIT"
+    sourceSubj: "audit.full"
+    durable: "audit-mt-filter"
+    mtStream: "AUDIT_MT"
+    destSubj: "audit.multitenancy"
+    duplicateWindow: "180"
+    retentionSeconds: "2592000"
+    batchSize: "50"
+    fetchWindowS: "1.0"
+    idleSleepS: "0.2"
+    ackWaitS: "30"
+    maxDeliver: "5"
+  probes:
+    readiness:
+      command: ["cat", "/tmp/livez"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    liveness:
+      command: ["python3", "-c", "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 15 else 1)"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    timeoutSeconds: 2
+  
 # alerts
 
 # kv
