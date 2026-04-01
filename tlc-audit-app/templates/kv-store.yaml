@@ -1,50 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: audit-kv
+  name: {{ .Values.kv.name }}
   labels:
-    app: audit-kv
+    app: {{ .Values.kv.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.kv.replicaCount }}
   selector:
     matchLabels:
-      app: audit-kv
+      app: {{ .Values.kv.name }}
   template:
     metadata:
       labels:
-        app: audit-kv
+        app: {{ .Values.kv.name }}
     spec:
       containers:
-      - name: audit-kv
-        image: zwx13/audit-python:dev
-        imagePullPolicy: Always
+      - name: {{ .Values.kv.name }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/mt_state_store.py"]
         env:
           - name: NATS_URL
-            value: "nats://nats:4222"
+            value: {{ .Values.envVars.natsUrl | quote }}
           - name: STATE_KV
-            value: "MT_STATE_STORE"
+            value: {{ .Values.kv.kvSettings.stateKV | quote }}
           - name: STORE_SUBJ
-            value: "audit.mt.state.store"
+            value: {{ .Values.kv.kvSettings.storeSubj | quote }}
           - name: MT_RETENTION_SECONDS
-            value: "2592000"
+            value: {{ .Values.kv.kvSettings.retentionSeconds | quote }}
         readinessProbe:
           exec:
-            command:
-            - cat
-            - /tmp/readyz
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.kv.probes.readiness.command | toJson }}
+          initialDelaySeconds: {{ .Values.kv.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.kv.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.kv.probes.readiness.timeoutSeconds }}
+          failureThreshold: {{ .Values.kv.probes.readiness.failureThreshold }}
         livenessProbe:
           exec:
-            command:
-            - python3
-            - -c
-            - "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 30 else 1)"
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.kv.probes.liveness.command | toJson }}
+          initialDelaySeconds: {{ .Values.kv.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.kv.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.kv.probes.liveness.timeoutSeconds }}
+          failureThreshold: {{ .Values.kv.probes.liveness.failureThreshold }}

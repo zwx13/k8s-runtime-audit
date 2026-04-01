@@ -2,7 +2,7 @@
 
 # general
 image:
-  repository: zwx13/audit-python
+  pythonimage: zwx13/audit-python
   tag: dev
   imagePullPolicy: Always
 envVars:
@@ -69,6 +69,7 @@ alerts:
     alertsSubj: "audit.mt.alerts"
     duplicateWindow: "180"
     retentionSeconds: "2592000"
+  replicaCount: 1
   probes:
     readiness:
       command: ["cat", "/tmp/livez"]
@@ -82,8 +83,26 @@ alerts:
       failureThreshold: 3
     timeoutSeconds: 2
 
-
 # kv
+kv:
+  name: audit-kv
+  kvSettings:
+    stateKV: "MT_STATE_STORE"
+    storeSubj: "audit.mt.state.store"
+    retentionSeconds: "2592000"
+  replicaCount: 1
+  probes:
+    readiness:
+      command: ["cat", "/tmp/livez"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    liveness:
+      command: ["python3", "-c", "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 30 else 1)"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    timeoutSeconds: 2
 
 # java tlc runner
 
