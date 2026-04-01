@@ -47,6 +47,7 @@ multitenancy:
     idleSleepS: "0.2"
     ackWaitS: "30"
     maxDeliver: "5"
+  replicaCount: 1
   probes:
     readiness:
       command: ["cat", "/tmp/livez"]
@@ -61,6 +62,26 @@ multitenancy:
     timeoutSeconds: 2
   
 # alerts
+alerts:
+  name: audit-alerts
+  alertsSettings:
+    alertsStream: "MT_ALERTS"
+    alertsSubj: "audit.mt.alerts"
+    duplicateWindow: "180"
+    retentionSeconds: "2592000"
+  probes:
+    readiness:
+      command: ["cat", "/tmp/livez"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    liveness:
+      command: ["python3", "-c", "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 30 else 1)"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    timeoutSeconds: 2
+
 
 # kv
 

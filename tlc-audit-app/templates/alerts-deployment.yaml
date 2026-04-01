@@ -1,52 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: audit-alerts
+  name: {{ .Values.alerts.name }}
   labels:
-    app: audit-alerts
+    app: {{ .Values.alerts.name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: audit-alerts
+      app: {{ .Values.alerts.name }}
   template:
     metadata:
       labels:
-        app: audit-alerts
+        app: {{ .Values.alerts.name }}
     spec:
       containers:
-      - name: audit-alerts
-        image: zwx13/audit-python:dev
-        imagePullPolicy: Always
+      - name: {{ .Values.alerts.name }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/alerts.py"]
         env:
           - name: NATS_URL
-            value: "nats://nats:4222"
+            value: {{ .Values.envVars.natsUrl | quote }}
           - name: ALERTS_STREAM
-            value: "MT_ALERTS"
+            value: {{ .Values.alerts.alertsSettings.alertsStream | quote }}
           - name: ALERTS_SUBJ
-            value: "audit.mt.alerts"
+            value: {{ .Values.alerts.alertsSettings.alertsSubj | quote }}
           - name: ALERTS_DUPLICATE_WINDOW
-            value: "180"
+            value: {{ .Values.alerts.alertsSettings.duplicateWindow | quote }}
           - name: ALERTS_RETENTION_SECONDS
-            value: "2592000"
+            value: {{ .Values.alerts.alertsSettings.retentionSeconds | quote }}
         readinessProbe:
           exec:
-            command:
-            - cat
-            - /tmp/readyz
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.alerts.probes.readiness.command | toJson }}
+          initialDelaySeconds: {{ .Values.alerts.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.alerts.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.alerts.probes.readiness.timeoutSeconds }}
+          failureThreshold: {{ .Values.alerts.probes.readiness.failureThreshold }}
         livenessProbe:
           exec:
-            command:
-            - python3
-            - -c
-            - "import os, time; exit(0 if time.time() - os.path.getmtime('/tmp/livez') < 30 else 1)"
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.alerts.probes.liveness.command | toJson }}
+          initialDelaySeconds: {{ .Values.alerts.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.alerts.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.alerts.probes.liveness.timeoutSeconds }}
+          failureThreshold: {{ .Values.alerts.probes.liveness.failureThreshold }}
