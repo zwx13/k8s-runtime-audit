@@ -1,54 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: audit-tlc-runner
+  name: {{ .Values.javarunner.name }}
   labels:
-    app: audit-tlc-runner
+    app: {{ .Values.javarunner.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.javarunner.replicaCount }}
   selector:
     matchLabels:
-      app: audit-tlc-runner
+      app: {{ .Values.javarunner.name }}
   template:
     metadata:
       labels:
-        app: audit-tlc-runner
+        app: {{ .Values.javarunner.name }}
     spec:
       containers:
-      - name: audit-tlc-runner
-        image: zwx13/audit-java:dev
-        imagePullPolicy: Always
+      - name: {{ .Values.javarunner.name }}
+        image: {{ .Values.image.javaimage }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         env:
           - name: NATS_URL
-            value: "nats://nats:4222"
+            value: {{ .Values.envVars.natsUrl | quote }}
           - name: JS_STREAM
-            value: "AUDIT_MT"
+            value: {{ .Values.javarunner.javaRunnerSettings.jsStream | quote }}
           - name: TLA_DURABLE
-            value: "audit-mt-tla-filter"
+            value: {{ .Values.javarunner.javaRunnerSettings.tlaDurable | quote }}
           - name: TLA_SUBJECT
-            value: "audit.multitenancy"
+            value: {{ .Values.javarunner.javaRunnerSettings.tlaSubj | quote }}
           - name: TLA_MESSAGES_NO
-            value: "50"
+            value: {{ .Values.javarunner.javaRunnerSettings.tlaMessageNo | quote }}
           - name: TLA_KV_NAME
-            value: "audit-mt-tla-state"
+            value: {{ .Values.javarunner.javaRunnerSettings.tlaKVName | quote }}
           - name: ALERTS_SUBJECT
-            value: "audit.mt.alerts"
+            value: {{ .Values.javarunner.javaRunnerSettings.alertsSubj | quote }}
         readinessProbe:
           exec:
-            command:
-            - cat
-            - /tmp/readyz
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.javarunner.probes.readiness.command | toJson }}
+          initialDelaySeconds: {{ .Values.javarunner.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.javarunner.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.javarunner.probes.readiness.timeoutSeconds }}
+          failureThreshold: {{ .Values.javarunner.probes.readiness.failureThreshold }}
         livenessProbe:
           exec:
-            command:
-            - sh
-            - -c
-            - '[ $(expr $(date +%s) - $(stat -c %Y /tmp/livez)) -lt 30 ]'
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
+            command: {{ .Values.javarunner.probes.liveness.command | toJson }}
+          initialDelaySeconds: {{ .Values.javarunner.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.javarunner.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.javarunner.probes.liveness.timeoutSeconds }}
+          failureThreshold: {{ .Values.javarunner.probes.liveness.failureThreshold }}
+

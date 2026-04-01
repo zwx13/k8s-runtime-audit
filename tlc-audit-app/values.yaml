@@ -3,6 +3,7 @@
 # general
 image:
   pythonimage: zwx13/audit-python
+  javaimage: zwx13/audit-java 
   tag: dev
   imagePullPolicy: Always
 envVars:
@@ -105,6 +106,28 @@ kv:
     timeoutSeconds: 2
 
 # java tlc runner
+javarunner:
+  name: audit-tlc-runner
+  javaRunnerSettings:
+    jsStream: "AUDIT_MT"
+    tlaDurable: "audit-mt-tla-filter"
+    tlaSubj: "audit.multitenancy"
+    tlaMessageNo: "50"
+    tlaKVName: "audit-mt-tla-state"
+    alertsSubj: "audit.mt.alerts"
+  replicas: 1
+  probes:
+    readiness:
+      command: ["cat", "/tmp/livez"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    liveness:
+      command: ["sh", "-c", "[ $(expr $(date +%s) - $(stat -c %Y /tmp/livez)) -lt 30 ]"]
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    timeoutSeconds: 2
 
 # ---------------- Nats dependency ---------------------
 nats:
