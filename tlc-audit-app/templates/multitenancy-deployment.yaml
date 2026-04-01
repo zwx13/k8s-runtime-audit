@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.multitenancy.name }}
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/multitenancy.py"]

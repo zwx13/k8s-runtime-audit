@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.webhook.name }}
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         env:
           - name: NATS_URL
