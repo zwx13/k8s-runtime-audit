@@ -18,6 +18,7 @@ from nats.errors import TimeoutError as NatsTimeoutError
 from nats.js.api import DeliverPolicy
 
 from config_helpers import env_int, env_float, env_str, env_duration_sec
+from utils import keep_alive, monitor_readiness, connect_nats
 from stream_functions import ensure_stream, ensure_consumer
 
 
@@ -94,16 +95,18 @@ def classify(ev: dict) -> str | None:
 def encode_compact_json(obj) -> bytes:
     return json.dumps(obj, separators=(",", ":")).encode("utf-8")
 
-
 async def main() -> None:
-    Path('/tmp/livez').touch()
-    
-    nc = await nats.connect(servers=[NATS_SERVER])
+    liveness_task = asyncio.create_task(keep_alive())
+
+    nc = await connect_nats()
+
+    readiness_task = asyncio.create_task(monitor_readiness(nc))
+
     js = nc.jetstream()
+
     sub = None
 
     try:
-
         await ensure_stream(
             js,
             stream_name=MT_STREAM,
@@ -143,9 +146,6 @@ async def main() -> None:
             DURABLE,
             MT_MAX_AGE,
         )
-
-        print(f"{os.path.basename(__file__)} is READY", flush=True)
-        Path('/tmp/readyz').touch()
 
         while True:
             try:
@@ -204,6 +204,8 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+
+    Path('/tmp/livez').touch()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

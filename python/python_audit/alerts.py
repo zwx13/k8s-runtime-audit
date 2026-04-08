@@ -15,6 +15,7 @@ from datetime import timedelta
 import nats
 
 from config_helpers import env_str, env_duration_sec, env_int
+from utils import keep_alive, monitor_readiness, connect_nats
 from stream_functions import ensure_stream
 
 
@@ -36,23 +37,16 @@ ALERTS_DUPLICATE_WINDOW: Final[int] = env_int("ALERTS_DUPLICATE_WINDOW", 180)
 # -----------------------------------------------------------------------------
 # Logic
 # -----------------------------------------------------------------------------
-
-async def keep_alive():
-    """Background task to continuously update liveness file."""
-    try:
-        while True:
-            Path('/tmp/livez').touch()
-            # give control back to main loop
-            await asyncio.sleep(10)
-    except asyncio.CancelledError:
-        pass
-
 async def main() -> None:
-    nc = await nats.connect(servers=[NATS_SERVER])
+    liveness_task = asyncio.create_task(keep_alive())
+
+    nc = await connect_nats()
+
+    readiness_task = asyncio.create_task(monitor_readiness(nc))
+
     js = nc.jetstream()
 
     try:
-        liveness_task = asyncio.create_task(keep_alive())
 
         await ensure_stream(
             js,
@@ -61,9 +55,6 @@ async def main() -> None:
             duplicate_window= ALERTS_DUPLICATE_WINDOW,
             max_age=ALERTS_MAX_AGE
         )
-
-        print(f"{os.path.basename(__file__)} is READY", flush=True)
-        Path('/tmp/readyz').touch()
 
         # run till cancelled
         await asyncio.Future()
@@ -89,6 +80,8 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+    Path('/tmp/livez').touch()
+
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

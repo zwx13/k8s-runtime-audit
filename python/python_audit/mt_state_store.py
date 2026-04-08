@@ -15,6 +15,7 @@ from datetime import timedelta
 import nats
 
 from config_helpers import env_str, env_duration_sec
+from utils import keep_alive, monitor_readiness, connect_nats
 from stream_functions import ensure_kv
 
 
@@ -35,30 +36,20 @@ MT_MAX_AGE: Final[timedelta] = env_duration_sec("MT_RETENTION_SECONDS", 30 * 24 
 # Logic
 # -----------------------------------------------------------------------------
 
-async def keep_alive():
-    """Background task to continuously update liveness file."""
-    try:
-        while True:
-            Path('/tmp/livez').touch()
-            # give control back to main loop
-            await asyncio.sleep(10)
-    except asyncio.CancelledError:
-        pass
-
 async def main() -> None:
-    nc = await nats.connect(servers=[NATS_SERVER])
+    liveness_task = asyncio.create_task(keep_alive())
+
+    nc = await connect_nats()
+
+    readiness_task = asyncio.create_task(monitor_readiness(nc))
+
     js = nc.jetstream()
 
     try:
-        liveness_task = asyncio.create_task(keep_alive())
-
         await ensure_kv(
             js,
             bucket_name = MT_STATE_STORE_KV
         )
-
-        print(f"{os.path.basename(__file__)} is READY", flush=True)
-        Path('/tmp/readyz').touch()
 
         # run till cancelled
         await asyncio.Future()
@@ -68,7 +59,7 @@ async def main() -> None:
         log.info("Shutdown requested (cancelled).")
         raise
     finally:
-        log.info("Cleaning up liveness task")
+        log.info("Cleaning up liveness & readiness tasks")
         if liveness_task:
             liveness_task.cancel()
 
@@ -84,6 +75,8 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+
+    Path('/tmp/livez').touch()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
