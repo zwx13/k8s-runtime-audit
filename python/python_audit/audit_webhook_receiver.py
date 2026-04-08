@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Kubernetes Audit Webhook → NATS JetStream ingester.
+Kubernetes Audit Webhook -> NATS JetStream ingester.
 
 Kubernetes audit logs are produced by the kube-apiserver and provide a total order over
 API requests as processed by the apiserver. We treat this ordered stream as the input
@@ -95,14 +95,17 @@ async def readyz():
                 "stream": JS_STREAM, 
                 "subjects": list(info.config.subjects),
                 "max_age": info.config.max_age
-            }
+            }, 200
     except Exception as e:
-        return {"status": "error", "detail": str(e)}
+        return {"status": "error", "detail": str(e)}, 503
 
 @app.get("/livez")
 async def livez():
     """Liveness endpoint: returns ok if app is alive."""
-    return {"status": "ok"}
+    try:
+        return {"status": "ok"}, 200
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}, 503
     
 
 
