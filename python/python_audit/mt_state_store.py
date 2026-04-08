@@ -50,6 +50,7 @@ async def main() -> None:
     js = nc.jetstream()
 
     try:
+        liveness_task = asyncio.create_task(keep_alive())
 
         await ensure_kv(
             js,
@@ -58,8 +59,6 @@ async def main() -> None:
 
         print(f"{os.path.basename(__file__)} is READY", flush=True)
         Path('/tmp/readyz').touch()
-
-        liveness_task = asyncio.create_task(keep_alive())
 
         # run till cancelled
         await asyncio.Future()

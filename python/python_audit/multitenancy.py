@@ -96,6 +96,8 @@ def encode_compact_json(obj) -> bytes:
 
 
 async def main() -> None:
+    Path('/tmp/livez').touch()
+    
     nc = await nats.connect(servers=[NATS_SERVER])
     js = nc.jetstream()
     sub = None
@@ -156,8 +158,6 @@ async def main() -> None:
                 log.exception("Fetch failed (connection/server issue?)")
                 await asyncio.sleep(1.0)
                 continue
-            finally:
-                Path('/tmp/livez').touch()
 
             for msg in msgs:
                 while True:

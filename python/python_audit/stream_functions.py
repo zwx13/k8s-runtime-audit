@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Sequence
 
 from nats.js.errors import NotFoundError as JetStreamNotFoundError, BucketNotFoundError
+from nats.errors import Error as NatsError
 from nats.js.api import StreamConfig, DeliverPolicy, ConsumerConfig, AckPolicy, KeyValueConfig
 from nats.js.kv import KeyValue
 from nats.js.client import JetStreamContext
@@ -61,6 +62,10 @@ async def ensure_stream(
         await js.add_stream(desired_cfg)
         log.info("Created stream %r with subjects=%s max_age=%s",
                                   stream_name, normalized_subjects, max_age)
+
+    except NatsError as e:
+        log.exception("NATS is unreachable: %s", e)
+        raise
 
 async def ensure_consumer(
         js: JetStreamContext,
@@ -140,3 +145,7 @@ async def ensure_kv(
         except Exception:
             log.exception("Failed to create or bind KV bucket=%s", bucket_name)
             raise
+
+    except NatsError as e:
+        log.exception("NATS is unreachable: %s", e)
+        raise
