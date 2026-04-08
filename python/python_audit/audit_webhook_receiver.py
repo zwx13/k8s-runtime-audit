@@ -15,6 +15,7 @@ This service:
 
 import json
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Final
@@ -46,38 +47,49 @@ WANTED_SUBJECTS: Final[list[str]] = [
 # -----------------------------------------------------------------------------
 # App lifecycle (connect/disconnect NATS)
 # -----------------------------------------------------------------------------
+async def nats_connect(app: FastAPI):
+    while True:
+        try:
+            log.info("Trying to connect to NATS!")
+            nc = await nats.connect(servers=[NATS_SERVER], connect_timeout=2)
+            js = nc.jetstream()
+
+            await ensure_stream(
+                js,
+                stream_name=JS_STREAM,
+                subjects=WANTED_SUBJECTS,
+                duplicate_window=DUPLICATE_WINDOW,
+                max_age=MAX_AGE
+            )
+
+            app.state.nc = nc
+            app.state.js = js
+
+            log.info(
+                "Connected to NATS JetStream server=%s stream=%s subject=%s max_age=%s",
+                NATS_SERVER,
+                JS_STREAM,
+                RAW_SUBJECT,
+                MAX_AGE
+            )
+        except Exception as e:
+            log.warning(f"NATS setting up failed ({e}), retrying in 5 seconds.")
+            await asyncio.sleep(5)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    nc = await nats.connect(servers=[NATS_SERVER])
-    js = nc.jetstream()
+    app.state.nc = None
+    app.state.js = None
 
-    await ensure_stream(
-        js,
-        stream_name=JS_STREAM,
-        subjects=WANTED_SUBJECTS,
-        duplicate_window=DUPLICATE_WINDOW,
-        max_age=MAX_AGE
-    )
+    connect_task = asyncio.create_task(nats_connect(app))
 
-    app.state.nc = nc
-    app.state.js = js
+    yield
 
-    log.info(
-        "Connected to NATS JetStream server=%s stream=%s subject=%s max_age=%s",
-        NATS_SERVER,
-        JS_STREAM,
-        RAW_SUBJECT,
-        MAX_AGE
-    )
-
-    try:
-        yield
-    finally:
+    connect_task.cancel()
+    if app.state.nc:
         # drain flushes in-flight publishes and closes nicely
-        await nc.drain()
+        await app.state.nc.drain()
         log.info("NATS connection drained and closed")
-
 
 app = FastAPI(lifespan=lifespan)
 
@@ -95,17 +107,17 @@ async def readyz():
                 "stream": JS_STREAM, 
                 "subjects": list(info.config.subjects),
                 "max_age": info.config.max_age
-            }, 200
+            }
     except Exception as e:
-        return {"status": "error", "detail": str(e)}, 503
+        raise HTTPException(status_code=503, detail=f"Stream check failed: {str(e)}")
 
 @app.get("/livez")
 async def livez():
     """Liveness endpoint: returns ok if app is alive."""
     try:
-        return {"status": "ok"}, 200
+        return {"status": "ok"}
     except Exception as e:
-        return {"status": "error", "detail": str(e)}, 503
+        raise HTTPException(status_code=503, detail=f"FastAPI app not running right: {str(e)}")
     
 
 
