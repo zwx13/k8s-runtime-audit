@@ -30,7 +30,7 @@ spec:
           - name: TLA_MESSAGES_NO
             value: "50"
           - name: TLA_KV_NAME
-            value: "audit-mt-tla-state"
+            value: "MT_STATE_STORE"
           - name: ALERTS_SUBJECT
             value: "audit.mt.alerts"
         readinessProbe:

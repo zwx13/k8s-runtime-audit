@@ -34,7 +34,7 @@ import io.nats.client.api.*;
     private static String SUBJECT = Utils.env("TLA_SUBJECT", "audit.multitenancy");
     private static int MESSAGES_NO = Utils.envInt("TLA_MESSAGES_NO", 50);
 
-    private static String KV_NAME = Utils.env("TLA_KV_NAME", "audit-mt-tla-state");
+    private static String KV_NAME = Utils.env("TLA_KV_NAME", "MT_STATE_STORE");
 
     private static String ALERTS_SUBJECT = Utils.env("ALERTS_SUBJECT", "audit.mt.alerts");
     
