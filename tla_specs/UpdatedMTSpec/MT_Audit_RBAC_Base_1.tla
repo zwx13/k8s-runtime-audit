@@ -25,7 +25,6 @@ SameTenant(g, ns) ==
   /\ nsTenantMap[ns] # NoTenant
   /\ GroupTenantMap[g] = nsTenantMap[ns]
 
-
 BindingsRespectMT ==
     \A <<ns, rb>> \in DOMAIN roleBindings:
       LET subjects == roleBindings[<<ns, rb>>][1]
@@ -69,8 +68,9 @@ CreateNamespace(actor, ns, t) ==
 DeleteNamespace(actor, ns, t) ==
     /\ actor \in ClusterAdmins
     /\ nsTenantMap[ns] # NoTenant
+    /\ roleBindings' = [ rb \in {rb \in DOMAIN roleBindings : rb[1] # ns} |-> roleBindings[rb] ]
     /\ nsTenantMap' = [nsTenantMap EXCEPT ![ns] = NoTenant]
-    /\ UNCHANGED << roleBindings, accessAttempts, clusterRoles >>
+    /\ UNCHANGED << accessAttempts, clusterRoles >>
 
 (*** ClusterRoles are cluster-wide, the admin creates them ***)
 CreateClusterRole(actor, k, p) ==
@@ -96,12 +96,11 @@ DeleteClusterRole(actor, k, p) ==
 GrantAccess(actor, ns, rbName, g, k) ==
     /\ actor \in ClusterAdmins
     /\ nsTenantMap[ns] # NoTenant
+    \* to remove
+    /\ GroupTenantMap[g] = nsTenantMap[ns]
     /\ clusterRoles[k] # {}
     /\ roleBindings' = IF <<ns,rbName>> \in DOMAIN roleBindings THEN
-                            [roleBindings EXCEPT ![<<ns, rbName>>] = 
-                                IF @ # {}
-                                THEN << @[1] \cup {g}, @[2] >>
-                                ELSE << {g}, k >>]
+                            [roleBindings EXCEPT ![<<ns, rbName>>] = << @[1] \cup {g}, @[2] >>]
                         ELSE <<ns, rbName>> :> <<{g}, k>> @@ roleBindings
     /\ UNCHANGED << nsTenantMap, accessAttempts, clusterRoles >>
 
@@ -109,12 +108,9 @@ RevokeAccess(actor, ns, rbName, g, k) ==
     /\ actor \in ClusterAdmins
     /\ nsTenantMap[ns] # NoTenant
     /\ <<ns, rbName>> \in DOMAIN roleBindings
-    /\ roleBindings[<<ns, rbName>>] # {}
-    /\ roleBindings' = [roleBindings EXCEPT ![<<ns, rbName>>] = 
-                            IF Cardinality(@[1]) = 1 THEN 
-                                {}
-                            ELSE 
-                            << @[1] \ {g}, @[2] >>]
+    /\ roleBindings' = IF Cardinality(roleBindings[<<ns, rbName>>][1]) = 1 THEN
+                            [rb \in DOMAIN roleBindings \ {<<ns, rbName>>} |-> roleBindings[rb] ]
+                        ELSE [roleBindings EXCEPT ![<<ns, rbName>>] = << @[1] \ {g}, @[2] >>]
     /\ UNCHANGED << nsTenantMap, accessAttempts, clusterRoles >>
 
 (*** Track all accessAttempts ***)
@@ -128,6 +124,9 @@ Inv ==
   /\ TypeOK
   /\ BindingsRespectMT
   /\ NoCrossTenantSuccess
+
+\* BaitInv == TLCGet("level") < 15
+
 
 Next ==
   \E a \in ClusterAdmins, rbName \in RBNames, g \in (Groups \ ClusterAdmins), ns \in Namespaces, t \in Tenants,
