@@ -27,8 +27,10 @@ SameTenant(g, ns) ==
 
 
 BindingsRespectMT ==
-    \A rbName \in RBNames, g \in Groups, ns \in Namespaces :
-      <<ns, rbName>> \in DOMAIN roleBindings => SameTenant(g, ns)
+    \A <<ns, rb>> \in DOMAIN roleBindings:
+      LET subjects == roleBindings[<<ns, rb>>][1]
+      IN \A subject \in subjects:
+        SameTenant(subject, ns)
 
 NoCrossTenantSuccess ==
     \A a \in DOMAIN accessAttempts :
@@ -93,6 +95,7 @@ DeleteClusterRole(actor, k, p) ==
 (*** Access is modified by creating/revoking a roleBinding ***)
 GrantAccess(actor, ns, rbName, g, k) ==
     /\ actor \in ClusterAdmins
+    /\ nsTenantMap[ns] # NoTenant
     /\ clusterRoles[k] # {}
     /\ roleBindings' = IF <<ns,rbName>> \in DOMAIN roleBindings THEN
                             [roleBindings EXCEPT ![<<ns, rbName>>] = 
