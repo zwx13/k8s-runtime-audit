@@ -1,5 +1,5 @@
 ---- MODULE MT_Audit_RBAC_Base_1 ----
-EXTENDS Naturals, FiniteSets, Sequences, TLC
+EXTENDS Naturals, FiniteSets, TLC, Sequences
 
 CONSTANTS Groups, Tenants, NoTenant, Namespaces, RBNames, CRBNames, RoleNames, DefaultClusterRoleNames,
 Permissions, GroupTenantMap, DefaultClusterRolePermMap
@@ -11,21 +11,14 @@ VARIABLES nsTenantMap, roleBindings, clusterRoleBindings, accessAttempts, cluste
 
 vars == << nsTenantMap, roleBindings, clusterRoleBindings, accessAttempts, clusterRoles, roles >>
 
-\* for access attempts
-MatchRoleBinding(g, ns, p) ==
+MatchRoleBinding(ns, g, p) ==
     \E key \in DOMAIN roleBindings :
         /\ key[1] = ns
-        /\ Len(roleBindings[key]) # 0
+        /\ Len(roleBindings[key]) > 0
         /\ g \in roleBindings[key][1]
         /\ p \in clusterRoles[roleBindings[key][2]]
 
-MatchCRBinding(g, p) ==
-    \E key \in DOMAIN clusterRoleBindings :
-        /\ Len(clusterRoleBindings[key]) # 0
-        /\ g \in clusterRoleBindings[key][1]
-        /\ p \in clusterRoles[clusterRoleBindings[key][2]]
-
-SameTenant(g, ns) ==
+SameTenant(ns, g) ==
   /\ nsTenantMap[ns] # NoTenant
   /\ GroupTenantMap[g] = nsTenantMap[ns]
 
@@ -54,7 +47,7 @@ BindingsRespectMT ==
     \A <<ns, rb>> \in DOMAIN roleBindings:
       LET subjects == roleBindings[<<ns, rb>>][1]
       IN \A subject \in subjects:
-        SameTenant(subject, ns)
+        SameTenant(ns, subject)
 
 NoCrossTenantSuccess ==
     \A a \in DOMAIN accessAttempts :
@@ -196,7 +189,8 @@ Inv ==
   /\ BindingsRespectMT
   /\ NoCrossTenantSuccess
 
-BaitInv == TLCGet("level") < 5
+BaitInv == TLCGet("level") < 15
+
 
 Next ==
   \E actorgroup \in Groups, rbName \in RBNames, targetgroup \in Groups, ns \in Namespaces, t \in Tenants,
