@@ -17,3 +17,6 @@ tla_specs/states
 tla_specs/NatsSmokeSpec/states
 zgarbage/*
 zMT_specs/*
+
+tla_specs/UpdatedMTSpec/simulation_results/*
+tla_specs/UpdatedMTSpec/states/*
