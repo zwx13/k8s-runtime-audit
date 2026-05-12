@@ -18,6 +18,12 @@ MatchRoleBinding(ns, g, p) ==
         /\ g \in roleBindings[key][1]
         /\ p \in clusterRoles[roleBindings[key][2]]
 
+MatchCRBinding(g, p) ==
+    \E key \in DOMAIN clusterRoleBindings :
+        /\ Len(clusterRoleBindings[key]) # 0
+        /\ g \in clusterRoleBindings[key][1]
+        /\ p \in clusterRoles[clusterRoleBindings[key][2]]
+
 SameTenant(ns, g) ==
   /\ nsTenantMap[ns] # NoTenant
   /\ GroupTenantMap[g] = nsTenantMap[ns]
