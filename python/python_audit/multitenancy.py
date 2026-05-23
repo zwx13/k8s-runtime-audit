@@ -168,7 +168,7 @@ async def main() -> None:
                     except json.JSONDecodeError:
                         log.warning("Bad JSON, acking to skip: %r", msg.data[:200])
                         await msg.ack()
-                        continue
+                        break
                     
                     try:
                         ev_type = classify(ev)
