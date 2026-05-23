@@ -6,7 +6,7 @@ import nats
 
 from config_helpers import env_str
 
-NATS_SERVER: Final[str] = env_str("NATS_URL","nats://nats:4222")
+NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
 
 async def keep_alive():
     try:

@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 # Source
-NATS_SERVER: Final[str] = env_str("NATS_URL","nats://nats:4222")
+NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
 RAW_STREAM: Final[str] = env_str("RAW_STREAM", "AUDIT")
 SOURCE_SUBJ: Final[str] = env_str("SOURCE_SUBJ", "audit.full")
 DURABLE: Final[str] = env_str("DURABLE", "audit-mt-filter")

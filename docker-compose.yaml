@@ -26,6 +26,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      NATS_URL: "nats://nats:4222"
     volumes:
       - ./python/python_audit:/app/python_audit
     
@@ -41,6 +43,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      NATS_URL: "nats://nats:4222"
     volumes:
       - ./python/python_audit:/app/python_audit
     command: ["python3", "python_audit/multitenancy.py"]
@@ -54,14 +58,12 @@ services:
         condition: service_healthy
       multitenancy:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/readyz"]    
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    environment:
+      NATS_URL: "nats://nats:4222"
     volumes:
       - ./python/python_audit:/app/python_audit
     command: ["python3", "python_audit/mt_state_store.py"]
+    restart: "no"
 
   alerts:
     image: zwx13/audit-python:dev
@@ -73,15 +75,13 @@ services:
       multitenancy:
         condition: service_healthy
       mt_state_store:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/readyz"]    
-      interval: 10s
-      timeout: 5s
-      retries: 3
+        condition: service_completed_successfully
+    environment:
+      NATS_URL: "nats://nats:4222"
     volumes:
       - ./python/python_audit:/app/python_audit
     command: ["python3", "python_audit/alerts.py"]
+    restart: "no"
 
   java-tla-monitor:
     image: zwx13/audit-java:dev
@@ -93,9 +93,11 @@ services:
       multitenancy:
         condition: service_healthy
       mt_state_store:
-        condition: service_healthy
+        condition: service_completed_successfully
       alerts:
-        condition: service_healthy
+        condition: service_completed_successfully
+    environment:
+      NATS_URL: "nats://nats:4222"
     volumes:
       - ./java/java-tlamonitor-audit/target:/app/target
     command: >

@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 # Configuration
 # -----------------------------------------------------------------------------
 
-NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://nats:4222")
+NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
 JS_STREAM: Final[str] = env_str("JS_STREAM", "AUDIT")
 RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 
