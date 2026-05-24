@@ -142,13 +142,15 @@ import io.nats.client.api.*;
         }
         
         try {
-            kv = NatsClient.getKVManagement(KV_NAME);
+            kv = NatsClient.getKV(KV_NAME);
+
             kvEntry = kv.get("cachedState");
 
             if (kvEntry == null || kvEntry.getValue() == null || kvEntry.getValue().length == 0) {
                 cachedTlaState = RecordValue.EmptyRcd;
             } else {
                 byte[] value = kvEntry.getValue();
+
                 JsonNode jsonValue = Utils.parseAndGetJson(value);
                 cachedTlaState = (Value) Utils.getValueFromJson(jsonValue);
             }
@@ -171,7 +173,7 @@ import io.nats.client.api.*;
         
         try {
             allocJson = Utils.getJsonFromValue(allocOut);
-            kv = NatsClient.getKVManagement(KV_NAME);
+            kv = NatsClient.getKV(KV_NAME);
             kv.put("cachedState", new ObjectMapper().writeValueAsBytes(allocJson));
             System.out.println("We saved the final state in KV");
 
