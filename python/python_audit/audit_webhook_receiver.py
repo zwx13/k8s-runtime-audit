@@ -72,6 +72,9 @@ async def nats_connect(app: FastAPI):
                 RAW_SUBJECT,
                 MAX_AGE
             )
+
+            return # stop retry loop after successful setup
+        
         except Exception as e:
             log.warning(f"NATS setting up failed ({e}), retrying in 5 seconds.")
             await asyncio.sleep(5)
@@ -81,15 +84,15 @@ async def lifespan(app: FastAPI):
     app.state.nc = None
     app.state.js = None
 
-    connect_task = asyncio.create_task(nats_connect(app))
+    await nats_connect(app)
 
-    yield
-
-    connect_task.cancel()
-    if app.state.nc:
-        # drain flushes in-flight publishes and closes nicely
-        await app.state.nc.drain()
-        log.info("NATS connection drained and closed")
+    try:
+        yield
+    finally:
+        if app.state.nc:
+            # drain flushes in-flight publishes and closes nicely
+            await app.state.nc.drain()
+            log.info("NATS connection drained and closed")
 
 app = FastAPI(lifespan=lifespan)
 
