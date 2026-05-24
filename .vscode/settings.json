@@ -4,5 +4,5 @@
     "tlaplus.tlc.modelChecker.options": "-workers 1 -coverage 1",
     "python-envs.pythonProjects": [],
     // to run tlc with custom jar from VS Code:
-    "tlaplus.java.options": "-XX:+UseParallelGC -cp <custom jar path>"
+    "tlaplus.java.options": "-XX:+UseParallelGC -cp /home/malina/monitoring2k25/java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:/home/malina/monitoring2k25/CommunityModules.jar:/home/malina/monitoring2k25/tla2tools.jar"
 }
