@@ -134,7 +134,7 @@ run "$KUBECTL" get pods -n "${TA}" --as="${U_A}"
 run "$KUBECTL" run ok-a -n "${TA}" --image="${OK_IMAGE}" --restart=Never --as="${U_A}"
 
 info "=== Expected FORBIDDEN in ${TB} as ${U_A} ==="
-expect_fail "kubectl get pods -n ${TB} --as=${U_A}" "$KUBECTL" get pods -n "${TB}" --as="${U_A}"
+expect_fail "kubectl get pods -n ${TA} --as=${U_B}" "$KUBECTL" get pods -n "${TB}" --as="${U_A}"
 expect_fail "kubectl run bad-a -n ${TB} --as=${U_A}" "$KUBECTL" run bad-a -n "${TB}" --image="${OK_IMAGE}" --restart=Never --as="${U_A}"
 
 info "All checks completed."

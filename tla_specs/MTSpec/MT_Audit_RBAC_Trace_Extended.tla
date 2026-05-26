@@ -274,28 +274,27 @@ AlertIfBindingsBad ==
             /\ PrintT("AlertedEvents is: " \o ToString(rbAlerts))
             /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
             /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
-            /\ UNCHANGED << danglingRBAlerts, crossTenantAlerts >>
 
 AlertIfCrossTenantBad ==
     LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
         IF crossTenantBad = {} THEN 
             /\ TRUE
+            /\ PrintT("Cross tenant GOOOOD!!!!")
             /\ UNCHANGED << crossTenantAlerts >>
         ELSE 
             /\ crossTenantAlerts' = crossTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("Cross tenant bad!!!!")
-            /\ UNCHANGED << danglingRBAlerts, rbAlerts >>
 
 
 AlertIfDanglingBindings ==
     LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
         IF danglingBindings = {} THEN
             /\ TRUE
+            /\ PrintT("NOOOOOOOO Dangling binding!!!")
             /\ UNCHANGED << danglingRBAlerts >>
         ELSE 
             /\ danglingRBAlerts' = danglingRBAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("Dangling binding!!!")
-            /\ UNCHANGED << crossTenantAlerts, rbAlerts >>
 
 alertOut == rbAlerts \cup crossTenantAlerts \cup danglingRBAlerts
 (*********4ALERTS***********)
@@ -318,10 +317,12 @@ SerializeAtEnd ==
   /\ NatsAckBatch
 \*   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ NatsPutCachedState(allocOut)
-  /\ IF alertOut # {} THEN 
-        NatsPublishAlert(SetToSeq(alertOut))
+  /\ IF alertOut # {} THEN
+        /\ PrintT("!!! publish alert " \o ToString(Len(LogEvents)))
+        /\ NatsPublishAlert(SetToSeq(alertOut))
      ELSE
-        TRUE
+        /\ PrintT("No alert to publish??????????????? " \o ToString(Len(LogEvents)))
+        /\ TRUE
   /\ UNCHANGED << vars >>
 
 NextPrintSerialize == (Next /\ AlertIfBadState) \/ SerializeAtEnd \/ PrintInitOnce
