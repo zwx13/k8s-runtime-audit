@@ -9,8 +9,7 @@ ConstRBNames == {"tenant-a-binding", "tenant-b-binding"}
 ConstCRBNames == {"cluster-rb-1", "cluster-admin"}
 ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
 ConstCustomClusterRoleNames == {"dev"}
-ConstClusterRoleNames == ConstDefaultClusterRoleNames \cup ConstCustomClusterRoleNames
-ConstRoleNames == {"ns-dev", "ns-senior-dev"}
+\* ConstRoleNames == {"ns-dev", "ns-senior-dev"}
 ConstNoTenant == "NO_TENANT"
 ConstPermissions == {"read", "write", "bind", "delegate", "escalate"}
 

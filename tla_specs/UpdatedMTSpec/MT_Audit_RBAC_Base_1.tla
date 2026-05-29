@@ -4,7 +4,7 @@ EXTENDS Naturals, FiniteSets, TLC, Sequences
 (*************************************************************************)
 (* Constants                                                             *)
 (*************************************************************************)
-CONSTANTS TenantGroups, PlatformGroups, Tenants, NoTenant, Namespaces, RBNames, CRBNames, RoleNames, DefaultClusterRoleNames,
+CONSTANTS TenantGroups, PlatformGroups, Tenants, NoTenant, Namespaces, RBNames, CRBNames, DefaultClusterRoleNames, CustomClusterRoleNames,
 Permissions, GroupTenantMap, DefaultClusterRolePermMap
 
 ASSUME GroupTenantMap \in [TenantGroups -> (Tenants \cup {NoTenant})]
@@ -130,14 +130,11 @@ TypeOK ==
   /\ nsTenantMap \in [Namespaces -> (Tenants \cup {NoTenant})]
   /\ DOMAIN roleBindings \in SUBSET (Namespaces \X RBNames)
   /\ \A key \in DOMAIN roleBindings:
-        roleBindings[key] \in ( (SUBSET Groups) \X (DefaultClusterRoleNames \cup RoleNames))
+        roleBindings[key] \in ( (SUBSET Groups) \X (DefaultClusterRoleNames \cup CustomClusterRoleNames))
   /\ DOMAIN clusterRoleBindings \in SUBSET CRBNames
   /\ \A key \in DOMAIN clusterRoleBindings:
-        clusterRoleBindings[key] \in ( (SUBSET (Groups)) \X (DefaultClusterRoleNames \cup RoleNames))
-  /\ DOMAIN roles \in SUBSET (Namespaces \X RoleNames)
-  /\ \A key \in DOMAIN roles:
-        roles[key] \in SUBSET (Permissions \cup {})
-  /\ clusterRoles \in [DefaultClusterRoleNames -> SUBSET (Permissions \cup {})]
+        clusterRoleBindings[key] \in ( (SUBSET (Groups)) \X (DefaultClusterRoleNames \cup CustomClusterRoleNames))
+  /\ clusterRoles \in [DefaultClusterRoleNames \cup CustomClusterRoleNames -> SUBSET (Permissions)]
   /\ DOMAIN accessAttempts \in SUBSET (Namespaces \X Groups \X Permissions)
   /\ \A key \in DOMAIN accessAttempts:
         accessAttempts[key] \in BOOLEAN
@@ -151,8 +148,7 @@ Init ==
   /\ roleBindings = [nsrb \in {} |-> {} ]
   /\ clusterRoleBindings = "cluster-admin" :> <<{"system-masters"}, "cluster-admin">>
   /\ roles = [r \in {} |-> {}]
-\*   /\ clusterRoles = [k \in DefaultClusterRoleNames |-> {} ]
-  /\ clusterRoles = DefaultClusterRolePermMap
+  /\ clusterRoles = [crName \in CustomClusterRoleNames |-> {}] @@ DefaultClusterRolePermMap
   /\ accessAttempts = [ gnp \in {} |-> {} ]
 
 
@@ -181,41 +177,41 @@ DeleteNamespace(actorgroup, ns, t) ==
     /\ nsTenantMap' = [nsTenantMap EXCEPT ![ns] = NoTenant]
     /\ UNCHANGED << clusterRoleBindings, roles, clusterRoles, accessAttempts >>
 
-(*
-* Roles are NS-wide, Cluster-admins can create them.
-* NS-Admins cannot create roles, but they can
-* bind approved ones.
-*)
-CreateRole(actorgroup, ns, r, p) ==
-    /\ IsClusterAdmin(actorgroup)
-    /\ <<ns, r>> \notin DOMAIN roles
-    /\ roles' = <<ns, r>> :> {p} @@ roles
-    /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
+\* (*
+\* * Roles are NS-wide, Cluster-admins can create them.
+\* * NS-Admins cannot create roles, but they can
+\* * bind approved ones.
+\* *)
+\* CreateRole(actorgroup, ns, r, p) ==
+\*     /\ IsClusterAdmin(actorgroup)
+\*     /\ <<ns, r>> \notin DOMAIN roles
+\*     /\ roles' = <<ns, r>> :> {p} @@ roles
+\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
     
-UpdateRole(actorgroup, ns, r, p) ==
-    /\ IsClusterAdmin(actorgroup)
-    /\ <<ns, r>> \in DOMAIN roles
-    /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \cup {p}]
-    /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
+\* UpdateRole(actorgroup, ns, r, p) ==
+\*     /\ IsClusterAdmin(actorgroup)
+\*     /\ <<ns, r>> \in DOMAIN roles
+\*     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \cup {p}]
+\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
 
-(*
-* An empty role is different from a fully-deleted role.
-* Dangling binding points to non-existed role.
-* If a binding points to an existing empty role, it would just
-* grant no permissions.
-*)
-DeleteRolePermission(actorgroup, ns, r, p) ==
-    /\ IsClusterAdmin(actorgroup)
-    /\ <<ns, r>> \in DOMAIN roles
-    /\ Cardinality(roles[r]) > 1
-    /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \ {p}]
-    /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
+\* (*
+\* * An empty role is different from a fully-deleted role.
+\* * Dangling binding points to non-existed role.
+\* * If a binding points to an existing empty role, it would just
+\* * grant no permissions.
+\* *)
+\* DeleteRolePermission(actorgroup, ns, r, p) ==
+\*     /\ IsClusterAdmin(actorgroup)
+\*     /\ <<ns, r>> \in DOMAIN roles
+\*     /\ Cardinality(roles[r]) > 1
+\*     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \ {p}]
+\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
 
-DeleteRole(actorgroup, ns, r, p) ==
-    /\ IsClusterAdmin(actorgroup)
-    /\ <<ns, r>> \in DOMAIN roles
-    /\ roles' = [key \in DOMAIN roles \ <<ns, r>> |-> roles[key]]
-    /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
+\* DeleteRole(actorgroup, ns, r, p) ==
+\*     /\ IsClusterAdmin(actorgroup)
+\*     /\ <<ns, r>> \in DOMAIN roles
+\*     /\ roles' = [key \in DOMAIN roles \ <<ns, r>> |-> roles[key]]
+\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
 
 (*
 * ClusterRoles are cluster-wide, so they pose a higher risk than roles
@@ -223,23 +219,28 @@ DeleteRole(actorgroup, ns, r, p) ==
 *)
 CreateClusterRole(actorgroup, k, p) ==
     /\ IsClusterAdmin(actorgroup)
+    /\ k \in CustomClusterRoleNames
     /\ clusterRoles[k] = {}
     /\ clusterRoles' = [clusterRoles EXCEPT ![k] = {p}]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, roles, accessAttempts >>
 
 UpdateClusterRole(actorgroup, k, p) ==
     /\ IsClusterAdmin(actorgroup)
+    /\ k \in CustomClusterRoleNames
+    /\ clusterRoles[k] # {}
     /\ clusterRoles' = [clusterRoles EXCEPT ![k] = @ \cup {p}]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, roles, accessAttempts >>
 
 DeleteClusterRolePermission(actorgroup, k, p) ==
     /\ IsClusterAdmin(actorgroup)
+    /\ k \in CustomClusterRoleNames
     /\ clusterRoles[k] # {}
     /\ clusterRoles' = [clusterRoles EXCEPT ![k] = @ \ {p}]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, roles, accessAttempts >>
 
 DeleteClusterRole(actorgroup, k, p) ==
     /\ IsClusterAdmin(actorgroup)
+    /\ k \in CustomClusterRoleNames
     /\ clusterRoles[k] # {}
     /\ clusterRoles' = [clusterRoles EXCEPT ![k] = {}]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, roles, accessAttempts >>
@@ -254,7 +255,8 @@ GrantNSAccess(actorgroup, ns, rbName, g, k) ==
         \/ IsClusterAdmin(actorgroup)
         \/ IsNSAdmin(actorgroup, ns)
     /\ SameTenant(g, ns)
-    /\ clusterRoles[k] # {}
+    /\ LET clusterPerm == clusterRoles[k]
+       IN clusterPerm \in (SUBSET {"read", "write"}) \ {{}}
     /\ roleBindings' = IF <<ns,rbName>> \in DOMAIN roleBindings THEN
                             [roleBindings EXCEPT ![<<ns, rbName>>] = << @[1] \cup {g}, @[2] >>]
                         ELSE <<ns, rbName>> :> <<{g}, k>> @@ roleBindings
@@ -320,12 +322,12 @@ BaitInv == TLCGet("level") < 15
 (*************************************************************************)
 Next ==
   \E actorgroup \in Groups, rbName \in RBNames, crbName \in CRBNames, targetgroup \in Groups, ns \in Namespaces, t \in Tenants,
-  p \in Permissions, k \in DefaultClusterRoleNames, r \in RoleNames:
+  p \in Permissions, k \in (DefaultClusterRoleNames \cup CustomClusterRoleNames):
     \/ CreateNamespace(actorgroup, ns, t)
     \/ DeleteNamespace(actorgroup, ns, t)
-    \/ CreateRole(actorgroup, targetgroup, ns, r, p)
-    \/ UpdateRole(actorgroup, targetgroup, ns, r, p)
-    \/ DeleteRole(actorgroup, targetgroup, ns, r, p)
+    \* \/ CreateRole(actorgroup, ns, r, p)
+    \* \/ UpdateRole(actorgroup, ns, r, p)
+    \* \/ DeleteRole(actorgroup, ns, r, p)
     \/ CreateClusterRole(actorgroup, k, p)
     \/ UpdateClusterRole(actorgroup, k, p)
     \/ DeleteClusterRole(actorgroup, k, p)
