@@ -186,15 +186,13 @@ DeleteNamespace(actorgroup, ns, t) ==
 * NS-Admins cannot create roles, but they can
 * bind approved ones.
 *)
-CreateRole(actorgroup, g, ns, r, p) ==
-    /\ SameTenant(g, ns)
+CreateRole(actorgroup, ns, r, p) ==
     /\ IsClusterAdmin(actorgroup)
     /\ <<ns, r>> \notin DOMAIN roles
     /\ roles' = <<ns, r>> :> {p} @@ roles
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
     
-UpdateRole(actorgroup, g, ns, r, p) ==
-    /\ SameTenant(g, ns)
+UpdateRole(actorgroup, ns, r, p) ==
     /\ IsClusterAdmin(actorgroup)
     /\ <<ns, r>> \in DOMAIN roles
     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \cup {p}]
@@ -206,16 +204,14 @@ UpdateRole(actorgroup, g, ns, r, p) ==
 * If a binding points to an existing empty role, it would just
 * grant no permissions.
 *)
-DeleteRolePermission(actorgroup, g, ns, r, p) ==
-    /\ SameTenant(g, ns)
+DeleteRolePermission(actorgroup, ns, r, p) ==
     /\ IsClusterAdmin(actorgroup)
     /\ <<ns, r>> \in DOMAIN roles
     /\ Cardinality(roles[r]) > 1
     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \ {p}]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
 
-DeleteRole(actorgroup, g, ns, r, p) ==
-    /\ SameTenant(g, ns)
+DeleteRole(actorgroup, ns, r, p) ==
     /\ IsClusterAdmin(actorgroup)
     /\ <<ns, r>> \in DOMAIN roles
     /\ roles' = [key \in DOMAIN roles \ <<ns, r>> |-> roles[key]]
