@@ -96,12 +96,12 @@ BindingsRespectMT ==
 *)
 NoCrossTenantSuccess ==
     \A a \in DOMAIN accessAttempts :
-        accessAttempts[a] = TRUE =>
-        LET namespace == a[1]
-            group == a[2]
+        LET group == a[2]
         IN 
-            \/ SameTenant(namespace, group)
-            \/ group \in PlatformGroups
+            accessAttempts[a].matchingRBorCBR = TRUE =>
+                \/ group \in PlatformGroups
+                \/ accessAttempts[a].respectsNSTMapAtReqTime = TRUE
+        
 
 (*
 * Cluster admin role should not be given in a ns, 
@@ -145,7 +145,10 @@ TypeOK ==
   /\ clusterRoles \in [DefaultClusterRoleNames \cup CustomClusterRoleNames -> SUBSET (Permissions)]
   /\ DOMAIN accessAttempts \in SUBSET (Namespaces \X Groups \X Permissions)
   /\ \A key \in DOMAIN accessAttempts:
-        accessAttempts[key] \in BOOLEAN
+        accessAttempts[key] \in [
+            respectsNSTMapAtReqTime: BOOLEAN,
+            matchingRBorCBR: BOOLEAN
+            ]
 
 (*************************************************************************)
 (* Initial state                                                         *)
@@ -281,8 +284,12 @@ RevokeNSAccess(actorgroup, ns, rbName, g, k) ==
 AttemptedAccess(ns, g, p) ==
   /\ nsTenantMap[ns] # NoTenant
   /\ accessAttempts' = IF <<ns, g, p>> \in DOMAIN accessAttempts THEN
-                            [accessAttempts EXCEPT ![<<ns, g, p>>] = (MatchRoleBinding(ns, g, p) \/ MatchCRBinding(g, p))]
-                       ELSE <<ns, g, p>>  :> (MatchRoleBinding(ns, g, p) \/ MatchCRBinding(g, p)) @@ accessAttempts
+                            [accessAttempts EXCEPT ![<<ns, g, p>>].respectsNSTMapAtReqTime = SameTenant(ns, g),
+                                                   ![<<ns, g, p>>].matchingRBorCBR = (MatchRoleBinding(ns, g, p) \/ MatchCRBinding(g, p))
+                            ]
+                       ELSE <<ns, g, p>>  :> [ respectsNSTMapAtReqTime |-> SameTenant(ns, g),
+                                               matchingRBorCBR |-> (MatchRoleBinding(ns, g, p) \/ MatchCRBinding(g, p))
+                                             ] @@ accessAttempts
   /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, roles >>
 
 
