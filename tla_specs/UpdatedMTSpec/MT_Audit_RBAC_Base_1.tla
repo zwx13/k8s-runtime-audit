@@ -91,8 +91,9 @@ NoCrossTenantSuccess ==
         accessAttempts[a] = TRUE =>
         LET namespace == a[1]
             group == a[2]
-        IN \/ SameTenant(namespace, group)
-           \/ group \in PlatformGroups
+        IN 
+            \/ SameTenant(namespace, group)
+            \/ group \in PlatformGroups
 
 (*
 * Cluster admin role should not be given in a ns, 
