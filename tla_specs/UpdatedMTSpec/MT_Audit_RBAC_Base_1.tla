@@ -185,42 +185,6 @@ DeleteNamespace(actorgroup, ns, t) ==
     /\ nsTenantMap' = [nsTenantMap EXCEPT ![ns] = NoTenant]
     /\ UNCHANGED << clusterRoleBindings, roles, clusterRoles, accessAttempts >>
 
-\* (*
-\* * Roles are NS-wide, Cluster-admins can create them.
-\* * NS-Admins cannot create roles, but they can
-\* * bind approved ones.
-\* *)
-\* CreateRole(actorgroup, ns, r, p) ==
-\*     /\ IsClusterAdmin(actorgroup)
-\*     /\ <<ns, r>> \notin DOMAIN roles
-\*     /\ roles' = <<ns, r>> :> {p} @@ roles
-\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
-    
-\* UpdateRole(actorgroup, ns, r, p) ==
-\*     /\ IsClusterAdmin(actorgroup)
-\*     /\ <<ns, r>> \in DOMAIN roles
-\*     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \cup {p}]
-\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
-
-\* (*
-\* * An empty role is different from a fully-deleted role.
-\* * Dangling binding points to non-existed role.
-\* * If a binding points to an existing empty role, it would just
-\* * grant no permissions.
-\* *)
-\* DeleteRolePermission(actorgroup, ns, r, p) ==
-\*     /\ IsClusterAdmin(actorgroup)
-\*     /\ <<ns, r>> \in DOMAIN roles
-\*     /\ Cardinality(roles[r]) > 1
-\*     /\ roles' = [roles EXCEPT ![<<ns, r>>] = @ \ {p}]
-\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
-
-\* DeleteRole(actorgroup, ns, r, p) ==
-\*     /\ IsClusterAdmin(actorgroup)
-\*     /\ <<ns, r>> \in DOMAIN roles
-\*     /\ roles' = [key \in DOMAIN roles \ <<ns, r>> |-> roles[key]]
-\*     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles, accessAttempts >>
-
 (*
 * ClusterRoles are cluster-wide, so they pose a higher risk than roles
 * Only the cluster admin creates/updates/deletes these as well.
@@ -339,9 +303,6 @@ Next ==
   p \in Permissions, k \in (DefaultClusterRoleNames \cup CustomClusterRoleNames):
     \/ CreateNamespace(actorgroup, ns, t)
     \/ DeleteNamespace(actorgroup, ns, t)
-    \* \/ CreateRole(actorgroup, ns, r, p)
-    \* \/ UpdateRole(actorgroup, ns, r, p)
-    \* \/ DeleteRole(actorgroup, ns, r, p)
     \/ CreateClusterRole(actorgroup, k, p)
     \/ UpdateClusterRole(actorgroup, k, p)
     \/ DeleteClusterRole(actorgroup, k, p)
