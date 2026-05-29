@@ -11,13 +11,12 @@ ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
 ConstCustomClusterRoleNames == {"dev"}
 \* ConstRoleNames == {"ns-dev", "ns-senior-dev"}
 ConstNoTenant == "NO_TENANT"
-ConstPermissions == {"read", "write", "bind", "delegate", "escalate"}
-
+ConstPermissions == {"read", "write", "admin-powers", "cluster-admin-powers"}
 
 ConstDefaultClusterRolePermMap ==
     [ dk \in ConstDefaultClusterRoleNames |->
-        IF dk = "cluster-admin" THEN {"read", "write", "delegate", "escalate", "bind"} 
-        ELSE IF dk = "admin" THEN {"read", "write", "delegate"}
+        IF dk = "cluster-admin" THEN {"read", "write", "admin-powers", "cluster-admin-powers"} 
+        ELSE IF dk = "admin" THEN {"read", "write", "admin-powers"}
         ELSE IF dk = "edit" THEN {"read", "write"}
         ELSE {"read"}
     ]
