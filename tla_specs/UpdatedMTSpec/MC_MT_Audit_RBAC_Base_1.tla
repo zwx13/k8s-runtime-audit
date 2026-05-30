@@ -11,14 +11,27 @@ ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
 ConstCustomClusterRoleNames == {"dev"}
 \* ConstRoleNames == {"ns-dev", "ns-senior-dev"}
 ConstNoTenant == "NO_TENANT"
-ConstPermissions == {"read", "write", "admin-powers", "cluster-admin-powers"}
+ConstPermissions == {"none", "read", "write", "admin-powers", "cluster-admin-powers"}
+
+(*
+* We define Permissions as being incremental in power.
+* cluster-admin-powers > admin-powers > write > read > no-permissions
+*)
+ConstPermissionTiers ==
+    [ p \in ConstPermissions |->
+     IF p = "none" THEN 0
+     ELSE IF p = "read" THEN 1
+     ELSE IF p = "write" THEN 2
+     ELSE IF p = "admin-powers" THEN 3
+     ELSE 4 
+    ]
 
 ConstDefaultClusterRolePermMap ==
     [ dk \in ConstDefaultClusterRoleNames |->
-        IF dk = "cluster-admin" THEN {"read", "write", "admin-powers", "cluster-admin-powers"} 
-        ELSE IF dk = "admin" THEN {"read", "write", "admin-powers"}
-        ELSE IF dk = "edit" THEN {"read", "write"}
-        ELSE {"read"}
+        IF dk = "cluster-admin" THEN "cluster-admin-powers"
+        ELSE IF dk = "admin" THEN "admin-powers"
+        ELSE IF dk = "edit" THEN "write"
+        ELSE "read"
     ]
   
 ConstGroupTenantMap ==
