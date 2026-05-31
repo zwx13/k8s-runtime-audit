@@ -5,11 +5,10 @@ ConstTenantGroups == {"tenant-a-group", "tenant-a-admin", "tenant-b-group", "ten
 ConstPlatformGroups == {"system-masters"}
 ConstTenants == {"tenant-a", "tenant-b"}
 ConstNamespaces == {"namespace1", "namespace2"}
-ConstRBNames == {"tenant-a-binding", "tenant-b-binding"}
-ConstCRBNames == {"cluster-rb-1", "cluster-admin"}
+ConstRBNames == {"rb-foo"}
+ConstCRBNames == {"cluster-rb-foo", "cluster-admin"}
 ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
 ConstCustomClusterRoleNames == {"dev"}
-\* ConstRoleNames == {"ns-dev", "ns-senior-dev"}
 ConstNoTenant == "NO_TENANT"
 ConstPermissions == {"none", "read", "write", "admin-powers", "cluster-admin-powers"}
 
