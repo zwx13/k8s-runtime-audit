@@ -213,8 +213,10 @@ TypeOK ==
         clusterRoleBindings[key] \in 
             ((SUBSET Groups) \X ClusterRoleNames)
 \*  clusterRoles 
-  /\ clusterRoles \in 
-        [ClusterRoleNames -> Permissions]
+  /\ DefaultClusterRoleNames \in SUBSET DOMAIN clusterRoles
+  /\ DOMAIN clusterRoles \in SUBSET ClusterRoleNames
+  /\ \A key \in DOMAIN clusterRoles: 
+        clusterRoles[key] \in Permissions
 \* accessAttempts
   /\ DOMAIN accessAttempts \in 
         SUBSET (Namespaces \X Groups \X Permissions)
@@ -405,8 +407,8 @@ AttemptedAccess(ns, g, p) ==
   /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles >>
 
 
-Inv == TRUE
-\*   /\ TypeOK
+Inv ==
+  /\ TypeOK
 \*   /\ BindingsRespectMT
 \*   /\ NoCrossTenantSuccess
 \*   /\ NoClusterAdminRB
