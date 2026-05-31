@@ -12,4 +12,7 @@ SeqToFun(t) ==
    IN 
     \*  /\ \A p, q \in T : p[1] = q[1] => p[2] = q[2] 
     [ key \in Keys |-> CHOOSE value \in valuesFor(key) : TRUE ]
+
+Codomain(S) == UNION { S[x] : x \in DOMAIN S }
+
 ====
