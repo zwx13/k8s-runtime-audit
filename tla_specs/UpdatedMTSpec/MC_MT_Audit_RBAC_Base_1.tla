@@ -1,10 +1,11 @@
 ---- MODULE MC_MT_Audit_RBAC_Base_1 ----
 EXTENDS MT_Audit_RBAC_Base_1
+CONSTANT namespace1, namespace2
 
-ConstTenantGroups == {"tenant-a-group", "tenant-a-admin", "tenant-b-group", "tenant-b-admin"}
+ConstTenantGroups == {"trs", "has"}
 ConstPlatformGroups == {"system-masters"}
 ConstTenants == {"tenant-a", "tenant-b"}
-ConstNamespaces == {"namespace1", "namespace2"}
+ConstNamespaces == {namespace1, namespace2}
 ConstRBNames == {"rb-foo"}
 ConstCRBNames == {"cluster-rb-foo", "cluster-admin"}
 ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
@@ -35,13 +36,13 @@ ConstDefaultClusterRolePermMap ==
   
 ConstGroupTenantMap ==
     [ g \in ConstTenantGroups |->
-        IF 
-            \/ g = "tenant-a-group"
-            \/ g = "tenant-a-admin" 
+        IF g = "trs"
+            \* \/ g = "tenant-a-group"
+            \* \/ g = "tenant-a-admin" 
         THEN "tenant-a"
-        ELSE IF 
-            \/ g = "tenant-b-group"
-            \/ g = "tenant-b-admin"
+        ELSE IF g = "has"
+            \* \/ g = "tenant-b-group"
+            \* \/ g = "tenant-b-admin"
         THEN "tenant-b"
         ELSE ConstNoTenant
     ]

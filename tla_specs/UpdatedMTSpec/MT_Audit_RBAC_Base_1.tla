@@ -165,13 +165,16 @@ NoCrossTenantSuccess ==
 
 (*
 * Cluster admin role should not be given in a ns, 
-* since it is too permissive.
+* since it is too permissive. A custom CR may be equivalent
+* to cluster-admin, so we check the tier of the permission
+* the role has.
 *) 
 NoClusterAdminRB ==
     \A key \in DOMAIN roleBindings : 
-        LET rbGroups == roleBindings[key][1]
-        IN 
-            ~IsClusterAdmin(rbGroups)
+        LET rbRole == roleBindings[key][2]
+        IN rbRole \in DOMAIN clusterRoles =>
+            LET rolePerms == clusterRoles[rbRole]
+            IN PermissionTiers[rolePerms] # 4
 
 (*
 * Tenants should only have access in their namespace, through roleBindings
@@ -409,12 +412,20 @@ AttemptedAccess(ns, g, p) ==
 
 Inv ==
   /\ TypeOK
-\*   /\ BindingsRespectMT
-\*   /\ NoCrossTenantSuccess
+  /\ BindingsRespectMT
+  /\ NoCrossTenantSuccess
+\*   /\ NoDanglingBindings
 \*   /\ NoClusterAdminRB
-\*   /\ NoTenantCRB
+  /\ NoTenantCRB
 
 BaitInv == TLCGet("level") < 15
+
+LenConstraints == 
+    /\ Cardinality(DOMAIN accessAttempts) <= 2
+    /\ Cardinality(DOMAIN clusterRoleBindings) <= 2
+    /\ Cardinality(DOMAIN roleBindings) <= 2
+
+Symmetry == Permutations(Namespaces)
 
 (*************************************************************************)
 (* Next states                                                           *)
