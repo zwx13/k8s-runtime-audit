@@ -5,10 +5,18 @@ EXTENDS Naturals, FiniteSets, TLC, Sequences
 (* Constants                                                             *)
 (*************************************************************************)
 CONSTANTS 
-    TenantGroups, PlatformGroups, Tenants, NoTenant, Namespaces, 
-    RBNames, CRBNames, DefaultClusterRoleNames, 
-    CustomClusterRoleNames, Permissions, PermissionTiers,
-    GroupTenantMap, DefaultClusterRolePermMap
+    TenantGroups, 
+    PlatformGroups, 
+    Tenants, NoTenant, 
+    Namespaces, 
+    RBNames, 
+    CRBNames, 
+    DefaultClusterRoleNames, 
+    CustomClusterRoleNames, 
+    Permissions, 
+    PermissionTiers,
+    GroupTenantMap, 
+    DefaultClusterRolePermMap
 
 ASSUME GroupTenantMap \in [TenantGroups -> (Tenants \cup {NoTenant})]
 ASSUME DefaultClusterRolePermMap \in [DefaultClusterRoleNames -> Permissions]
@@ -23,8 +31,11 @@ ClusterRoleNames == DefaultClusterRoleNames \cup CustomClusterRoleNames
 (* State variables                                                       *)
 (*************************************************************************)
 VARIABLES 
-    nsTenantMap, roleBindings, clusterRoleBindings, 
-    accessAttempts, clusterRoles
+    nsTenantMap, 
+    roleBindings, 
+    clusterRoleBindings, 
+    accessAttempts, 
+    clusterRoles
 
 vars == 
     << nsTenantMap, roleBindings, clusterRoleBindings, 
@@ -203,7 +214,7 @@ repeated attempts; we just want to check that all possible attemps end up ok
 *)
 
 TypeOK ==
-\*   nsTenantMap
+\* nsTenantMap
   /\ nsTenantMap \in [Namespaces -> (Tenants \cup {NoTenant})]
 \* roleBindings
   /\ DOMAIN roleBindings \in SUBSET (Namespaces \X RBNames)
@@ -215,7 +226,7 @@ TypeOK ==
   /\ \A key \in DOMAIN clusterRoleBindings:
         clusterRoleBindings[key] \in 
             ((SUBSET Groups) \X ClusterRoleNames)
-\*  clusterRoles 
+\* clusterRoles 
   /\ DefaultClusterRoleNames \in SUBSET DOMAIN clusterRoles
   /\ DOMAIN clusterRoles \in SUBSET ClusterRoleNames
   /\ \A key \in DOMAIN clusterRoles: 
@@ -410,6 +421,9 @@ AttemptedAccess(ns, g, p) ==
   /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, clusterRoles >>
 
 
+(*************************************************************************)
+(* Invariants for .cfg                                                   *)
+(*************************************************************************)
 Inv ==
   /\ TypeOK
   /\ BindingsRespectMT
@@ -420,6 +434,9 @@ Inv ==
 
 BaitInv == TLCGet("level") < 15
 
+(*************************************************************************)
+(* Model-checking constraints                                            *)
+(*************************************************************************)
 LenConstraints == 
     /\ Cardinality(DOMAIN accessAttempts) <= 2
     /\ Cardinality(DOMAIN clusterRoleBindings) <= 2
