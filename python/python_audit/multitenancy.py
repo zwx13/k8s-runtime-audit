@@ -52,10 +52,84 @@ ACK_WAIT_S: Final[int] = env_int("ACK_WAIT_S", 30)
 MAX_DELIVER: Final[int] = env_int("MAX_DELIVER", 5)
 
 # -----------------------------------------------------------------------------
+# HELPER ENV VARS
+# -----------------------------------------------------------------------------
+READ_VERBS = {"get", "list", "watch"}
+WRITE_VERBS = {"create", "update", "patch"}
+DELETE_VERBS = {"delete", "deletecollection"}
+
+SUCCESS_CODES= {200, 201}
+
+NAMESPACE_RESOURCE_PERMISSION_MAP = {
+    # Pods
+    ("pods", "get"): "read",
+    ("pods", "list"): "read",
+    ("pods", "watch"): "read",
+    ("pods", "create"): "write",
+    ("pods", "update"): "write",
+    ("pods", "patch"): "write",
+    ("pods", "delete"): "write",
+    ("pods", "deletecollection"): "write",
+
+     # Services
+    ("services", "get"): "read",
+    ("services", "list"): "read",
+    ("services", "watch"): "read",
+    ("services", "create"): "write",
+    ("services", "update"): "write",
+    ("services", "patch"): "write",
+    ("services", "delete"): "write",
+    ("services", "deletecollection"): "write",
+
+    # ConfigMaps
+    ("configmaps", "get"): "read",
+    ("configmaps", "list"): "read",
+    ("configmaps", "watch"): "read",
+    ("configmaps", "create"): "write",
+    ("configmaps", "update"): "write",
+    ("configmaps", "patch"): "write",
+    ("configmaps", "delete"): "write",
+    ("configmaps", "deletecollection"): "write",
+
+    # Secrets
+    ("secrets", "get"): "admin",
+    ("secrets", "list"): "admin",
+    ("secrets", "watch"): "admin",
+    ("secrets", "create"): "admin",
+    ("secrets", "update"): "admin",
+    ("secrets", "patch"): "admin",
+    ("secrets", "delete"): "admin",
+    ("secrets", "deletecollection"): "admin",
+}
+
+# -----------------------------------------------------------------------------
 # Logic
 # -----------------------------------------------------------------------------
 
-def classify(ev: dict) -> str | None:
+# def is_real_user_attempt(ev):
+#     imp = ev.get("impersonatedUser") or {}
+#     user = imp.get("username")
+
+#     return isinstance(user, str) and user != "kubernetes-admin"
+
+def is_access_attempt(ev):
+    verb = ev.get("verb")
+    obj = ev.get("objectRef") or {}
+
+    resource = obj.get("resource")
+    namespace = obj.get("namespace")
+    subresource = obj.get("subresource")
+    
+    if not namespace:
+        return False
+    
+    # Ignore pod/log, pod/exec, pod/status etc.
+    if subresource:
+        return False
+
+    return (resource, verb) in NAMESPACE_RESOURCE_PERMISSION_MAP
+
+def classify_event(ev: dict) -> str | None:
     verb = ev.get("verb")
     obj = ev.get("objectRef") or {}
     resp = ev.get("responseStatus") or {}
@@ -63,32 +137,47 @@ def classify(ev: dict) -> str | None:
     resource = obj.get("resource")
     code = resp.get("code")
 
-    if verb == "create" and resource == "namespaces" and code in {200, 201}:
+    if verb == "create" and resource == "namespaces" and code in SUCCESS_CODES:
         return "ns.created"
 
-    if verb == "create" and resource == "roles" and code in {200, 201}:
-        return "role.created"
+    if verb == "create" and resource == "clusterroles" and code in SUCCESS_CODES:
+        return "clusterrole.created"
 
-    if verb == "create" and resource == "rolebindings" and code in {200, 201}:
+    if verb == "create" and resource == "rolebindings" and code in SUCCESS_CODES:
         return "rolebinding.created"
 
-    if verb in {"create", "get", "list", "delete"} and resource == "pods":
-        imp = ev.get("impersonatedUser") or {}
-        user = imp.get("username")
-        if isinstance(user, str) and user != "kubernetes-admin":
-            return "access.attempt"
+    if verb == "create" and resource == "clusterrolebinding" and code in SUCCESS_CODES:
+        return "clusterrolebinding.created"
+
+    if is_access_attempt(ev):
+        return "access.attempt"
         
-    if verb == "delete" and resource == "namespaces" and code in {200, 201}:
+    if verb == "delete" and resource == "namespaces" and code in SUCCESS_CODES:
         return "ns.deleted"
 
-    if verb == "delete" and resource == "roles" and code in {200, 201}:
-        return "role.deleted"
+    if verb == "delete" and resource == "clusterroles" and code in SUCCESS_CODES:
+        return "clusterrole.deleted"
 
-    if verb == "delete" and resource == "rolebindings" and code in {200, 201}:
+    if verb == "delete" and resource == "rolebindings" and code in SUCCESS_CODES:
         return "rolebinding.deleted"
+
+    if verb == "delete" and resource == "clusterrolebindings" and code in SUCCESS_CODES:
+        return "clusterrolebinding.deleted"
 
     return None
 
+def classify_permission(ev: dict) -> str | None:
+    verb = ev.get("verb")
+    obj = ev.get("objectRef") or {}
+    resource = obj.get("resource")
+
+    type = ev.get("tlaType")
+
+    if type != "access.attempt":
+        return None
+    
+    return NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb), "no-permission")
+    
 
 # compact json, no extra spaces
 # prepare to send as bytestring
@@ -171,11 +260,15 @@ async def main() -> None:
                         break
                     
                     try:
-                        ev_type = classify(ev)
+                        ev_type = classify_event(ev)
                         if ev_type is not None:
                             # create shallow copy so we do not modify actual log
                             out_ev = dict(ev)
                             out_ev["tlaType"] = ev_type
+
+                            permission = classify_permission(out_ev)
+                            if permission is not None:
+                                out_ev["permission"] = permission
 
                             audit_id = out_ev.get("auditID")
                             headers = {"Nats-Msg-Id": audit_id} if audit_id else None
