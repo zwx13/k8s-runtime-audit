@@ -297,17 +297,6 @@ UpdateClusterRole(actorgroup, cr, p) ==
     /\ clusterRoles' = [clusterRoles EXCEPT ![cr] = p]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, accessAttempts >>
 
-DeleteClusterRolePermission(actorgroup, cr, p) ==
-    /\ IsClusterAdmin(actorgroup)
-    /\ cr \in CustomClusterRoleNames
-    /\ cr \in DOMAIN clusterRoles
-    /\ clusterRoles' = 
-        IF PermissionTiers[clusterRoles[cr]] = 4 THEN [clusterRoles EXCEPT ![cr] = "admin-powers"]
-        ELSE IF PermissionTiers[clusterRoles[cr]] = 3 THEN [clusterRoles EXCEPT ![cr] = "write"]
-        ELSE IF PermissionTiers[clusterRoles[cr]] = 3 THEN [clusterRoles EXCEPT ![cr] = "read"]
-        ELSE [clusterRoles EXCEPT ![cr] = "none"]
-    /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoleBindings, accessAttempts >>
-
 (*
 * A CR can be deleted no matter if it's empty or if
 * It actually has permissionsa associated to it 
@@ -455,7 +444,6 @@ Next ==
         \/ DeleteNamespace(actorgroup, ns)
         \/ CreateClusterRole(actorgroup, cr, p)
         \/ UpdateClusterRole(actorgroup, cr, p)
-        \/ DeleteClusterRolePermission(actorgroup, cr, p)
         \/ DeleteClusterRole(actorgroup, cr)
         \/ GrantNSAccess(actorgroup, ns, rbName, targetgroup, cr)
         \/ RevokeNSAccess(actorgroup, ns, rbName, targetgroup, cr)
