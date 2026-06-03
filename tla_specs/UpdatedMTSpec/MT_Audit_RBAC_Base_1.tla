@@ -58,13 +58,13 @@ MatchRoleBinding(targetNS, targetG, targetP) ==
     IN
         /\ rbRole \in DOMAIN clusterRoles
         /\ LET 
-                rbGroups == roleBindings[key][1]
+                rbGroup == roleBindings[key][1]
                 rbPerms == clusterRoles[rbRole]
                 rbNS == key[1]
                 rbValue == roleBindings[key]
            IN
                 /\ Len(rbValue) # 0
-                /\ targetG \in rbGroups
+                /\ targetG = rbGroup
                 /\ 
                     \/ targetP = rbPerms
                     \/ PermissionTiers[rbPerms] >= PermissionTiers[targetP]
@@ -77,12 +77,12 @@ MatchCRBinding(targetG, targetP) ==
     IN
         /\ crbRole \in DOMAIN clusterRoles
         /\ LET
-                crbGroups == clusterRoleBindings[key][1]
+                crbGroup == clusterRoleBindings[key][1]
                 crbPerms == clusterRoles[crbRole]
                 crbValue == clusterRoleBindings[key]
             IN
                 /\ Len(crbValue) # 0
-                /\ targetG \in crbGroups
+                /\ targetG = crbGroup
                 /\ 
                     \/ targetP = crbPerms
                     \/ PermissionTiers[crbPerms] >= PermissionTiers[targetP]
@@ -94,12 +94,12 @@ IsClusterAdmin(actorgroup) ==
     IN 
         /\ crbRole \in DOMAIN clusterRoles
         /\ LET 
-                crbGroups == clusterRoleBindings[key][1]
+                crbGroup == clusterRoleBindings[key][1]
                 crbPerms == clusterRoles[crbRole]
                 crbValue == clusterRoleBindings[key]
            IN
                 /\ Len(crbValue) # 0
-                /\ actorgroup \in crbGroups
+                /\ actorgroup = crbGroup
                 /\ crbPerms = "cluster-admin-powers"
 
 IsNSAdmin(actorgroup, targetNS) ==
@@ -109,14 +109,14 @@ IsNSAdmin(actorgroup, targetNS) ==
     IN
         /\ rbRole \in DOMAIN clusterRoles
         /\ LET
-                rbGroups == roleBindings[key][1]
+                rbGroup == roleBindings[key][1]
                 rbPerms == clusterRoles[rbRole]
                 rbNS == key[1]
                 rbValue == roleBindings[key]
             IN
                 /\ Len(rbValue) # 0
                 /\ rbNS = targetNS
-                /\ actorgroup \in rbGroups
+                /\ actorgroup = rbGroup
                 /\ rbPerms = "admin-powers"
 
 IsNSTenant(g) ==
@@ -144,8 +144,9 @@ SameTenant(targetNS, targetG) ==
 *)
 BindingsRespectMT ==
     \A <<ns, rb>> \in DOMAIN roleBindings:
-      LET groups == roleBindings[<<ns, rb>>][1]
-      IN \A group \in groups:
+      LET 
+        group == roleBindings[<<ns, rb>>][1]
+      IN 
         SameTenant(ns, group)
 
 (*
@@ -193,10 +194,10 @@ NoClusterAdminRB ==
 *)
 NoTenantCRB ==
     \A key \in DOMAIN clusterRoleBindings : 
-        LET crbGroups == clusterRoleBindings[key][1]
+        LET 
+            crbGroup == clusterRoleBindings[key][1]
         IN 
-            \A group \in crbGroups: 
-                ~IsNSTenant(group)
+            ~IsNSTenant(crbGroup)
 
 \* tenant groups must only have read or write
 
@@ -220,12 +221,12 @@ TypeOK ==
   /\ DOMAIN roleBindings \in SUBSET (Namespaces \X RBNames)
   /\ \A key \in DOMAIN roleBindings:
         roleBindings[key] \in 
-            ((SUBSET Groups) \X ClusterRoleNames)
+            (Groups \X ClusterRoleNames)
 \* clusterRoleBindings
   /\ DOMAIN clusterRoleBindings \in SUBSET CRBNames
   /\ \A key \in DOMAIN clusterRoleBindings:
         clusterRoleBindings[key] \in 
-            ((SUBSET Groups) \X ClusterRoleNames)
+            (Groups \X ClusterRoleNames)
 \* clusterRoles 
   /\ DefaultClusterRoleNames \in SUBSET DOMAIN clusterRoles
   /\ DOMAIN clusterRoles \in SUBSET ClusterRoleNames
@@ -247,7 +248,7 @@ TypeOK ==
 Init == 
   /\ nsTenantMap = [ns \in Namespaces |-> NoTenant]
   /\ roleBindings = [nsrb \in {} |-> {}]
-  /\ clusterRoleBindings = "cluster-admin" :> <<{"system-masters"}, "cluster-admin">>
+  /\ clusterRoleBindings = "cluster-admin" :> <<"system-masters", "cluster-admin">>
   /\ clusterRoles = DefaultClusterRolePermMap
   /\ accessAttempts = [ gnp \in {} |-> {} ]
 
@@ -329,9 +330,7 @@ GrantNSAccess(actorgroup, targetNS, rbName, targetG, cr) ==
                     /\ clusterPerm \in {"none", "read", "write"}
                     /\ SameTenant(targetNS, targetG)
     /\ SameTenant(targetNS, targetG)
-    /\ roleBindings' = IF <<targetNS,rbName>> \in DOMAIN roleBindings THEN
-                            [roleBindings EXCEPT ![<<targetNS, rbName>>] = << @[1] \cup {targetG}, @[2] >>]
-                        ELSE <<targetNS, rbName>> :> <<{targetG}, cr>> @@ roleBindings
+    /\ roleBindings' = <<targetNS, rbName>> :> <<targetG, cr>> @@ roleBindings
     /\ UNCHANGED << nsTenantMap, clusterRoleBindings, clusterRoles, accessAttempts >>
 
 (*
@@ -344,7 +343,6 @@ RevokeNSAccess(actorgroup, targetNS, rbName, targetG, k) ==
             IF k \in DOMAIN clusterRoles
             THEN clusterRoles[k]
             ELSE "deleted-role"
-        rbGroups == roleBindings[<<targetNS, rbName>>][1]
     IN 
         /\
             \/ 
@@ -359,9 +357,7 @@ RevokeNSAccess(actorgroup, targetNS, rbName, targetG, k) ==
                     \/ clusterPerm \in {"none", "read", "write"}
                 /\ SameTenant(targetNS, targetG)
         /\ <<targetNS, rbName>> \in DOMAIN roleBindings
-        /\ roleBindings' = IF Cardinality(rbGroups) = 1 THEN
-                                [key \in DOMAIN roleBindings \ {<<targetNS, rbName>>} |-> roleBindings[key]]
-                            ELSE [roleBindings EXCEPT ![<<targetNS, rbName>>] = << @[1] \ {targetG}, @[2] >>]
+        /\ roleBindings' = [key \in DOMAIN roleBindings \ {<<targetNS, rbName>>} |-> roleBindings[key]]
         /\ UNCHANGED << nsTenantMap, clusterRoleBindings, clusterRoles, accessAttempts >>
 
 (*
@@ -374,9 +370,7 @@ GrantClusterAccess(actorgroup, crbName, g, cr) ==
     /\ cr \in DOMAIN clusterRoles
     /\ IsClusterAdmin(actorgroup)
     /\ g \in PlatformGroups
-    /\ clusterRoleBindings' = IF crbName \in DOMAIN clusterRoleBindings THEN
-                                    [clusterRoleBindings EXCEPT ![crbName] = << @[1] \cup {g}, @[2] >>]
-                                ELSE crbName :> <<{g}, cr>> @@ clusterRoleBindings
+    /\ clusterRoleBindings' = crbName :> <<g, cr>> @@ clusterRoleBindings
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoles, accessAttempts >>
 
 (*
@@ -388,9 +382,7 @@ RevokeClusterAccess(actorgroup, crbName, g, k) ==
     /\ IsClusterAdmin(actorgroup)
     /\ crbName \in DOMAIN clusterRoleBindings
     /\ crbName # "cluster-admin"
-    /\ clusterRoleBindings' = IF Cardinality(clusterRoleBindings[crbName][1]) = 1 THEN
-                                    [crb \in DOMAIN clusterRoleBindings \ {crbName} |-> clusterRoleBindings[crb]]
-                                ELSE [clusterRoleBindings EXCEPT ![crbName] = << @[1] \ g, @[2] >>]
+    /\ clusterRoleBindings' = [crb \in DOMAIN clusterRoleBindings \ {crbName} |-> clusterRoleBindings[crb]]
     /\ UNCHANGED << nsTenantMap, roleBindings, clusterRoles, accessAttempts >>
 
 (*
