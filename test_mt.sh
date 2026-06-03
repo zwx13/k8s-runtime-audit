@@ -25,9 +25,9 @@ expect_fail() {
   info "EXPECT FORBIDDEN: ${desc}"
   # take what the command returns
   if "$@"; then
-    die "Expected failure but command succeeded: ${desc}"
+    die "Did not fail (bad!): ${desc}"
   else
-    info "PASS (failed as expected): ${desc}"
+    info "Failed (good!): ${desc}"
   fi
 }
 
