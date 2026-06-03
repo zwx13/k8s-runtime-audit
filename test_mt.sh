@@ -3,8 +3,15 @@ set -euo pipefail
 
 TA="${TA:-tenant-a}"
 TB="${TB:-tenant-b}"
+
+CTX_A="${CTX_A:-tenant-a-user@kubernetes}"
+CTX_B="${CTX_B:-tenant-b-user@kubernetes}"
+
 U_A="${U_A:-tenant-a-user}"
 U_B="${U_B:-tenant-b-user}"
+
+G_A="${G_A:-tenant-a}"
+G_B="${G_B:-tenant-b}"
 
 OK_IMAGE="${OK_IMAGE:-nginx}"
 KUBECTL="${KUBECTL:-kubectl}"
@@ -19,6 +26,11 @@ run() {
   "$@"
 }
 
+# takes a description and command
+# $@ is all remaining arguments after the shift
+# then runs the actual command; if exit code is 0,
+# we enter the branch, if non-zero, we go on else
+# branch.
 expect_fail() {
   # usage: expect_fail <description> <cmd...>
   local desc="$1"; shift
@@ -95,7 +107,7 @@ rules:
   verbs: ["get", "list", "create", "update", "patch", "delete"]
 EOF
 
-info "Creating RoleBindings to ClusterRole dev for ${U_A} and ${U_B}..."
+info "Creating RoleBindings to ClusterRole dev for ${G_A} and ${G_B}..."
 cat <<EOF | "$KUBECTL" apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -103,8 +115,8 @@ metadata:
   name: tenant-a-binding
   namespace: ${TA}
 subjects:
-- kind: User
-  name: ${U_A}
+- kind: Group
+  name: ${G_A}
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -117,8 +129,8 @@ metadata:
   name: tenant-b-binding
   namespace: ${TB}
 subjects:
-- kind: User
-  name: ${U_B}
+- kind: Group
+  name: ${G_B}
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -130,43 +142,44 @@ info "Waiting for RBAC changes to take effect..."
 sleep 1
 
 info "=== Expected ALLOWED in ${TA} as ${U_A}: pod read/write/delete ==="
-run "$KUBECTL" get pods -n "${TA}" --as="${U_A}"
-run "$KUBECTL" run ok-a -n "${TA}" --image="${OK_IMAGE}" --restart=Never --as="${U_A}"
-run "$KUBECTL" delete pod ok-a -n "${TA}" --wait=false --ignore-not-found --as="${U_A}"
+run "$KUBECTL" --context="${CTX_A}" get pods -n "${TA}"
+run "$KUBECTL" --context="${CTX_A}" run ok-a -n "${TA}" --image="${OK_IMAGE}" --restart=Never
+run "$KUBECTL" --context="${CTX_A}" delete pod ok-a -n "${TA}" --wait=false --ignore-not-found
 
 info "=== Expected ALLOWED in ${TA} as ${U_A}: configmap read/write/delete ==="
-run "$KUBECTL" create configmap cm-a -n "${TA}" --from-literal=key=value --as="${U_A}"
-run "$KUBECTL" get configmap cm-a -n "${TA}" --as="${U_A}"
-run "$KUBECTL" patch configmap cm-a -n "${TA}" --type merge -p '{"data":{"key":"new-value"}}' --as="${U_A}"
-run "$KUBECTL" delete configmap cm-a -n "${TA}" --as="${U_A}"
+run "$KUBECTL" --context="${CTX_A}" create configmap cm-a -n "${TA}" --from-literal=key=value
+run "$KUBECTL" --context="${CTX_A}" get configmap cm-a -n "${TA}"
+run "$KUBECTL" --context="${CTX_A}" patch configmap cm-a -n "${TA}" --type merge -p '{"data":{"key":"new-value"}}'
+run "$KUBECTL" --context="${CTX_A}" delete configmap cm-a -n "${TA}"
 
 info "=== Expected ALLOWED in ${TA} as ${U_A}: secret admin-sensitive access ==="
-run "$KUBECTL" create secret generic secret-a -n "${TA}" --from-literal=token=abc123 --as="${U_A}"
-run "$KUBECTL" get secret secret-a -n "${TA}" --as="${U_A}"
-run "$KUBECTL" patch secret secret-a -n "${TA}" --type merge -p '{"stringData":{"token":"changed"}}' --as="${U_A}"
-run "$KUBECTL" delete secret secret-a -n "${TA}" --as="${U_A}"
+run "$KUBECTL" --context="${CTX_A}" create secret generic secret-a -n "${TA}" --from-literal=token=abc123
+run "$KUBECTL" --context="${CTX_A}" get secret secret-a -n "${TA}"
+run "$KUBECTL" --context="${CTX_A}" patch secret secret-a -n "${TA}" --type merge -p '{"stringData":{"token":"changed"}}'
+run "$KUBECTL" --context="${CTX_A}" delete secret secret-a -n "${TA}"
 
 info "=== Expected ALLOWED in ${TB} as ${U_B}: varied access attempts ==="
-run "$KUBECTL" get pods -n "${TB}" --as="${U_B}"
-run "$KUBECTL" create configmap cm-b -n "${TB}" --from-literal=key=value --as="${U_B}"
-run "$KUBECTL" get configmap cm-b -n "${TB}" --as="${U_B}"
-run "$KUBECTL" create secret generic secret-b -n "${TB}" --from-literal=token=xyz789 --as="${U_B}"
-run "$KUBECTL" get secret secret-b -n "${TB}" --as="${U_B}"
+run "$KUBECTL" --context="${CTX_B}" get pods -n "${TB}"
+run "$KUBECTL" --context="${CTX_B}" create configmap cm-b -n "${TB}" --from-literal=key=value
+run "$KUBECTL" --context="${CTX_B}" get configmap cm-b -n "${TB}"
+run "$KUBECTL" --context="${CTX_B}" create secret generic secret-b -n "${TB}" --from-literal=token=xyz789
+run "$KUBECTL" --context="${CTX_B}" get secret secret-b -n "${TB}"
+
 
 info "=== Expected FORBIDDEN cross-tenant access ==="
-expect_fail "U_A cannot get pods in ${TB}" \
-  "$KUBECTL" get pods -n "${TB}" --as="${U_A}"
+expect_fail "${U_A} cannot get pods in ${TB}" \
+  "$KUBECTL" --context="${CTX_A}" get pods -n "${TB}"
 
-expect_fail "U_A cannot create pod in ${TB}" \
-  "$KUBECTL" run bad-a -n "${TB}" --image="${OK_IMAGE}" --restart=Never --as="${U_A}"
+expect_fail "${U_A} cannot create pod in ${TB}" \
+  "$KUBECTL" --context="${CTX_A}" run bad-a -n "${TB}" --image="${OK_IMAGE}" --restart=Never
 
-expect_fail "U_A cannot get secret in ${TB}" \
-  "$KUBECTL" get secret secret-b -n "${TB}" --as="${U_A}"
+expect_fail "${U_A} cannot get secret in ${TB}" \
+  "$KUBECTL" --context="${CTX_A}" get secret secret-b -n "${TB}"
 
-expect_fail "U_B cannot get pods in ${TA}" \
-  "$KUBECTL" get pods -n "${TA}" --as="${U_B}"
+expect_fail "${U_B} cannot get pods in ${TA}" \
+  "$KUBECTL" --context="${CTX_B}" get pods -n "${TA}"
 
-expect_fail "U_B cannot create configmap in ${TA}" \
-  "$KUBECTL" create configmap bad-cm -n "${TA}" --from-literal=key=value --as="${U_B}"
+expect_fail "${U_B} cannot create configmap in ${TA}" \
+  "$KUBECTL" --context="${CTX_B}" create configmap bad-cm -n "${TA}" --from-literal=key=value
 
 info "All checks completed."
