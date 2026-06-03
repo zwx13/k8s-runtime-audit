@@ -92,25 +92,53 @@ NAMESPACE_RESOURCE_PERMISSION_MAP = {
     ("configmaps", "deletecollection"): "write",
 
     # Secrets
-    ("secrets", "get"): "admin",
-    ("secrets", "list"): "admin",
-    ("secrets", "watch"): "admin",
-    ("secrets", "create"): "admin",
-    ("secrets", "update"): "admin",
-    ("secrets", "patch"): "admin",
-    ("secrets", "delete"): "admin",
-    ("secrets", "deletecollection"): "admin",
+    ("secrets", "get"): "admin-powers",
+    ("secrets", "list"): "admin-powers",
+    ("secrets", "watch"): "admin-powers",
+    ("secrets", "create"): "admin-powers",
+    ("secrets", "update"): "admin-powers",
+    ("secrets", "patch"): "admin-powers",
+    ("secrets", "delete"): "admin-powers",
+    ("secrets", "deletecollection"): "admin-powers",
+}
+
+DEFAULT_CLUSTER_ROLES_PERMISSION_MAP = {
+    "view": "read",
+    "edit": "write",
+    "admin": "admin-powers",
+    "cluster-admin": "cluster-admin-powers"
+}
+
+PERMISSION_TIER = {
+    "none": 0,
+    "read": 1,
+    "write": 2,
+    "admin-powers": 3,
+    "cluster-admin-powers": 4
+}
+
+SYSTEM_GROUPS = {
+    "system:nodes",
+    "system:serviceaccounts",
 }
 
 # -----------------------------------------------------------------------------
 # Logic
 # -----------------------------------------------------------------------------
 
-# def is_real_user_attempt(ev):
-#     imp = ev.get("impersonatedUser") or {}
-#     user = imp.get("username")
+def is_system_group(ev):
+    imp = ev.get("impersonatedUser") or {}
+    
+    if imp.get("groups"):
+        action_groups = set(imp.get("groups") or [])
+    else:
+        user = ev.get("user") or {}
+        action_groups = set(user.get("groups") or [])
 
-#     return isinstance(user, str) and user != "kubernetes-admin"
+    if action_groups & {"system:nodes", "system:serviceaccounts"}:
+        return True
+    
+    return False
 
 def is_access_attempt(ev):
     verb = ev.get("verb")
@@ -120,6 +148,9 @@ def is_access_attempt(ev):
     namespace = obj.get("namespace")
     subresource = obj.get("subresource")
     
+    if is_system_group(ev):
+        return False
+
     if not namespace:
         return False
     
@@ -166,7 +197,7 @@ def classify_event(ev: dict) -> str | None:
 
     return None
 
-def classify_permission(ev: dict) -> str | None:
+def classify_access_attempts_permission(ev: dict) -> str | None:
     verb = ev.get("verb")
     obj = ev.get("objectRef") or {}
     resource = obj.get("resource")
@@ -177,8 +208,40 @@ def classify_permission(ev: dict) -> str | None:
         return None
     
     return NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb), "no-permission")
-    
 
+def max_permission(a, b):
+    if PERMISSION_TIER[b] > PERMISSION_TIER[a]:
+        return b
+    return a
+
+def permission_from_clusterrole_rules(ev):
+    result = "none"
+    if (
+        ev.get("tlaType") in {"clusterrole.created", "clusterrole.updated"}
+        and (ev.get("requestObject") or {})
+                .get("metadata", {})
+                .get("name") not in {"view", "edit", "admin", "cluster-admin"}
+        ):
+
+        rules = ev.get("requestObject" or {}).get("rules" or {})
+
+        for rule in rules or []:
+            resources = rule.get("resources") or []
+            verbs = rule.get("verbs") or []
+
+            for resource in resources:
+                for verb in verbs:
+                    if resource == "*" or verb == "*":
+                        result = max_permission(result, "cluster-admin-powers")
+                        continue
+                
+                    permission = NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb))
+                   
+                    if permission is not None:
+                        result = max_permission(result, permission)
+
+        return result
+                
 # compact json, no extra spaces
 # prepare to send as bytestring
 def encode_compact_json(obj) -> bytes:
@@ -260,15 +323,23 @@ async def main() -> None:
                         break
                     
                     try:
+                        # classify relevant events, add TlaType
                         ev_type = classify_event(ev)
                         if ev_type is not None:
                             # create shallow copy so we do not modify actual log
                             out_ev = dict(ev)
                             out_ev["tlaType"] = ev_type
+                            # if event is access attempt, map the verb x resource to a permission
+                            # in our model
+                            access_attempt_permission = classify_access_attempts_permission(out_ev)
+                            if access_attempt_permission is not None:
+                                out_ev["permission"] = access_attempt_permission
 
-                            permission = classify_permission(out_ev)
-                            if permission is not None:
-                                out_ev["permission"] = permission
+                            # if event is granting access and clusterRole is non default,
+                            # we must map its permissions to a permission in our model
+                            cluster_role_permission = permission_from_clusterrole_rules(out_ev)
+                            if cluster_role_permission is not None:
+                                out_ev["permission"] = cluster_role_permission
 
                             audit_id = out_ev.get("auditID")
                             headers = {"Nats-Msg-Id": audit_id} if audit_id else None
