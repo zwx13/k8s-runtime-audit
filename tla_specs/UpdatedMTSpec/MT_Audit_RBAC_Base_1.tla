@@ -128,6 +128,44 @@ SameTenant(targetNS, targetG) ==
   /\ GroupTenantMap[targetG] = nsTenantMap[targetNS]
 
 (*************************************************************************)
+(* Trace Alerts                                                          *)
+(*************************************************************************)
+CrossTenantSuccessSet == {a \in DOMAIN accessAttempts :
+        /\ accessAttempts[a].matchingRBorCBR
+        /\ ~(accessAttempts[a].respectsNSTMapAtReqTime)
+}
+
+DanglingRoleBindingsSet == {rbkey \in DOMAIN roleBindings:
+        LET
+            rbRole == roleBindings[rbkey][2]
+        IN
+            rbRole \notin DOMAIN clusterRoles
+}
+
+DanglingClusterRoleBindingsSet == {crbkey \in DOMAIN roleBindings:
+        LET
+            crbRole == clusterRoleBindings[crbkey][2]
+        IN
+            crbRole \notin DOMAIN clusterRoles
+}
+
+ClusterRoleBindingForTenantSet == {key \in DOMAIN clusterRoleBindings : 
+        LET 
+            crbGroup == clusterRoleBindings[key][1]
+        IN 
+            IsNSTenant(crbGroup)
+}
+
+
+RoleBindingToClusterAdminSet == {
+    key \in DOMAIN roleBindings : 
+        LET rbRole == roleBindings[key][2]
+            rolePerms == clusterRoles[rbRole]
+        IN /\ rbRole \in DOMAIN clusterRoles
+           /\ ~(PermissionTiers[rolePerms] # 4)
+}
+
+(*************************************************************************)
 (* Invariants                                                            *)
 (*************************************************************************)
 

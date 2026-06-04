@@ -22,23 +22,35 @@ CONSTANTS
 (*************************************************************************)
 (* State variables                                                       *)
 (*************************************************************************)
+
+(* - idx is to iterate through logs incrementally,
+*  - the .*Alerts variables are to define sets that contain 
+* logs corresponding to cluster state that should not be allowed.
+* We cannot use invariants, since the logs may be violating.
+* Instead, we follow the cluster's state and alert ONLY ONCE
+* per bad audit log.
+*)
 VARIABLES
-    idx,
     nsTenantMap,
     roleBindings,
     clusterRoleBindings,
     accessAttempts,
     clusterRoles,
+    \* variables specific for trace spec
+    idx,
     crossTenantAlerts,
     danglingRoleBindingsAlerts,
-    danglingClusterRoleBindingsAlerts
-    
+    danglingClusterRoleBindingsAlerts,
+    clusterRoleBindingForTenantAlerts,
+    roleBindingToClusterTenantAlerts
+
 
 vars == 
     << 
         idx, nsTenantMap, clusterRoles, roleBindings, 
         clusterRoleBindings, accessAttempts, crossTenantAlerts, 
-        danglingRoleBindingsAlerts, danglingClusterRoleBindingsAlerts
+        danglingRoleBindingsAlerts, danglingClusterRoleBindingsAlerts,
+        clusterRoleBindingForTenantAlerts, roleBindingToClusterTenantAlerts
     >>
 
 (*************************************************************************)
@@ -157,6 +169,8 @@ Init ==
     /\ crossTenantAlerts = {}
     /\ danglingRoleBindingsAlerts = {}
     /\ danglingClusterRoleBindingsAlerts = {}
+    /\ clusterRoleBindingForTenantAlerts = {}
+    /\ roleBindingToClusterTenantAlerts = {}
     /\ PrintT("AllocIn is: " \o ToString(AllocIn))
     /\ PrintT("Namespaces from batch: " \o ToString(NamespacesFromBatch))
     /\  
@@ -270,7 +284,6 @@ AlertIfCrossTenantAction ==
             /\ crossTenantAlerts' = crossTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("!!! Cross Tenant Access Identified !!!")
 
-
 AlertIfDanglingRoleBindings ==
     LET danglingRoleBindings == Model!DanglingRoleBindingsSet' \ Model!DanglingRoleBindingsSet IN
         IF danglingRoleBindings = {} THEN
@@ -278,7 +291,7 @@ AlertIfDanglingRoleBindings ==
             /\ UNCHANGED << danglingRoleBindingsAlerts >>
         ELSE 
             /\ danglingRoleBindingsAlerts' = danglingRoleBindingsAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-            /\ PrintT("!!! Dangling binding identified !!!")
+            /\ PrintT("!!! Dangling rolebinding identified !!!")
 
 AlertIfDanglingClusterRoleBindings == 
     LET danglingClusterRoleBindings == Model!DanglingRoleBindingsSet' \ Model!DanglingRoleBindingsSet IN
@@ -287,7 +300,25 @@ AlertIfDanglingClusterRoleBindings ==
             /\ UNCHANGED << danglingClusterRoleBindingsAlerts >>
         ELSE 
             /\ danglingClusterRoleBindingsAlerts' = danglingClusterRoleBindingsAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-            /\ PrintT("!!! Dangling binding identified !!!")
+            /\ PrintT("!!! Dangling clusterrolebinding identified !!!")
+
+AlertIfClusterRoleBindingForTenant ==
+    LET clusterRoleBindingForTenant == Model!ClusterRoleBindingForTenantSet' \ Model!ClusterRoleBindingForTenantSet IN
+        IF clusterRoleBindingForTenant = {} THEN
+            /\ TRUE
+            /\ UNCHANGED << clusterRoleBindingForTenantAlerts >>
+        ELSE 
+            /\ clusterRoleBindingForTenantAlerts' = clusterRoleBindingForTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("!!! ClusterRoleBinding for a tenant group identified !!!")
+
+AlertIfRoleBindingToClusterAdmin ==
+    LET roleBindingsToClusterAdmin == Model!RoleBindingToClusterAdminSet' \ Model!RoleBindingToClusterAdminSet IN
+        IF roleBindingsToClusterAdmin = {} THEN
+            /\ TRUE
+            /\ UNCHANGED << roleBindingToClusterTenantAlerts >>
+        ELSE 
+            /\ roleBindingToClusterTenantAlerts' = roleBindingToClusterTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("!!! RoleBinding binding the cluster-admin role identified !!!")
 
 alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts
 (*********4ALERTS***********)
@@ -317,7 +348,7 @@ SerializeAtEnd ==
         /\ NatsPublishAlert(SetToSeq(alertOut))
      ELSE
         /\ PrintT("================================================")
-        /\ PrintT("State of the MT cluster is fully ok.")
+        /\ PrintT("In this batch, state of the MT cluster is    ok.")
         /\ PrintT("================================================")
         /\ TRUE
   /\ NatsPutCachedState(allocOut)
