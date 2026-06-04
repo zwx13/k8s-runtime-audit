@@ -4,11 +4,11 @@ EXTENDS MT_Audit_RBAC_Trace_1
 ConstTenantGroups == {"tenant-a", "tenant-b"}
 ConstPlatformGroups == {"kubeadm:cluster-admins"}
 ConstTenants == {"tenant-a", "tenant-b"}
-ConstNamespaces == NamespacesFromBatch
-ConstRBNames == RBNamesFromBatch
-ConstCRBNames == ClusterRBNamesFromBatch
+ConstNamespaces == {"tenant-a", "tenant-b"}
+ConstRBNames == {"tenant-a-binding", "tenant-b-binding"}
+ConstCRBNames == {"cluster-admin"}
 ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
-ConstCustomClusterRoleNames == CustomClusterRoleNamesFromBatch
+ConstCustomClusterRoleNames == {"dev"}
 ConstNoTenant == "NO_TENANT"
 ConstPermissions == {"none", "read", "write", "admin-powers", "cluster-admin-powers"}
 
@@ -35,14 +35,12 @@ ConstDefaultClusterRolePermMap ==
   
 ConstGroupTenantMap ==
     [ g \in ConstTenantGroups |->
-        IF g = "trs"
-            \* \/ g = "tenant-a-group"
-            \* \/ g = "tenant-a-admin" 
+        IF g = "tenant-a"
         THEN "tenant-a"
-        ELSE IF g = "has"
-            \* \/ g = "tenant-b-group"
-            \* \/ g = "tenant-b-admin"
+
+        ELSE IF g = "tenant-b"
         THEN "tenant-b"
+
         ELSE ConstNoTenant
     ]
 ====

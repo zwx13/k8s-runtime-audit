@@ -28,16 +28,18 @@ VARIABLES
     roleBindings,
     clusterRoleBindings,
     accessAttempts,
-    clusterRoles
-    \* rbAlerts,
-    \* cbrAlerts,
-    \* danglingRBAlerts,
-    \* crossTenantAlerts
+    clusterRoles,
+    crossTenantAlerts,
+    danglingRoleBindingsAlerts,
+    danglingClusterRoleBindingsAlerts
     
 
 vars == 
-    << idx, nsTenantMap, roleBindings, clusterRoleBindings,
-    accessAttempts, clusterRoles >>
+    << 
+        idx, nsTenantMap, clusterRoles, roleBindings, 
+        clusterRoleBindings, accessAttempts, crossTenantAlerts, 
+        danglingRoleBindingsAlerts, danglingClusterRoleBindingsAlerts
+    >>
 
 (*************************************************************************)
 (* NatsConsume Call                                                      *)
@@ -124,7 +126,7 @@ GetAllRBNames(logs) ==
       
 GetAllClusterRBNames(logs) ==
   { RBName(logs[i]) : 
-    i \in { j \in 1..Len(logs) : (logs[j]["tlaType"] = "rolebinding.created" \/ logs[j]["tlaType"] = "rolebinding.deleted") } }
+    i \in { j \in 1..Len(logs) : (logs[j]["tlaType"] = "clusterrolebinding.created" \/ logs[j]["tlaType"] = "clusterrolebinding.deleted") } }
   
 \* precompute from logs to avoid creating a constant
 \* nsTenantMap and Default CR map are hard-set
@@ -144,36 +146,35 @@ HasEmptyMappings ==
     /\ DOMAIN AllocIn # {}
     /\ \A k \in DOMAIN AllocIn : AllocIn[k] = <<>>
 
+HasEmptyNSTenantMap ==
+    /\ DOMAIN AllocIn # {}
+    /\ Len(AllocIn.nsTenant) = 0
+
 Init == 
     /\ idx = 1
-    \* /\ rbAlerts = {}
-    \* /\ danglingRBAlerts = {}
-    \* /\ crossTenantAlerts = {}
     /\ TLCSet(13, 0)
-    /\ PrintT("================================================")
-    /\ PrintT("===========Initial State information============")
-    /\ PrintT("Length of event batch is: " \o ToString(Len(LogEvents)))
-    /\ PrintT("All namespace names in batch: " \o ToString(NamespacesFromBatch))
-    /\ PrintT("All ClusterRoleNames in batch: " \o ToString(CustomClusterRoleNamesFromBatch))
-    /\ PrintT("All tenant-group names in batch: " \o ToString(NSTenantLabelsFromBatch))
-    /\ PrintT("AllocIn is: " \o ToString(AllocIn))
-    /\ PrintT("===============================================")
-    \* /\ PrintT(LogEvents)
     /\ accessAttempts = [ gnp \in {} |-> {} ]
-    /\  IF 
+    /\ crossTenantAlerts = {}
+    /\ danglingRoleBindingsAlerts = {}
+    /\ danglingClusterRoleBindingsAlerts = {}
+    /\ PrintT("AllocIn is: " \o ToString(AllocIn))
+    /\ PrintT("Namespaces from batch: " \o ToString(NamespacesFromBatch))
+    /\  
+        IF 
             \/ IsEmpty 
             \/ HasEmptyMappings
         THEN   
             \* if we do not have anywhere to pick up from, we assume cluster is empty
             \* then, initial state is the same as in the base spec
-            /\ nsTenantMap = [ ns \in NamespacesFromBatch |-> NoTenant ]
+            /\ nsTenantMap = [ ns \in Namespaces |-> NoTenant ]
             /\ roleBindings = [nsrb \in {} |-> {}]
-            /\ clusterRoleBindings = "cluster-admin" :> <<"system-masters", "cluster-admin">>
+            /\ clusterRoleBindings = "cluster-admin" :> <<"kubeadm:cluster-admins", "cluster-admin">>
             /\ clusterRoles = DefaultClusterRolePermMap
         ELSE
             \* if we have a state to pick up from, we transform it to match the
             \* variables we have defined, then use this as starting point.
-            /\ nsTenantMap = SeqToFun(AllocIn.nsTenant)
+            /\ nsTenantMap = IF HasEmptyNSTenantMap THEN [ ns \in Namespaces |-> NoTenant ]
+                             ELSE SeqToFun(AllocIn.nsTenant)
             /\ clusterRoles = SeqToFun(AllocIn.clusterRoles)
             /\ roleBindings = SeqToFun(AllocIn.roleBindings)
             /\ clusterRoleBindings = SeqToFun(AllocIn.clusterRoleBindings)
@@ -191,11 +192,21 @@ PrintInitOnce ==
       /\ UNCHANGED <<vars>>
       ELSE
       /\ TLCSet(13, 42)
-      /\ PrintT("idx=" \o ToString(idx))
-      /\ PrintT("init DOMAIN = " \o ToString(DOMAIN AllocIn)) 
-      /\ PrintT("=============================================") 
-      /\ PrintT("init raw = " \o ToString(AllocIn)) 
-      /\ PrintT("=============================================") 
+      /\ PrintT("=================================================")
+      /\ PrintT("==============Initial State information=================")
+      /\ PrintT("Length of event batch is: " \o ToString(Len(LogEvents)))
+      /\ PrintT("nsTenantMap is: " \o ToString(nsTenantMap))
+      /\ PrintT("clusterRoles is: " \o ToString(clusterRoles))
+      /\ PrintT("roleBindings is: " \o ToString(roleBindings))
+      /\ PrintT("clusterRoleBindings is: " \o ToString(clusterRoleBindings))
+      /\ PrintT("accessAttempts is: " \o ToString(accessAttempts))
+      /\ PrintT("All namespace names in batch: " \o ToString(NamespacesFromBatch))
+      /\ PrintT("All ClusterRoleNames in batch: " \o ToString(CustomClusterRoleNamesFromBatch))
+      /\ PrintT("All RoleBinding names in batch: " \o ToString(RBNamesFromBatch))
+      /\ PrintT("All ClusterRoleBinding names in batch: " \o ToString(ClusterRBNamesFromBatch))
+      /\ PrintT("All tenant-group names in batch: " \o ToString(NSTenantLabelsFromBatch))
+      /\ PrintT("AllocIn is: " \o ToString(AllocIn))
+      /\ PrintT("====================================================")
       /\ UNCHANGED <<vars>>
 ---------------------------------------------------------------------------------------------
 \* this is the edge case when LogEvents is empty but allocIn is not
@@ -249,44 +260,39 @@ Next ==
   /\ idx' = idx + 1
 
 (*********4ALERTS***********)
-\* \* 2do: publish the actual set too
-\* AlertIfBindingsBad == 
-\*     LET bindingsBad == Model!BadRoleBindings' \ Model!BadRoleBindings IN
-\*         IF bindingsBad = {} THEN
-\*             /\ PrintT("Good Binding is: " \o ToString(Model!BadRoleBindings'))
-\*             /\ TRUE
-\*             /\ UNCHANGED << rbAlerts >>
-\*         ELSE 
-\*             /\ rbAlerts' = rbAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx] >> }
-\*             /\ PrintT("AlertedEvents is: " \o ToString(rbAlerts))
-\*             /\ PrintT("Bad Binding is: " \o ToString(Model!BadRoleBindings'))
-\*             /\ PrintT("Bindingsbad is " \o ToString(bindingsBad))
 
-\* AlertIfCrossTenantBad ==
-\*     LET crossTenantBad == Model!BadCrossTenantSuccessSet' \ Model!BadCrossTenantSuccessSet IN
-\*         IF crossTenantBad = {} THEN 
-\*             /\ TRUE
-\*             /\ PrintT("Cross tenant GOOOOD!!!!")
-\*             /\ UNCHANGED << crossTenantAlerts >>
-\*         ELSE 
-\*             /\ crossTenantAlerts' = crossTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-\*             /\ PrintT("Cross tenant bad!!!!")
+AlertIfCrossTenantAction ==
+    LET crossTenantAction == Model!CrossTenantSuccessSet' \ Model!CrossTenantSuccessSet IN
+        IF crossTenantAction = {} THEN 
+            /\ TRUE
+            /\ UNCHANGED << crossTenantAlerts >>
+        ELSE 
+            /\ crossTenantAlerts' = crossTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("!!! Cross Tenant Access Identified !!!")
 
 
-\* AlertIfDanglingBindings ==
-\*     LET danglingBindings == Model!BadDanglingBindingsSet' \ Model!BadDanglingBindingsSet IN
-\*         IF danglingBindings = {} THEN
-\*             /\ TRUE
-\*             /\ PrintT("NOOOOOOOO Dangling binding!!!")
-\*             /\ UNCHANGED << danglingRBAlerts >>
-\*         ELSE 
-\*             /\ danglingRBAlerts' = danglingRBAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
-\*             /\ PrintT("Dangling binding!!!")
+AlertIfDanglingRoleBindings ==
+    LET danglingRoleBindings == Model!DanglingRoleBindingsSet' \ Model!DanglingRoleBindingsSet IN
+        IF danglingRoleBindings = {} THEN
+            /\ TRUE
+            /\ UNCHANGED << danglingRoleBindingsAlerts >>
+        ELSE 
+            /\ danglingRoleBindingsAlerts' = danglingRoleBindingsAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("!!! Dangling binding identified !!!")
 
-\* alertOut == rbAlerts \cup crossTenantAlerts \cup danglingRBAlerts
-\* (*********4ALERTS***********)
+AlertIfDanglingClusterRoleBindings == 
+    LET danglingClusterRoleBindings == Model!DanglingRoleBindingsSet' \ Model!DanglingRoleBindingsSet IN
+        IF danglingClusterRoleBindings = {} THEN
+            /\ TRUE
+            /\ UNCHANGED << danglingClusterRoleBindingsAlerts >>
+        ELSE 
+            /\ danglingClusterRoleBindingsAlerts' = danglingClusterRoleBindingsAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
+            /\ PrintT("!!! Dangling binding identified !!!")
 
-\* AlertIfBadState == AlertIfBindingsBad /\ AlertIfCrossTenantBad /\ AlertIfDanglingBindings
+alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts
+(*********4ALERTS***********)
+
+AlertIfBadState == AlertIfCrossTenantAction /\ AlertIfDanglingRoleBindings /\ AlertIfDanglingClusterRoleBindings
 
 \* we serialize and create a JSON object that contains arrays
 allocOut ==
@@ -299,38 +305,29 @@ allocOut ==
 
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
-  /\ PrintT("Len of events is " \o ToString(Len(LogEvents)))
-  /\ PrintT("We are in serialize at end, idx: " \o ToString(idx))
+\*   /\ PrintT("We are in serialize at end, idx: " \o ToString(idx))
   /\ NatsAckBatch
   /\ PrintT("allocOut = " \o ToString(allocOut))
+  /\ IF alertOut # {} THEN
+        /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        /\ PrintT("Bad event, alert(s) published in alert stream!")
+        /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        /\ NatsPublishAlert(SetToSeq(alertOut))
+     ELSE
+        /\ PrintT("================================================")
+        /\ PrintT("State of the MT cluster is fully ok.")
+        /\ PrintT("================================================")
+        /\ TRUE
   /\ NatsPutCachedState(allocOut)
-\*   /\ IF alertOut # {} THEN
-\*         /\ PrintT("!!! publish alert " \o ToString(Len(LogEvents)))
-\*         /\ NatsPublishAlert(SetToSeq(alertOut))
-\*      ELSE
-\*         /\ PrintT("No alert to publish??????????????? " \o ToString(Len(LogEvents)))
-\*         /\ TRUE
   /\ UNCHANGED << vars >>
 
-NextPrintSerialize == Next \/ SerializeAtEnd \/ PrintInitOnce
+NextPrintSerialize == PrintInitOnce \/ (Next /\ AlertIfBadState) \/ SerializeAtEnd
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
 BaseInv == Model!TypeOK
-
-\* BaseInv ==  IF Model!Inv THEN
-\*                 TRUE
-\*             ELSE
-\*                 /\ NatsAckBatch
-\*                 /\ NatsPutCachedState(allocOut)
-\*                 /\ PrintT("Violation alloc written in " \o ToString(AlertFile))
-\*                 /\ FALSE
-
-
-\* BaseInv == Model!Inv
-
-\* BaitInv == TLCGet("level") < 14
-
 
 (*************************************************************************)
 (* Future Work                                                           *)
