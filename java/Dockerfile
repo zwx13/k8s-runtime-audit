@@ -28,7 +28,7 @@ COPY CommunityModules.jar ./
 COPY tla_specs/ ./tla_specs/
 
 CMD ["java", "-cp", "app.jar:CommunityModules.jar:tla2tools.jar", "tlc2.Main", \
-     "tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.tla", \
-     "tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.cfg", \
+     "tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.tla", \
+     "tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.cfg", \
      "CommunityModules.jar", \
      "tla2tools.jar"]
