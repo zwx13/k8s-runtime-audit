@@ -7,7 +7,7 @@ Then, we can inspect them manually.
 
 import asyncio
 import os
-from pathlib import Path
+import json
 import logging
 from typing import Final
 from datetime import timedelta
@@ -17,8 +17,7 @@ import nats
 from config_helpers import env_str, env_duration_sec
 from utils import connect_nats
 from stream_functions import ensure_kv
-
-
+from mt_state_bootstrap import build_cached_state
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
 MT_STATE_STORE_KV: Final[str] = env_str("STATE_KV", "MT_STATE_STORE")
 STORE_SUBJ: Final[str] = env_str("STORE_SUBJ", "audit.mt.state.store")
 MT_MAX_AGE: Final[timedelta] = env_duration_sec("MT_RETENTION_SECONDS", 30 * 24 * 60 * 60)
-
+CACHED_STATE_KEY = "cachedState"
 
 # -----------------------------------------------------------------------------
 # Logic
@@ -42,12 +41,20 @@ async def main() -> None:
     js = nc.jetstream()
 
     try:
-        await ensure_kv(
+        kv = await ensure_kv(
             js,
             bucket_name = MT_STATE_STORE_KV
         )
-        log.info("Ensured kv for storing state %s, for subject %s", MT_STATE_STORE_KV, [STORE_SUBJ])
+        log.info("Ensured kv for storing state %s, for subject %s", 
+                 MT_STATE_STORE_KV, 
+                 [STORE_SUBJ])
 
+        cached_state = await build_cached_state()
+        await kv.put("cachedState", json.dumps(cached_state).encode())
+
+        log.info("Bootstrapped KV bucket=%s, key=%s",
+                MT_STATE_STORE_KV,
+                CACHED_STATE_KEY)
 
     finally:
         try:
