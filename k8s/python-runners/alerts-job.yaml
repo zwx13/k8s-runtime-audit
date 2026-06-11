@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Job
+metadata:
+  name: {{ .Values.alerts.name }}
+  labels:
+    app: {{ .Values.alerts.name }}
+  annotations:
+  "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ .Values.alerts.backoffLimit | default 3 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.alerts.name }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: {{ .Values.alerts.name }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        command: ["python3"]
+        args: ["python_audit/alerts.py"]
+        env:
+          - name: NATS_URL
+            value: {{ .Values.envVars.natsUrl | quote }}
+          - name: ALERTS_STREAM
+            value: {{ .Values.alerts.alertsSettings.alertsStream | quote }}
+          - name: ALERTS_SUBJ
+            value: {{ .Values.alerts.alertsSettings.alertsSubj | quote }}
+          - name: ALERTS_DUPLICATE_WINDOW
+            value: {{ .Values.alerts.alertsSettings.duplicateWindow | quote }}
+          - name: ALERTS_RETENTION_SECONDS
+            value: {{ .Values.alerts.alertsSettings.retentionSeconds | quote }}
