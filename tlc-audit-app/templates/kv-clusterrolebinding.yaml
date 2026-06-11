@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}-reader-binding
+  labels:
+    app: {{ .Values.kv.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}-reader
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.kv.name }}
+  labels:
+    app: {{ .Values.kv.name }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ .Values.kv.backoffLimit | default 3 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kv.name }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}
+      containers:
+      - name: {{ .Values.kv.name }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        command: ["python3"]
+        args: ["python_audit/mt_state_store.py"]
+        env:
+          - name: NATS_URL
+            value: {{ .Values.envVars.natsUrl | quote }}
+          - name: STATE_KV
+            value: {{ .Values.kv.kvSettings.stateKV | quote }}
+          - name: STORE_SUBJ
+            value: {{ .Values.kv.kvSettings.storeSubj | quote }}
+          - name: MT_RETENTION_SECONDS
+            value: {{ .Values.kv.kvSettings.retentionSeconds | quote }}

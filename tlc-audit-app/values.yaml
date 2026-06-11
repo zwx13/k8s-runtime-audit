@@ -65,45 +65,22 @@ multitenancy:
 # alerts
 alerts:
   name: audit-alerts
+  backoffLimit: 3
   alertsSettings:
     alertsStream: "MT_ALERTS"
     alertsSubj: "audit.mt.alerts"
     duplicateWindow: "180"
     retentionSeconds: "2592000"
-  replicaCount: 1
-  probes:
-    readiness:
-      command: ["python3", "-c", "import os, time; exit(0 if os.path.exists('/tmp/readyz') and time.time() - os.path.getmtime('/tmp/readyz') < 25 else 1)"]
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      failureThreshold: 3
-    liveness:
-      command: ["python3", "-c", "import os, time; exit(0 if os.path.exists('/tmp/livez') and time.time() - os.path.getmtime('/tmp/livez') < 25 else 1)"]
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      failureThreshold: 3
-    timeoutSeconds: 2
 
 # kv
 kv:
   name: audit-kv
+  backoffLimit: 3
+  serviceAccountName: mt-state-store
   kvSettings:
     stateKV: "MT_STATE_STORE"
     storeSubj: "audit.mt.state.store"
     retentionSeconds: "2592000"
-  replicaCount: 1
-  probes:
-    readiness:
-      command: ["python3", "-c", "import os, time; exit(0 if os.path.exists('/tmp/readyz') and time.time() - os.path.getmtime('/tmp/readyz') < 25 else 1)"]
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      failureThreshold: 3
-    liveness:
-      command: ["python3", "-c", "import os, time; exit(0 if os.path.exists('/tmp/livez') and time.time() - os.path.getmtime('/tmp/livez') < 25 else 1)"]
-      initialDelaySeconds: 5
-      periodSeconds: 10
-      failureThreshold: 3
-    timeoutSeconds: 2
 
 # java tlc runner
 javarunner:
