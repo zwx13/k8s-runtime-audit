@@ -169,12 +169,6 @@ RoleBindingToClusterAdminSet == {
 (* Invariants                                                            *)
 (*************************************************************************)
 
-\* Only Cluster Admins may Create Cluster roles
-\* For roles, groups may create roles, but only with permissions they have
-\* Any role upgrade is done with Admin approval (aggregation)
-\* no escalation/impersonation/binding?
-\* only admin group in that ns may be granted admin ns permissions
-
 (*
 * For all roleBindings that we have, the tenant of the target subject
 * and namespace must match, i.e. there should no binding that binds
@@ -237,11 +231,19 @@ NoTenantCRB ==
         IN 
             ~IsNSTenant(crbGroup)
 
-\* tenant groups must only have read or write
+(* 
+* FUTURE WORK
+* ----------------------------------------------------------------------
+* tenant groups must only have read or write
+* only platform group should have cluster wide max power
+* tenant admins should not be able to give more permissions than they have
+* Only Cluster Admins may Create Cluster roles
+* For roles, groups may create roles, but only with permissions they have
+* Any role upgrade is done with Admin approval (aggregation)
+* no escalation/impersonation/binding?
+* only admin group in that ns may be granted admin ns permissions
+*)
 
-\* only platform group should have cluster wide max power
-
-\* tenant admins should not be able to give more permissions than they have
 
 (*
 * nsTenantMap is equivalent to using NS labels
@@ -320,7 +322,6 @@ DeleteNamespace(actorgroup, ns) ==
 * ClusterRoles are cluster-wide permissions.
 * Only the cluster admin creates/updates/deletes the custom ones.
 * The default ones may not be changed at all.
-* 
 *)
 CreateClusterRole(actorgroup, cr, p) ==
     /\ IsClusterAdmin(actorgroup)

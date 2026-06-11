@@ -99,24 +99,16 @@ TargetNS(l) == l["objectRef"]["namespace"]
 ActorGroup(l) == l["user"]["groups"][1]
 Permission(l) == l["permission"]
 
-\* GetAll helpers for initial mapping
-(*
-We cannot do
-GetAllNS(logs) ==
-  { NSName(logs[i]) :
-      i \in 1..Len(logs) /\ IsNSCreationLog(logs[i]) } }
-see https://github.com/tlaplus/rfcs/issues/10
-maybe we should check if there s been any update..
-
-Also, we should only "get" constants; getting variables at the
-beginning could mess with the creation timestamp and defeat
-the spec purpose (e.g. if we get a RB that is created after 
-a particular access attempt, we would not know)
-*)
-
 (*************************************************************************)
 (* Helpers                                                               *)
 (*************************************************************************)
+
+(*
+ * We should only "get" constants; getting variables at the
+ * beginning could mess with the creation timestamp and defeat
+ * the spec purpose (e.g. if we get a RB that is created after 
+ * a particular access attempt, we would not know).
+*)
 
 \* Namespace-related
 GetAllNSNames(logs) ==
@@ -140,16 +132,15 @@ GetAllClusterRBNames(logs) ==
   { RBName(logs[i]) : 
     i \in { j \in 1..Len(logs) : (logs[j]["tlaType"] = "clusterrolebinding.created" \/ logs[j]["tlaType"] = "clusterrolebinding.deleted") } }
   
-\* precompute from logs to avoid creating a constant
-\* nsTenantMap and Default CR map are hard-set
-\* so are groups (both tenant and platform)
 NamespacesFromBatch == GetAllNSNames(LogEvents)
 NSTenantLabelsFromBatch == GetAllNSTenantLabels(LogEvents)
 RBNamesFromBatch == GetAllRBNames(LogEvents)
 ClusterRBNamesFromBatch == GetAllClusterRBNames(LogEvents)
 CustomClusterRoleNamesFromBatch == GetAllCustomClusterRoleNames(LogEvents)
 
-\* precomputing from loaded state
+(*************************************************************************)
+(* Load and check loaded state helpers                                   *)
+(*************************************************************************)
 AllocIn == NatsLoadCachedState
 
 IsEmpty == DOMAIN AllocIn = {} 
@@ -162,6 +153,10 @@ HasEmptyNSTenantMap ==
     /\ DOMAIN AllocIn # {}
     /\ Len(AllocIn.nsTenant) = 0
 
+
+(*************************************************************************)
+(* Initial States                                                        *)
+(*************************************************************************)
 Init == 
     /\ idx = 1
     /\ TLCSet(13, 0)
@@ -172,21 +167,24 @@ Init ==
     /\ clusterRoleBindingForTenantAlerts = {}
     /\ roleBindingToClusterTenantAlerts = {}
     /\ PrintT("AllocIn is: " \o ToString(AllocIn))
-    /\ PrintT("Namespaces from batch: " \o ToString(NamespacesFromBatch))
     /\  
         IF 
             \/ IsEmpty 
             \/ HasEmptyMappings
         THEN   
-            \* if we do not have anywhere to pick up from, we assume cluster is empty
-            \* then, initial state is the same as in the base spec
+            (* 
+             * If we do not have anywhere to pick up from, we assume cluster is empty.
+             * Then, initial state is the same as in the base spec.
+             *)
             /\ nsTenantMap = [ ns \in Namespaces |-> NoTenant ]
             /\ roleBindings = [nsrb \in {} |-> {}]
             /\ clusterRoleBindings = "cluster-admin" :> <<"kubeadm:cluster-admins", "cluster-admin">>
             /\ clusterRoles = DefaultClusterRolePermMap
         ELSE
-            \* if we have a state to pick up from, we transform it to match the
-            \* variables we have defined, then use this as starting point.
+            (*
+             * If we have a state to pick up from, we transform it to match the
+             * variables we have defined, then use this as starting point.
+            *)
             /\ nsTenantMap = IF HasEmptyNSTenantMap THEN [ ns \in Namespaces |-> NoTenant ]
                              ELSE SeqToFun(AllocIn.nsTenant)
             /\ clusterRoles = SeqToFun(AllocIn.clusterRoles)
@@ -194,11 +192,12 @@ Init ==
             /\ clusterRoleBindings = SeqToFun(AllocIn.clusterRoleBindings)
 
 
-\* TLC replays (at least when hitting Invariant violatins)
-\* this is why we cannot just put the print in Init, or use
-\* a variable like `printed = TRUE/FALSE`, it will always start
-\* from the beginning. However, this TLCGet/TLCSet strategy seems to
-\* work for a whole TLC process
+(* 
+ * TLC replays (at least when hitting Invariant violations). This is why we 
+ * cannot just put the print in Init, or use a variable like `printed = TRUE/FALSE`, 
+ * it will always start from the beginning. However, this TLCGet/TLCSet strategy 
+ * seems to work for a whole TLC process.
+*)
 PrintInitOnce ==
     IF TLCGet(13) = 42
       THEN 
@@ -222,10 +221,16 @@ PrintInitOnce ==
       /\ PrintT("AllocIn is: " \o ToString(AllocIn))
       /\ PrintT("====================================================")
       /\ UNCHANGED <<vars>>
----------------------------------------------------------------------------------------------
-\* this is the edge case when LogEvents is empty but allocIn is not
+
+
+(*************************************************************************)
+(* Base spec instance                                                    *)
+(*************************************************************************)
 Model == INSTANCE MT_Audit_RBAC_Base_1
----------------------------------------------------------------------------------------------
+
+(*************************************************************************)
+(* Next                                                                  *)
+(*************************************************************************)
 Next ==
   /\ idx <= Len(LogEvents)
   /\ PrintT("idx is: " \o ToString(idx))
@@ -273,7 +278,10 @@ Next ==
          /\ UNCHANGED  << nsTenantMap, clusterRoles, roleBindings, clusterRoleBindings >>
   /\ idx' = idx + 1
 
-(*********4ALERTS***********)
+
+(*************************************************************************)
+(* Alerts                                                                *)
+(*************************************************************************)
 
 AlertIfCrossTenantAction ==
     LET crossTenantAction == Model!CrossTenantSuccessSet' \ Model!CrossTenantSuccessSet IN
@@ -321,7 +329,7 @@ AlertIfRoleBindingToClusterAdmin ==
             /\ PrintT("!!! RoleBinding binding the cluster-admin role identified !!!")
 
 alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts
-(*********4ALERTS***********)
+
 
 AlertIfBadState == 
   /\ AlertIfCrossTenantAction 
@@ -330,7 +338,11 @@ AlertIfBadState ==
   /\ AlertIfClusterRoleBindingForTenant 
   /\ AlertIfRoleBindingToClusterAdmin
 
-\* we serialize and create a JSON object that contains arrays
+(* 
+* We serialize and create a JSON object that contains arrays.
+* Then, we put the data from the result in the NATS KV, to be
+* picked up in the next batch. (checkpoint)
+*)
 allocOut ==
   [
     nsTenant |-> FunToSeq(nsTenantMap),
@@ -339,9 +351,15 @@ allocOut ==
     clusterRoleBindings |-> FunToSeq(clusterRoleBindings)
   ]
 
+(*
+* If publishing alerts fails, we want to not ack.
+* Rather, we try to put the batch through TLC again,
+* to not miss alerts. We only put the cachedState after
+* we have a successful publishing of alerts. Only then we
+* know that we can continue to the next batch of logs.
+*)
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
-\*   /\ PrintT("We are in serialize at end, idx: " \o ToString(idx))
   /\ NatsAckBatch
   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ IF alertOut # {} THEN
@@ -359,10 +377,26 @@ SerializeAtEnd ==
   /\ NatsPutCachedState(allocOut)
   /\ UNCHANGED << vars >>
 
+(*************************************************************************)
+(* Next states                                                           *)
+(*************************************************************************)
+
+(*
+* Actual Next is a disjunction of PrintInitOnce, which prints the initial
+* state at the beginning of the model checking process, one time. Then
+* both Next and AlertIfBadState are checked at every step, to ensure that
+* the relevant variables are updated and the relevant alerts are published.
+* Finally, when the idx variable surpasses the length of the batch,
+* the spec enters SerializeAtEnd, to publish the results.
+*)
 NextPrintSerialize == PrintInitOnce \/ (Next /\ AlertIfBadState) \/ SerializeAtEnd
 
 TraceBehavior == Init /\ [][NextPrintSerialize]_vars
 
+(* We always check TypeOK, to make sure the variables contain the relevant
+* information. The other invariants we do not check, since we publish alerts
+* instead.
+*)
 BaseInv == Model!TypeOK
 
 (*************************************************************************)
