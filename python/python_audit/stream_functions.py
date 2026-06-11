@@ -110,7 +110,7 @@ async def ensure_kv(
         js: JetStreamContext,
         *,
         bucket_name: str,
-) -> None:
+) -> KeyValue:
     """
     Ensure a kv exists. If new, create it. If existing, use it.
     If error, raise it.
@@ -130,6 +130,7 @@ async def ensure_kv(
                   status.history,
                   status.ttl,
         )
+        return kv
     except BucketNotFoundError:
         log.info("Bucket %s does not exist, we create it.", bucket_name)
         try:
@@ -142,6 +143,7 @@ async def ensure_kv(
                     status.history,
                     status.ttl
             )
+            return kv
         except Exception:
             log.exception("Failed to create or bind KV bucket=%s", bucket_name)
             raise
