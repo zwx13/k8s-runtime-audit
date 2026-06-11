@@ -17,7 +17,7 @@ from nats.errors import TimeoutError as NatsTimeoutError
 from nats.js.api import DeliverPolicy
 
 from config_helpers import env_int, env_float, env_str, env_duration_sec
-from classifiser import classify_event, classify_access_attempts_permission, permission_from_clusterrole_rules
+from classifier import classify_event, classify_access_attempts_permission, permission_from_clusterrole_rules
 from utils import keep_alive, monitor_readiness, connect_nats
 from stream_functions import ensure_stream, ensure_consumer
 
