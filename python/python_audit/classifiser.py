@@ -124,7 +124,7 @@ def classify_event(ev: dict) -> str | None:
     if verb == "create" and resource == "rolebindings" and code in SUCCESS_CODES:
         return "rolebinding.created"
 
-    if verb == "create" and resource == "clusterrolebinding" and code in SUCCESS_CODES:
+    if verb == "create" and resource == "clusterrolebindings" and code in SUCCESS_CODES:
         return "clusterrolebinding.created"
 
     if is_access_attempt(ev):
@@ -161,8 +161,27 @@ def max_permission(a, b):
         return b
     return a
 
-def permission_from_clusterrole_rules(ev):
+def permission_from_rules(rules: list[dict]) -> str:
     result = "none"
+
+    for rule in rules or []:
+        resources = rule.get("resources") or []
+        verbs = rule.get("verbs") or []
+
+        for resource in resources:
+            for verb in verbs:
+                if resource == "*" or verb == "*":
+                    result = max_permission(result, "cluster-admin-powers")
+                    continue
+
+                permission = NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb))
+
+                if permission is not None:
+                    result = max_permission(result, permission)
+
+    return result
+
+def permission_from_clusterrole_rules(ev):
     if (
         ev.get("tlaType") in {"clusterrole.created", "clusterrole.updated"}
         and (ev.get("requestObject") or {})
@@ -170,21 +189,6 @@ def permission_from_clusterrole_rules(ev):
                 .get("name") not in {"view", "edit", "admin", "cluster-admin"}
         ):
 
-        rules = ev.get("requestObject" or {}).get("rules" or {})
+        rules = (ev.get("requestObject") or {}).get("rules") or []
 
-        for rule in rules or []:
-            resources = rule.get("resources") or []
-            verbs = rule.get("verbs") or []
-
-            for resource in resources:
-                for verb in verbs:
-                    if resource == "*" or verb == "*":
-                        result = max_permission(result, "cluster-admin-powers")
-                        continue
-                
-                    permission = NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb))
-                   
-                    if permission is not None:
-                        result = max_permission(result, permission)
-
-        return result
+        return permission_from_rules(rules)
