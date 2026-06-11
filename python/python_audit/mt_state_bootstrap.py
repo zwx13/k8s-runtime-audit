@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 from typing import Any
 
 from classifier import (
@@ -9,6 +10,8 @@ from classifier import (
     )
 
 log = logging.getLogger(__name__)
+
+KUBECTL = os.getenv("KUBECTL", "kubectl")
 
 MONITORED_NAMESPACES = {"tenant-a", "tenant-b"}
 
@@ -27,7 +30,7 @@ MONITORED_CLUSTERROLEBINDING_SUBJECTS = {
 
 async def kubectl_get_json(*args: str) -> dict[str, Any]:
     proc = await asyncio.create_subprocess_exec(
-        "kubectl",
+        KUBECTL,
         *args,
         "-o",
         "json",

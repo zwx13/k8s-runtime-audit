@@ -60,8 +60,10 @@ services:
         condition: service_healthy
     environment:
       NATS_URL: "nats://nats:4222"
+      KUBECONFIG: /kube/config
     volumes:
       - ./python/python_audit:/app/python_audit
+      - ./kubeconfig.docker:/kube/config:ro
     command: ["python3", "python_audit/mt_state_store.py"]
     restart: "no"
 
@@ -103,8 +105,8 @@ services:
     command: >
       java -cp "/app/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar:/app/CommunityModules.jar:/app/tla2tools.jar"
       tlc2.Main
-      tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.tla
-      tla_specs/MTSpec/MC_MT_Audit_RBAC_Trace_Extended.cfg
+      tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.tla
+      tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.cfg
       CommunityModules.jar
       tla2tools.jar
 

@@ -20,3 +20,6 @@ zMT_specs/*
 
 tla_specs/UpdatedMTSpec/simulation_results/*
 tla_specs/UpdatedMTSpec/states/*
+
+# Sensitive
+kubeconfig.docker
