@@ -1,9 +1,12 @@
+"""
+Helper module for getting env var data.
+
+This file contains logic for getting info from the environment, whether the env
+variables are strings, ints, or floats.
+"""
+
 import os
 from datetime import timedelta
-
-# -----------------------------------------------------------------------------
-# Config helpers
-# -----------------------------------------------------------------------------
 
 def env_str(name: str, default: str) -> str:
     v = os.environ.get(name, default).strip()

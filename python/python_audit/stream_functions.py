@@ -1,3 +1,8 @@
+'''
+This file contains functions that operate on NATS streams or KV,
+consumers, or KV.
+'''
+
 import logging
 from datetime import timedelta
 from typing import Sequence
@@ -79,7 +84,7 @@ async def ensure_consumer(
     ) -> None:
     """
     Ensure a durable consumer exists on stream_name with explicit config.
-    We refer to consumer by its DURABLE name
+    We refer to consumer by its DURABLE name.
     """
 
     cfg = ConsumerConfig(

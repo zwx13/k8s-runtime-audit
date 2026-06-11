@@ -1,3 +1,7 @@
+'''
+This file contains helpers for readiness and liveness and a function that
+handles connecting to NATS.
+'''
 import asyncio
 from typing import Final
 from pathlib import Path

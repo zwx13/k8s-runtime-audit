@@ -1,8 +1,9 @@
 """
 NATS JetStream kv: MT_STATE_STORE_KV, subject: "audit.mt.state.store"
 
-This is where encountered violations by TLC processes get written
-Then, we can inspect them manually.
+This KV bucket acts as a checkpoint for the monitoring tool. Whenever
+a new TLC process is started, it must remember where it left off. To do this,
+one process writes to the KV bucket and the following reads from it.
 """
 
 import asyncio

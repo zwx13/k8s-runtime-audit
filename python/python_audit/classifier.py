@@ -1,6 +1,20 @@
+"""
+Classifier for audit events.
+
+This file contains logic for classifying events before they are ingested by 
+the NATS AUDIT_MT Stream. We are interested in events that are related to
+our multitenant cluster standards only. This can be modified to fit the
+needs of different clusters.
+
+NAMESPACE_RESOURCE_PERMISSION_MAP maps kubernetes resources and verbs to a more
+abstracted version, which is then used by the TLA specification. Same for
+DEFAULT_CLUSTER_ROLES_PERMISSION_MAP.
+"""
+
 # -----------------------------------------------------------------------------
-# HELPER ENV VARS
+# HELPER VARS
 # -----------------------------------------------------------------------------
+
 READ_VERBS = {"get", "list", "watch"}
 WRITE_VERBS = {"create", "update", "patch"}
 DELETE_VERBS = {"delete", "deletecollection"}
@@ -76,9 +90,23 @@ SYSTEM_GROUPS = {
 # -----------------------------------------------------------------------------
 
 def is_monitored_namespace_name(name: str | None) -> bool:
+    """
+    Checks if the namespace is one of the ones we monitor.
+
+    Args: namespace name
+
+    Returns: True if it's in MONITORED_NAMESPACES
+    """
     return name in MONITORED_NAMESPACES
 
 def is_system_group(ev):
+    """
+    Checks if the actor group is a system group.
+
+    Args: event json
+
+    Returns: True if system group we wish to ignore, False owise.
+    """
     imp = ev.get("impersonatedUser") or {}
     
     if imp.get("groups"):
@@ -93,6 +121,14 @@ def is_system_group(ev):
     return False
 
 def is_access_attempt(ev):
+    """
+    Checks if the log is an actual access attempt.
+    
+    Args: audit log event json
+    
+    Returns: False if not a relevant access attempt, abstracted permission
+    if actual access attempt.
+    """
     verb = ev.get("verb")
     obj = ev.get("objectRef") or {}
 
@@ -116,6 +152,15 @@ def is_access_attempt(ev):
     return (resource, verb) in NAMESPACE_RESOURCE_PERMISSION_MAP
 
 def classify_event(ev: dict) -> str | None:
+    """
+    Classifies audit log events and adds a new field that contains
+    this classification for ease of processing inside the TLA
+    specification.
+
+    Args: audit log event json
+
+    Returns: classification of event or None if not relevant
+    """
     verb = ev.get("verb")
     obj = ev.get("objectRef") or {}
     resp = ev.get("responseStatus") or {}
@@ -159,6 +204,14 @@ def classify_event(ev: dict) -> str | None:
     return None
 
 def classify_access_attempts_permission(ev: dict) -> str | None:
+    """
+    Includes an access attempt event's abstracted
+    permission in the event json, before feeding it to NATS.
+
+    Args: access attempt event json
+
+    Returns: highly abstracted permission from NAMESPACE_RESOURCE_PERMISSION_MAP
+    """
     verb = ev.get("verb")
     obj = ev.get("objectRef") or {}
     resource = obj.get("resource")
@@ -171,11 +224,29 @@ def classify_access_attempts_permission(ev: dict) -> str | None:
     return NAMESPACE_RESOURCE_PERMISSION_MAP.get((resource, verb), "no-permission")
 
 def max_permission(a, b):
+    """
+    Compares tiers of 2 permissions based on our abstraction.
+
+    Args: 2 abstracted permissions.
+
+    Returns: the one with better tier.
+    """
     if PERMISSION_TIER[b] > PERMISSION_TIER[a]:
         return b
     return a
 
 def permission_from_rules(rules: list[dict]) -> str:
+    """
+    Identifies permissions in role rules based on the abstraction.
+    Roles can have multiple mappings of resources and verbs. This
+    function returns the abstracted permission result, based on
+    the highest tier of permissions in the rules.
+
+    Args: content of a `rules` field in a ClusterRole creation log
+
+    Returns: one of the 5 abstracted permissions: none, read, write
+    admin-powers, cluster-admin-powers
+    """
     result = "none"
 
     for rule in rules or []:
@@ -196,6 +267,13 @@ def permission_from_rules(rules: list[dict]) -> str:
     return result
 
 def permission_from_clusterrole_rules(ev):
+    """
+    Classify non-default cluster roles based on the highest-tier permission.
+
+    Args: an audit event (json)
+
+    Returns: one of the 5 abstracted permissions.
+    """
     if (
         ev.get("tlaType") in {"clusterrole.created", "clusterrole.updated"}
         and (ev.get("requestObject") or {})

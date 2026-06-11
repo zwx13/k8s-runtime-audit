@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Kubernetes Audit Webhook -> NATS JetStream ingester.
+Kubernetes Audit Webhook (NATS JetStream ingester).
 
 Kubernetes audit logs are produced by the kube-apiserver and provide a total order over
 API requests as processed by the apiserver. We treat this ordered stream as the input
@@ -47,6 +47,7 @@ WANTED_SUBJECTS: Final[list[str]] = [
 # -----------------------------------------------------------------------------
 # App lifecycle (connect/disconnect NATS)
 # -----------------------------------------------------------------------------
+
 async def nats_connect(app: FastAPI):
     while True:
         try:
@@ -81,6 +82,11 @@ async def nats_connect(app: FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Startups and shutsdown code. `yield` keyword separates the two. On startup, we
+    attempt to connect to nats. When we shutdown, we attempt a "nice" close with
+    drain.
+    """
     app.state.nc = None
     app.state.js = None
 
@@ -90,7 +96,6 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         if app.state.nc:
-            # drain flushes in-flight publishes and closes nicely
             await app.state.nc.drain()
             log.info("NATS connection drained and closed")
 
@@ -122,8 +127,6 @@ async def livez():
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"FastAPI app not running right: {str(e)}")
     
-
-
 @app.post("/")
 async def receive_audit_log(request: Request):
     """
@@ -153,19 +156,19 @@ async def receive_audit_log(request: Request):
 
     for item in items:
         try:
-            # encode to bytes 4 nats
+            # encode to bytes for NATS
             payload = json.dumps(item, separators=(",", ":")).encode("utf-8")
             await js.publish(RAW_SUBJECT, payload)  # returns PubAck; we don't use it here
             published += 1
         except Exception:
             log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
 
-    # for debugging, if ever; we can send with curl a log to see the response
+    # for debugging: we can send with curl a log to see the response
     return {"status": "ok", "published": published, 
             "received": len(items), "errors": len(items) - published}
 
 # -----------------------------------------------------------------------------
-# Local dev entrypoint
+# Main
 # -----------------------------------------------------------------------------
 
 if __name__ == "__main__":

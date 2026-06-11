@@ -1,3 +1,14 @@
+"""
+Helper module for catching up with cluster state
+
+This file's purpose is to handle the logic for catching up
+to the cluster state right when setting up the key-value bucket.
+The idea is that the monitoring tool can be installed in the cluster
+at any point and multitenant objects may already be created. If this
+is the case, we need to catch up the cluster state and save it in the KV,
+so the monitoring and alerting is accurate.
+"""
+
 import asyncio
 import json
 import logging
@@ -10,6 +21,10 @@ from classifier import (
     )
 
 log = logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------------
+# HELPER VARS
+# -----------------------------------------------------------------------------
 
 KUBECTL = os.getenv("KUBECTL", "kubectl")
 
@@ -29,6 +44,13 @@ MONITORED_CLUSTERROLEBINDING_SUBJECTS = {
 }
 
 async def kubectl_get_json(*args: str) -> dict[str, Any]:
+    '''
+    Creates a process that runs a kubectl command.
+    
+    Args: a tuple of strings.
+
+    Returns: the output of the kubectl command.
+    '''
     proc = await asyncio.create_subprocess_exec(
         KUBECTL,
         *args,
@@ -48,6 +70,11 @@ async def kubectl_get_json(*args: str) -> dict[str, Any]:
     return json.loads(stdout.decode())
 
 async def build_cached_state() -> dict[str, Any]:
+    '''
+    Builds the relevant cached state for the KV store.
+    
+    Returns: the cached state (dict)
+    '''
     namespaces = await kubectl_get_json("get", "namespaces")
     clusterroles = await kubectl_get_json("get", "clusterroles")
     rolebindings = await kubectl_get_json("get", "rolebindings", "-A")
@@ -71,6 +98,13 @@ async def build_cached_state() -> dict[str, Any]:
     return cached_state
 
 def build_ns_tenant(namespaces: dict[str, Any]) -> list[list[str]]:
+    '''
+    Builds the ns tenant entry for the KV
+
+    Args: Output of kubectl get namespaces command
+
+    Returns: Sorted list of namespaces based on name.
+    '''
     result: list[list[str]] = []
 
     for ns in namespaces.get("items", []):
@@ -90,6 +124,13 @@ def build_ns_tenant(namespaces: dict[str, Any]) -> list[list[str]]:
 
 
 def build_cluster_roles(clusterroles: dict[str, Any]) -> list[list[str]]:
+    '''
+    Builds the cluster roles entry for the KV
+
+    Args: Output of kubectl get clusterroles command
+
+    Returns: List of clusterroles.
+    '''
     result: list[list[str]] = []
 
     for name, permission in DEFAULT_CLUSTER_ROLES_PERMISSION_MAP.items():
@@ -119,6 +160,13 @@ def build_cluster_roles(clusterroles: dict[str, Any]) -> list[list[str]]:
 
 
 def first_subject_name(binding: dict[str, Any]) -> str | None:
+    '''
+    Gets the first subject of a rolebinding.
+
+    Args: a rolebinding entry
+
+    Returns: The first subject of the binding.
+    '''
     subjects = binding.get("subjects") or []
 
     if not subjects:
@@ -128,6 +176,13 @@ def first_subject_name(binding: dict[str, Any]) -> str | None:
 
 
 def build_role_bindings(rolebindings: dict[str, Any]) -> list[list[list[str]]]:
+    '''
+    Builds the RoleBinding entry for the KV
+
+    Args: Output of kubectl get RoleBindings command
+
+    Returns: List of RoleBindings.
+    '''
     result: list[list[list[str]]] = []
 
     for rb in rolebindings.get("items", []):
@@ -154,6 +209,14 @@ def build_role_bindings(rolebindings: dict[str, Any]) -> list[list[list[str]]]:
 
 
 def build_cluster_role_bindings(clusterrolebindings: dict[str, Any]) -> list[list[Any]]:
+    '''
+    Builds the ClusterRoleBinding entry for the KV
+
+    Args: Output of kubectl get clusterrolebindings command
+
+    Returns: Sorted list of ClusterRoleBindings based on role name.
+    If matching, then based on subject.
+    '''
     result: list[list[Any]] = []
 
     for crb in clusterrolebindings.get("items", []):

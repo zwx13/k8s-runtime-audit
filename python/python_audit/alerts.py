@@ -1,7 +1,7 @@
 """
-NATS JetStream kv: MT_ALERTS, subject: "audit.mt.alerts"
+NATS JetStream Stream: MT_ALERTS
 
-This is where encountered violations by TLC processes get written
+This is where encountered violations by TLC processes get written to.
 Then, we can inspect them manually.
 """
 
@@ -21,14 +21,19 @@ from stream_functions import ensure_stream
 log = logging.getLogger(__name__)
 
 
+# -----------------------------------------------------------------------------
 # Configuration
+# -----------------------------------------------------------------------------
 NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
 ALERTS_STREAM: Final[str] = env_str("ALERTS_STREAM", "MT_ALERTS")
 ALERTS_SUBJ: Final[str] = env_str("ALERTS_SUBJ", "audit.mt.alerts")
 ALERTS_MAX_AGE: Final[timedelta] = env_duration_sec("ALERTS_RETENTION_SECONDS", 30 * 24 * 60 * 60)
 ALERTS_DUPLICATE_WINDOW: Final[int] = env_int("ALERTS_DUPLICATE_WINDOW", 180)
 
-# Logic
+# -----------------------------------------------------------------------------
+# Stream Verification & Creation if missing
+# -----------------------------------------------------------------------------
+
 async def main() -> None:
     nc = await connect_nats()
 
