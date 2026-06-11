@@ -323,7 +323,12 @@ AlertIfRoleBindingToClusterAdmin ==
 alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts
 (*********4ALERTS***********)
 
-AlertIfBadState == AlertIfCrossTenantAction /\ AlertIfDanglingRoleBindings /\ AlertIfDanglingClusterRoleBindings
+AlertIfBadState == 
+  /\ AlertIfCrossTenantAction 
+  /\ AlertIfDanglingRoleBindings 
+  /\ AlertIfDanglingClusterRoleBindings 
+  /\ AlertIfClusterRoleBindingForTenant 
+  /\ AlertIfRoleBindingToClusterAdmin
 
 \* we serialize and create a JSON object that contains arrays
 allocOut ==
