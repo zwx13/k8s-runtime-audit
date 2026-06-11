@@ -5,6 +5,8 @@ READ_VERBS = {"get", "list", "watch"}
 WRITE_VERBS = {"create", "update", "patch"}
 DELETE_VERBS = {"delete", "deletecollection"}
 
+MONITORED_NAMESPACES = {"tenant-a", "tenant-b"}
+
 SUCCESS_CODES= {200, 201}
 
 NAMESPACE_RESOURCE_PERMISSION_MAP = {
@@ -73,6 +75,9 @@ SYSTEM_GROUPS = {
 # Logic
 # -----------------------------------------------------------------------------
 
+def is_monitored_namespace_name(name: str | None) -> bool:
+    return name in MONITORED_NAMESPACES
+
 def is_system_group(ev):
     imp = ev.get("impersonatedUser") or {}
     
@@ -101,6 +106,9 @@ def is_access_attempt(ev):
     if not namespace:
         return False
     
+    if namespace not in MONITORED_NAMESPACES:
+        return False
+    
     # Ignore pod/log, pod/exec, pod/status etc.
     if subresource:
         return False
@@ -116,7 +124,10 @@ def classify_event(ev: dict) -> str | None:
     code = resp.get("code")
 
     if verb == "create" and resource == "namespaces" and code in SUCCESS_CODES:
-        return "ns.created"
+        name = obj.get("name")
+        if is_monitored_namespace_name(name):
+            return "ns.created"
+        return None
 
     if verb == "create" and resource == "clusterroles" and code in SUCCESS_CODES:
         return "clusterrole.created"
@@ -131,7 +142,10 @@ def classify_event(ev: dict) -> str | None:
         return "access.attempt"
         
     if verb == "delete" and resource == "namespaces" and code in SUCCESS_CODES:
-        return "ns.deleted"
+        name = obj.get("name")
+        if is_monitored_namespace_name(name):
+            return "ns.deleted"
+        return None
 
     if verb == "delete" and resource == "clusterroles" and code in SUCCESS_CODES:
         return "clusterrole.deleted"
