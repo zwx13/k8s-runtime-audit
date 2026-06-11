@@ -23,3 +23,6 @@ tla_specs/UpdatedMTSpec/states/*
 
 # Sensitive
 kubeconfig.docker
+*.key
+*.crt
+*.csr
