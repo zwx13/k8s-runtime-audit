@@ -24,10 +24,6 @@ import io.nats.client.api.*;
 
 // !!!! the consume operator takes as long as we configure ack_wait to be
 
-// TLA+ operator that fetches 50 messages from NATS JetStream,
-// converts them to an IValue (e.g., TupleValue, RecordValue),
-// adds them to messages List; at the end, turn this list to a Tuple.
-// can be called inside a TLA+ specification to iterate through logs in order.
  public class NatsOps {
 
     private static String DURABLE = Utils.env("TLA_DURABLE", "audit-mt-tla-filter");
@@ -52,6 +48,11 @@ import io.nats.client.api.*;
     private static KeyValueEntry kvEntry;
     private static IValue cachedTlaState;
 
+    /**
+     * TLA+ operator that fetches 50 messages from NATS JetStream, converts them to an IValue 
+     * (e.g., TupleValue, RecordValue), adds them to messages List; at the end, turn this list to a Tuple.
+     * Can be called inside a TLA+ specification to iterate through logs in order.
+     */
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
     public static synchronized Value consume() throws Exception {
         long t0 = System.nanoTime();

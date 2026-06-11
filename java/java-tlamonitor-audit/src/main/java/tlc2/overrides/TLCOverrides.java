@@ -1,3 +1,7 @@
+ /**
+ * This file is necessary in order to load our own operators into TLC.
+ * Contains some debugging messages.
+ */
 package tlc2.overrides;
 
 public class TLCOverrides implements ITLCOverrides {

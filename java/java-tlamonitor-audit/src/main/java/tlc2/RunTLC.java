@@ -1,3 +1,9 @@
+/**
+ * This file handles creation of TLC processes. It's responsible for
+ * passing the right arguments and filtering the output to contain only
+ * relevant information
+ */
+
 package tlc2;
 
 import java.io.File;
@@ -27,8 +33,6 @@ public class RunTLC {
     "-config", cfgAbs,
     specAbs
 );
-
-    // pb.inheritIO();
 
     // debug
     // System.out.println(String.join(" ", pb.command()));

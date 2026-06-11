@@ -1,3 +1,11 @@
+/**
+ * This file is responsible for handling the type conversions
+ * between TLA and data saved in NATS. It's necessary because
+ * in order to ingest K8s audit logs, they need to be transformed
+ * to something that TLA understand. Similarly, to publish alerts
+ * or save the checkpoint state in a NATS KV, we need to transform
+ * TLA tuples, records, functions to data that NATS understands.
+ */
 package tlc2;
 
 import java.io.IOException;
@@ -22,11 +30,6 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
 public class Utils {
-    /* 
-    ****************************
-    JSON TLA CONVERT PART
-    ****************************
-    */
     public static JsonNode parseAndGetJson(byte[] msgData) throws IOException, StreamReadException, DatabindException
     {
     // json parser, hold whole Json in root
@@ -53,7 +56,11 @@ public class Utils {
     //     JsonNodeType jsonType = JsonNode.getNodeType();
     // } 
 
-    // call would be like IValue root = getValueFromJson(jsonNodeRoot), sees it s an array
+    /**
+     * Transforms a JSON entry to a datatype that TLA undestands based
+     * on a mapping.
+     * Call example: IValue root = getValueFromJson(jsonNodeRoot)
+     */
     public static IValue getValueFromJson(JsonNode json) throws IOException {
     return switch (json.getNodeType()) {
         case ARRAY   -> getTupleValue(json);

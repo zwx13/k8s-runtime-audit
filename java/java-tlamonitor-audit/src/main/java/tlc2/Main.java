@@ -1,3 +1,10 @@
+/**
+ * Main entry point for running the TLC model checker with a given TLA+ spec and config file.
+ * The class parses cmd arguments, validates the inputs, and repeatedly invokes TLC using the 
+ * provided {@code tla2tools.jar}. It also initializes the NATS infra used by the monitoring layer.
+ * TLC is executed in a loop; after each run, the process sleeps before restarting TLC. 
+ * Any fatal error causes the program to terminate with a non-zero exit code.
+ */
 package tlc2;
 
 import tlc2.Utils;
@@ -6,37 +13,6 @@ import io.nats.client.*;
 
 import java.io.IOException;
 import java.io.File;
-
-/**
- * Main entry point for running the TLC model checker with a given TLA+ spec and config file.
- * <p>
- * The class parses cmd arguments, validates the inputs, and repeatedly invokes TLC using the 
- * provided {@code tla2tools.jar}. It also initializes the NATS infra used by the monitoring layer.
- * </p>
- *
- * <h2>Command-line arguments</h2>
- * <ol>
- *   <li>Absolute path to the TLA+ specification file ({@code .tla})</li>
- *   <li>Absolute path to the TLC configuration file ({@code .cfg})</li>
- *   <li>Absolute path to {@code CommunityModules.jar}</li>
- *   <li>Absolute path to {@code tla2tools.jar}</li>
- * </ol>
- *
- * <h2>Usage</h2>
- * <pre>{@code
- * java -cp "java-tlamonitor-audit-1.0-SNAPSHOT-shaded.jar:/path/to/tla2tools.jar" \
- *   tlc2.Main \
- *   /path/to/spec.tla \
- *   /path/to/spec.cfg \
- *   /path/to/CommunityModules.jar \
- *   /path/to/tla2tools.jar
- * }</pre>
- *
- * <p>
- * TLC is executed in a loop; after each run, the process sleeps before restarting TLC. 
- * Any fatal error causes the program to terminate with a non-zero exit code.
- * </p>
- */
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, JetStreamApiException{
