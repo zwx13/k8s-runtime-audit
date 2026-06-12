@@ -354,8 +354,8 @@ DeleteClusterRole(actorgroup, cr) ==
 *)
 
 (*
-* NSAdmins should be able to only grant access in the namespace where
-* they are admins.
+* Both Cluster Admins and NSAdmins should be able to only grant access in 
+* the namespace where they are admins.
 *)
 GrantNSAccess(actorgroup, targetNS, rbName, targetG, cr) ==
     /\ cr \in DOMAIN clusterRoles
@@ -367,7 +367,6 @@ GrantNSAccess(actorgroup, targetNS, rbName, targetG, cr) ==
               \/ 
                     /\ IsNSAdmin(actorgroup, targetNS)
                     /\ clusterPerm \in {"none", "read", "write"}
-                    /\ SameTenant(targetNS, targetG)
     /\ SameTenant(targetNS, targetG)
     /\ roleBindings' = <<targetNS, rbName>> :> <<targetG, cr>> @@ roleBindings
     /\ UNCHANGED << nsTenantMap, clusterRoleBindings, clusterRoles, accessAttempts >>
