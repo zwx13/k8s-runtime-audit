@@ -1,12 +1,19 @@
 ---- MODULE MC_MT_Audit_RBAC_Trace_1 ----
 EXTENDS MT_Audit_RBAC_Trace_1
 
+(*
+* These should be changed to match the tenant names and the
+* rest of the objects in the cluster. The python/python_audit/mt_state_bootstrap.py
+* should be modified as well, in order to match the entities in the cluster.
+* Otherwise, TLC will fail when it ingests logs that reference something that is not
+* one of the entries of these constants.
+*)
 ConstTenantGroups == {"tenant-a", "tenant-b"}
 ConstPlatformGroups == {"kubeadm:cluster-admins"}
 ConstTenants == {"tenant-a", "tenant-b"}
 ConstNamespaces == {"tenant-a", "tenant-b"}
 ConstRBNames == {"tenant-a-binding", "tenant-b-binding"}
-ConstCRBNames == {"cluster-admin"}
+ConstCRBNames == {"cluster-admin", "foo-global-binding"}
 ConstDefaultClusterRoleNames == {"cluster-admin", "admin", "edit", "view"}
 ConstCustomClusterRoleNames == {"dev"}
 ConstNoTenant == "NO_TENANT"
@@ -43,4 +50,10 @@ ConstGroupTenantMap ==
 
         ELSE ConstNoTenant
     ]
+
+(*
+* FUTURE WORK: find a mechanism that avoids requiring
+* to hardcode object names in this MC.*.tla file
+*)
+
 ====
