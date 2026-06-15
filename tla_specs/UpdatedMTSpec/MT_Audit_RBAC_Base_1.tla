@@ -142,7 +142,7 @@ DanglingRoleBindingsSet == {rbkey \in DOMAIN roleBindings:
             rbRole \notin DOMAIN clusterRoles
 }
 
-DanglingClusterRoleBindingsSet == {crbkey \in DOMAIN roleBindings:
+DanglingClusterRoleBindingsSet == {crbkey \in DOMAIN clusterRoleBindings:
         LET
             crbRole == clusterRoleBindings[crbkey][2]
         IN
@@ -155,7 +155,6 @@ ClusterRoleBindingForTenantSet == {key \in DOMAIN clusterRoleBindings :
         IN 
             IsNSTenant(crbGroup)
 }
-
 
 RoleBindingToClusterAdminSet == {
     key \in DOMAIN roleBindings : 
