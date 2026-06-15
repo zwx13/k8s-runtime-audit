@@ -260,7 +260,7 @@ Next ==
          /\ roleBindings' = [key \in DOMAIN roleBindings \ {<<RBNamespace(l), RBName(l)>>} |-> roleBindings[key]]
          /\ UNCHANGED << nsTenantMap, clusterRoles, clusterRoleBindings, accessAttempts >>
        ELSE IF l["tlaType"] = "clusterrolebinding.created" THEN
-         /\ clusterRoleBindings' = ClusterRBName(l) :> <<ClusterRBTargetGroup(l), ClusterRoleName(l)>> @@ clusterRoleBindings
+         /\ clusterRoleBindings' = ClusterRBName(l) :> <<ClusterRBTargetGroup(l), ClusterRBClusterRole(l)>> @@ clusterRoleBindings
          /\ UNCHANGED << nsTenantMap, clusterRoles, roleBindings, accessAttempts >>
        ELSE IF l["tlaType"] = "clusterrolebinding.deleted" THEN
          /\ clusterRoleBindings' = [crb \in DOMAIN clusterRoleBindings \ {ClusterRBName(l)} |-> clusterRoleBindings[crb]]
@@ -275,7 +275,7 @@ Next ==
                                                                               ] @@ accessAttempts
          /\ UNCHANGED << nsTenantMap, clusterRoles, roleBindings, clusterRoleBindings >>
        ELSE
-         /\ UNCHANGED  << nsTenantMap, clusterRoles, roleBindings, clusterRoleBindings >>
+         /\ UNCHANGED  << nsTenantMap, clusterRoles, roleBindings, clusterRoleBindings, accessAttempts >>
   /\ idx' = idx + 1
 
 
@@ -302,7 +302,7 @@ AlertIfDanglingRoleBindings ==
             /\ PrintT("!!! Dangling rolebinding identified !!!")
 
 AlertIfDanglingClusterRoleBindings == 
-    LET danglingClusterRoleBindings == Model!DanglingRoleBindingsSet' \ Model!DanglingRoleBindingsSet IN
+    LET danglingClusterRoleBindings == Model!DanglingClusterRoleBindingsSet' \ Model!DanglingClusterRoleBindingsSet IN
         IF danglingClusterRoleBindings = {} THEN
             /\ TRUE
             /\ UNCHANGED << danglingClusterRoleBindingsAlerts >>
@@ -328,7 +328,7 @@ AlertIfRoleBindingToClusterAdmin ==
             /\ roleBindingToClusterTenantAlerts' = roleBindingToClusterTenantAlerts \cup { << LogEvents[idx]["auditID"], LogEvents[idx]["tlaType"] >> }
             /\ PrintT("!!! RoleBinding binding the cluster-admin role identified !!!")
 
-alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts
+alertOut == crossTenantAlerts \cup danglingRoleBindingsAlerts \cup danglingClusterRoleBindingsAlerts \cup clusterRoleBindingForTenantAlerts \cup roleBindingToClusterTenantAlerts
 
 
 AlertIfBadState == 
