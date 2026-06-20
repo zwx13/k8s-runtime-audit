@@ -14,6 +14,22 @@ spec:
       labels:
         app: {{ .Values.javarunner.name }}
     spec:
+      serviceAccountName: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}
+      initContainers:
+      - name: {{ .Values.kv.initName }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        command: ["python3"]
+        args: ["python_audit/mt_state_store.py"]
+        env:
+          - name: NATS_URL
+            value: {{ .Values.envVars.natsUrl | quote }}
+          - name: STATE_KV
+            value: {{ .Values.kv.kvSettings.stateKV | quote }}
+          - name: STORE_SUBJ
+            value: {{ .Values.kv.kvSettings.storeSubj | quote }}
+          - name: MT_RETENTION_SECONDS
+            value: {{ .Values.kv.kvSettings.retentionSeconds | quote }}
       containers:
       - name: {{ .Values.javarunner.name }}
         image: {{ .Values.image.javaimage }}:{{ .Values.image.tag }}
