@@ -75,6 +75,7 @@ alerts:
 # kv
 kv:
   name: audit-kv
+  initName: audit-kv-init
   backoffLimit: 3
   serviceAccountName: mt-state-store
   kvSettings:

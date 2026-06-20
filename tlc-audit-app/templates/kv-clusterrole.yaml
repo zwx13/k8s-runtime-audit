@@ -17,6 +17,7 @@ rules:
     - clusterrolebindings
     - roles
     - rolebindings
+    - namespaces
   verbs:
     - get
     - list
