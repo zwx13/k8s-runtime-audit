@@ -1,0 +1,5 @@
+[+] Creating developer ClusterRole dev...
+[+] Creating RBs for tenants: one is (accidentally) misconfigured.
+[+] Triggering cross-tenant access attempt: tenant-a user tries to read tenant-b namespace.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[["81a7bc15-eb23-44a0-9310-6266b5ec3297","access.attempt"]]
