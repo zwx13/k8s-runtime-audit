@@ -1,0 +1,53 @@
+[1/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[2/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[3/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[4/50] action=delete-rb ns=tenant-b name=tenant-b-binding
+[5/50] action=delete-rb ns=tenant-a name=tenant-a-binding
+[6/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=services namespace=tenant-b
+[7/50] action=create-crb name=foo-global-binding group=tenant-a role=view
+[8/50] action=create-rb ns=tenant-b name=tenant-b-binding group=tenant-b role=edit
+[9/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[10/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[11/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[12/50] action=delete-rb ns=tenant-a name=tenant-a-binding
+[13/50] action=create-rb ns=tenant-a name=tenant-a-binding group=tenant-a role=cluster-admin
+[14/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[15/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[16/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[17/50] action=delete-rb ns=tenant-b name=tenant-b-binding
+[18/50] action=delete-rb ns=tenant-b name=tenant-b-binding
+[19/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[20/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[21/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[22/50] action=create-rb ns=tenant-a name=tenant-a-binding group=tenant-a role=view
+[23/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[24/50] action=delete-crb name=foo-global-binding
+[25/50] action=create-rb ns=tenant-a name=tenant-a-binding group=tenant-a role=dev
+[26/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[27/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[28/50] action=create-clusterrole name=dev resources=pods verbs=update,patch
+[29/50] action=create-clusterrole name=dev resources=secrets,pods verbs=watch,update
+[30/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[31/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[32/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[33/50] action=create-rb ns=tenant-a name=tenant-a-binding group=tenant-a role=edit
+[34/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[35/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[36/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=services namespace=tenant-b
+[37/50] action=delete-clusterrole name=dev
+[38/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[39/50] action=create-rb ns=tenant-b name=tenant-b-binding group=tenant-b role=edit
+[40/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[41/50] action=delete-clusterrole name=dev
+[42/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=pods namespace=tenant-b
+[43/50] action=create-rb ns=tenant-a name=tenant-a-binding group=tenant-a role=cluster-admin
+[44/50] action=create-crb name=foo-global-binding group=tenant-a role=edit
+[45/50] action=delete-clusterrole name=dev
+[46/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=services namespace=tenant-b
+[47/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+[48/50] action=delete-crb name=foo-global-binding
+[49/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=secrets namespace=tenant-b
+[50/50] action=cross-tenant-access context=tenant-a-user@kubernetes resource=configmaps namespace=tenant-b
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[["25d60875-bd86-432d-9895-b0902ab15df8","clusterrolebinding.created"],["026d94d3-7f8c-4374-a0c6-f5886cff0b70","rolebinding.created"],["801f69a7-a786-443b-8e38-28c71a74f530","access.attempt"],["a32c8ddd-44d0-4003-8a1b-2b3236b9098a","rolebinding.created"],["32aa1c57-07b9-4670-9139-6c83e2c74414","clusterrole.deleted"]]
+[["e9739231-2149-43b7-a2b7-99bea9a44ade","rolebinding.created"],["48c75f8e-8e94-4135-aa19-adf9e8e253b9","clusterrolebinding.created"],["30c20901-9084-4f84-9a87-1cec433135d1","access.attempt"]]
