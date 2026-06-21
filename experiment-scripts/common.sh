@@ -24,7 +24,7 @@ MON_NS="${MON_NS:-default}"
 NATS_BOX_DEPLOY="${NATS_BOX_DEPLOY:-nats-box}"
 ALERT_STREAM="${ALERT_STREAM:-MT_ALERTS}"
 ALERT_SUBJECT="${ALERT_SUBJECT:-audit.mt.alerts}"
-ALERT_WAIT_SECONDS="${ALERT_WAIT_SECONDS:-20}"
+ALERT_WAIT_SECONDS="${ALERT_WAIT_SECONDS:-30}"
 ALERT_OUT="${ALERT_OUT:-/tmp/mt-alerts.out}"
 ALERT_SUB_PID=""
 
@@ -52,7 +52,7 @@ expect_fail()
 
   info "EXPECT FAILURE: ${desc}"
   if "$@"; then
-    warn "Command unexpectedly succeeded: ${desc}"
+    warn "Command WRONGLY succeeded: ${desc}"
   else
     info "Command failed as expected: ${desc}"
   fi
@@ -70,26 +70,23 @@ purge_alerts()
   if nats_box_exec nats stream purge "$ALERT_STREAM" --force >/dev/null 2>&1; then
     info "Alert stream purged."
   else
-    warn "Could not purge alert stream with --force."
-    warn "Trying non-interactive yes pipe..."
-
-    if nats_box_exec sh -c "yes | nats stream purge ${ALERT_STREAM}" >/dev/null 2>&1; then
-      info "Alert stream purged."
-    else
-      warn "Could not purge alert stream. Continuing anyway."
-    fi
+    warn "Could not purge alert stream. Continuing anyway."
   fi
 }
 
 start_alert_listener() 
 {
+
+  local count
+  count=$1
+
   info "Starting NATS alert listener on subject: ${ALERT_SUBJECT}"
   rm -f "$ALERT_OUT"
 
   (
     nats_box_exec nats sub "$ALERT_SUBJECT" \
-      --count=1 \
-      --timeout="${ALERT_WAIT_SECONDS}s" \
+      --count="${count}" \
+      --wait="${ALERT_WAIT_SECONDS}s" \
       --raw
   ) > "$ALERT_OUT" 2>&1 &
 
@@ -119,6 +116,13 @@ wait_for_alert_listener()
   cat "$ALERT_OUT" || true
   echo "------------------------------------------------------------"
   echo
+}
+
+save_alerts_to_file()
+{
+  echo
+  echo " ~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~" > "$RESULTS_FILE"
+  echo "$ALERT_OUT" >> "$RESULTS_FILE" 2>/dev/null || true
 }
 
 prepare_alert_stream() 
