@@ -1,0 +1,3 @@
+[+] Creating invalid RoleBinding to cluster-admin inside namespace tenant-a...
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[["86c5fda4-c2c0-4271-a65b-21fd24d0dac4","rolebinding.created"]]
