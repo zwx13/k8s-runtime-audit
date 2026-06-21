@@ -7,7 +7,7 @@ trap cleanup EXIT
 
 COUNT="${1:-50}"
 
-RESULT_DIR="../experiment-results/run-$(date +%Y%m%d-%H%M%S)"
+RESULT_DIR="../experiment-results/06/run-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$RESULT_DIR"
 
 RESULTS_FILE="$RESULT_DIR/script-output-and-alerts.log"
@@ -16,22 +16,6 @@ AUDIT_FILE="$RESULT_DIR/audit-events.jsonl"
 ROLES=("view" "edit" "admin" "cluster-admin" "dev")
 VERBS=("get" "list" "watch" "create" "update" "patch" "delete" "deletecollection")
 RESOURCES=("pods" "services" "configmaps" "secrets")
-
-extract_audit_events_for_alerts()
-{
-  info "--- Extracting audit events referenced by alerts ---"
-
-  local ids_file
-  ids_file="$(mktemp)"
-
-  grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$RESULTS_FILE" > "$ids_file"
-
-  sudo grep -Ff "$ids_file" /var/log/kubernetes/audit.log | jq -c . > "$AUDIT_FILE" || true
-
-  rm -f "$ids_file"
-
-  info "Saved $(wc -l < "$AUDIT_FILE") audit events to $AUDIT_FILE"
-}
 
 random_verb()
 {
@@ -46,18 +30,6 @@ random_resource()
 random_role() 
 {
   printf "%s\n" "${ROLES[@]}" | shuf -n 1
-}
-
-step() 
-{
-  local i="$1"
-  local action="$2"
-  shift 2
-
-  local msg="[$i/$COUNT] action=${action} $*"
-
-  info "$msg"
-  echo "$msg" >> "$RESULTS_FILE"
 }
 
 create_clusterrole()

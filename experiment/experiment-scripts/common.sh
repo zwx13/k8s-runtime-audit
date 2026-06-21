@@ -31,6 +31,7 @@ ALERT_SUB_PID=""
 OK_IMAGE="${OK_IMAGE:-nginx}"
 
 info() { echo "[+]" "$*"; }
+info2file() { echo "[+]" "$*" && echo "[+]" "$*" >> "$RESULTS_FILE" ; }
 warn() { echo "[!]" "$*" >&2; }
 die() { echo "[x]" "$*" >&2; exit 1; }
 
@@ -133,6 +134,22 @@ prepare_alert_stream()
   sleep 1
 }
 
+extract_audit_events_for_alerts()
+{
+  info "--- Extracting audit events referenced by alerts ---"
+
+  local ids_file
+  ids_file="$(mktemp)"
+
+  grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$RESULTS_FILE" > "$ids_file"
+
+  sudo grep -Ff "$ids_file" /var/log/kubernetes/audit.log | jq -c . > "$AUDIT_FILE" || true
+
+  rm -f "$ids_file"
+
+  info "Saved $(wc -l < "$AUDIT_FILE") audit events to $AUDIT_FILE"
+}
+
 ensure_base_tenants() 
 {
   info "Creating tenant namespaces ${TA} and ${TB}..."
@@ -151,6 +168,18 @@ metadata:
   labels:
     tenant: ${TB}
 EOF
+}
+
+step() 
+{
+  local i="$1"
+  local action="$2"
+  shift 2
+
+  local msg="[$i/$COUNT] action=${action} $*"
+
+  info "$msg"
+  echo "$msg" >> "$RESULTS_FILE"
 }
 
 cleanup() 

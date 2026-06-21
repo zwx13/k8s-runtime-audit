@@ -5,11 +5,17 @@ source "$(dirname "$0")/common.sh"
 
 trap cleanup EXIT
 
+RESULT_DIR="../experiment-results/01/run-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$RESULT_DIR"
+
+RESULTS_FILE="$RESULT_DIR/script-output-and-alerts.log"
+AUDIT_FILE="$RESULT_DIR/audit-events.jsonl"
+
 prepare_alert_stream
 
 ensure_base_tenants
 
-info "Creating developer ClusterRole dev..."
+info2file "Creating developer ClusterRole dev..."
 cat <<EOF | admin apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -21,7 +27,7 @@ rules:
   verbs: ["get", "list", "create", "update", "patch", "delete"]
 EOF
 
-info "Creating RBs for tenants: one is (accidentally) misconfigured."
+info2file "Creating RBs for tenants: one is (accidentally) misconfigured."
 cat <<EOF | admin apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -56,8 +62,12 @@ sleep 2
 
 start_alert_listener 1
 
-info "Triggering cross-tenant access attempt: tenant-a user tries to read tenant-b namespace."
+info2file "Triggering cross-tenant access attempt: tenant-a user tries to read tenant-b namespace."
 expect_fail "${CTX_A} cannot get pods in ${TB}" \
   "$KUBECTL" --context="$CTX_A" get pods -n "$TB"
 
 wait_for_alert_listener
+
+save_alerts_to_file
+
+extract_audit_events_for_alerts
