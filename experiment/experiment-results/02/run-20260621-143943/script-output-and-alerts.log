@@ -1,0 +1,5 @@
+[+] Creating ClusterRole dev...
+[+] Creating RoleBinding in tenant-a that references dev
+[+] Deleting ClusterRole dev. The RoleBinding should become dangling.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[["e45a60b7-9d94-40b7-8cea-76f4424f842b","clusterrole.deleted"]]
