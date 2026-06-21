@@ -7,7 +7,7 @@ trap cleanup EXIT
 
 COUNT="${1:-50}"
 
-RESULTS_FILE="experiment-results-$(date +%Y%m%d-%H%M%S).log"
+RESULTS_FILE="../experiment-results/experiment-results-$(date +%Y%m%d-%H%M%S).log"
 
 ROLES=("view" "edit" "admin" "cluster-admin" "dev")
 VERBS=("get" "list" "watch" "create" "update" "patch" "delete" "deletecollection")
