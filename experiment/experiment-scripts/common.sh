@@ -24,7 +24,7 @@ MON_NS="${MON_NS:-default}"
 NATS_BOX_DEPLOY="${NATS_BOX_DEPLOY:-nats-box}"
 ALERT_STREAM="${ALERT_STREAM:-MT_ALERTS}"
 ALERT_SUBJECT="${ALERT_SUBJECT:-audit.mt.alerts}"
-ALERT_WAIT_SECONDS="${ALERT_WAIT_SECONDS:-30}"
+ALERT_WAIT_SECONDS="${ALERT_WAIT_SECONDS:-70}"
 ALERT_OUT="${ALERT_OUT:-/tmp/mt-alerts.out}"
 ALERT_SUB_PID=""
 
@@ -121,8 +121,10 @@ wait_for_alert_listener()
 save_alerts_to_file()
 {
   echo
-  echo " ~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~" > "$RESULTS_FILE"
-  echo "$ALERT_OUT" >> "$RESULTS_FILE" 2>/dev/null || true
+  echo " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" >> "$RESULTS_FILE"
+  if ! cat "$ALERT_OUT" >> "$RESULTS_FILE" 2>/dev/null; then
+    warn "Failed to append alert output from $ALERT_OUT"
+  fi
 }
 
 prepare_alert_stream() 
