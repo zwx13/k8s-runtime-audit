@@ -1,0 +1,3 @@
+[+] Creating invalid ClusterRoleBinding that grants cluster-wide access to tenant group tenant-a...
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[["504ab442-ccaf-41ba-a3a7-91c4d31d0783","clusterrolebinding.created"]]
