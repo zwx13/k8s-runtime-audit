@@ -54,7 +54,7 @@ EOF
 
 sleep 2
 
-start_alert_listener
+start_alert_listener 1
 
 info "Triggering cross-tenant access attempt: tenant-a user tries to read tenant-b namespace."
 expect_fail "${CTX_A} cannot get pods in ${TB}" \

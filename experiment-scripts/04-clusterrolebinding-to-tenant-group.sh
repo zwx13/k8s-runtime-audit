@@ -25,6 +25,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 EOF
 
-start_alert_listener
+start_alert_listener 1
 
 wait_for_alert_listener

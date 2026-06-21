@@ -40,7 +40,7 @@ EOF
 
 sleep 2
 
-start_alert_listener
+start_alert_listener 1
 
 info "Deleting ClusterRole dev. The RoleBinding should become dangling."
 admin delete clusterrole dev

@@ -42,6 +42,6 @@ sleep 2
 info "Deleting ClusterRole dev. The ClusterRoleBinding should become dangling."
 admin delete clusterrole dev
 
-start_alert_listener
+start_alert_listener 1
 
 wait_for_alert_listener
