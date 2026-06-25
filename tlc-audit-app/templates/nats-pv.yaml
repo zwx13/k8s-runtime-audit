@@ -4,14 +4,14 @@ metadata:
   name: nats-local-pv
 spec:
   capacity:
-    storage: 1Gi
+    storage: {{ .Values.natsPV.size }}
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /mnt/nats-data
+    path: {{ .Values.natsPV.path }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -19,4 +19,4 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - k8s-worker1
+          - {{ .Values.natsPV.node | quote }}

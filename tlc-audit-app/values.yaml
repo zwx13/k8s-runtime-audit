@@ -107,6 +107,12 @@ javarunner:
       failureThreshold: 3
     timeoutSeconds: 2
 
+# nats PV
+natsPV:
+  size: 1Gi
+  path: /mnt/nats-data
+  node: "k8s-worker1"
+
 # ---------------- Nats dependency ---------------------
 nats:
   fullnameOverride: "nats"
