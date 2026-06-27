@@ -67,6 +67,16 @@ The `UpdatedMTSpec` subfolder contains the multitenancy specifications:
 
 The TLA+ specifications can be model checked manually from the TLA+ Toolbox or from VS Code. The trace specification can also be run manually, but the audit webhook and NATS setup need to be running first if live traces are expected.
 
+## TLA+ dependencies
+
+The repository also contains TLA+ dependencies required by the Java checker.
+
+The `tla2tools.jar` file is the TLC binary used to run the model checker. The `CommunityModules` folder contains additional TLA+ operators defined by the community. These modules are available from the TLA+ Community Modules repository:
+
+https://github.com/tlaplus/CommunityModules
+
+Both `tla2tools.jar` and the required community modules must be available when running the Java checker. They are kept in the repository so the checker can load the TLC binary and any additional operators needed by the specifications.
+
 ## Local execution with Docker Compose
 
 The root of the repository contains a `docker-compose.yaml` file.
