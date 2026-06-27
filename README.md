@@ -7,14 +7,14 @@ The tool monitors Kubernetes audit logs, filters the relevant multitenancy event
 ## Repository structure
 
 The repository is organized into the following main folders:
-
+- `experiment`
 - `java`
+- `k8s`
 - `python`
 - `tla_specs`
-- `k8s`
 - `tlc-audit-app`
 
-There is also a `docker-compose.yaml` file in the root of the repository, which can be used for running the main containers locally.
+There is also the `.vscode` folder that contains the `settings.json` configured to match what the TLA+ VS Code extension expects. It's just a template, so it needs to be updated with the correct entries. 
 
 ## Java application
 
@@ -50,6 +50,10 @@ The `python` folder also contains:
 
 - a `Dockerfile` for containerizing the Python applications;
 - a `requirements.txt` file containing the Python dependencies.
+
+## docker-compose
+
+The `docker-compose.yaml` file in the root of the repository can be used for running the main containers locally.
 
 ## TLA+ specifications
 
