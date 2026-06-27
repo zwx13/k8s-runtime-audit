@@ -145,6 +145,49 @@ The chart can be deployed with:
 helm upgrade tlc-audit-release tlc-audit-app/ --values tlc-audit-app/values.yaml
 ```
 
+## Experiments
+
+The `experiment` folder contains the scripts and collected results used for testing the tool against several violating scenarios.
+
+It is split into two subfolders:
+
+- `experiment-scripts`
+- `experiment-results`
+
+### Experiment scripts
+
+The `experiment-scripts` subfolder contains the shell scripts used to trigger different multitenancy violations in the cluster.
+
+The scripts are:
+
+- `01-cross-tenant-access.sh`
+- `02-dangling-rolebinding.sh`
+- `03-rolebinding-to-cluster-admin.sh`
+- `04-clusterrolebinding-to-tenant-group.sh`
+- `05-dangling-clusterrolebinding.sh`
+- `06-combined-scenario.sh`
+
+The `common.sh` file contains helper functions used by the experiment scripts. These include functions for purging the alert stream, subscribing to it, ensuring that the required tenants exist, and other shared setup or cleanup logic.
+
+Each experiment script creates or attempts a specific violating configuration. The one attempted by the `06-combined-scenario` is randomized. The purpose is to check whether the monitoring pipeline detects the violation and produces the expected alert.
+
+### Experiment results
+
+The `experiment-results` subfolder contains the collected results for the experiment runs.
+
+It contains subfolders from `01` to `06`, corresponding to the six experiment scenarios. Each of these folders contains six result subfolders. The name of each result subfolder is `run-` followed by a timestamp representing the run date and time.
+
+Each result subfolder contains:
+
+- `audit-events.jsonl`
+- `script-output-and-alerts.log`
+
+The `audit-events.jsonl` file contains the actual violating audit events identified from the cluster.
+
+The `script-output-and-alerts.log` file contains both the output of the experiment script and the output read from the NATS alert stream. The scripts write their output to a temporary file and then print it so the user can inspect what happened during the run.
+
+The violating audit log entry is identified using the `auditID` from the alert. The full audit event is not stored directly in the alert stream because the complete audit log entry is too verbose. Instead, the alert contains enough information for the administrator to locate the corresponding audit event by its `auditID`.
+
 ## Kubernetes audit logging requirements
 
 This tool depends on Kubernetes audit logs.
