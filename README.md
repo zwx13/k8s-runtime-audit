@@ -149,10 +149,16 @@ It contains a `values.yaml` file, which should be overwritten or adjusted with t
 
 The `Chart.yaml` file shows the NATS dependency. The `Chart.lock` file contains the resolved dependency information. The `templates` folder contains Kubernetes manifests similar to those in the `k8s` folder, but adapted for Helm deployment.
 
-The chart can be deployed with:
+The chart can be installed or upgraded with:
 
 ```bash
-helm upgrade tlc-audit-release tlc-audit-app/ --values tlc-audit-app/values.yaml
+helm upgrade --install tlc-audit-release tlc-audit-app/ --values tlc-audit-app/values.yaml
+```
+
+Then, if you want to uninstall it:
+
+```bash
+helm uninstall tlc-audit-release
 ```
 
 ## Experiments
