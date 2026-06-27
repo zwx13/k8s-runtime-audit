@@ -189,7 +189,7 @@ Each experiment script creates or attempts a specific violating configuration. T
 
 ### Experiment results
 
-The `experiment-results` subfolder contains the collected results for the experiment runs.
+The `experiment-results` subfolder contains the collected results for the experiment runs. I ran the experiment on a `kubeadm` K8s cluster running locally, on 3 VMs: 1 control-plane node and 2 worker nodes.
 
 It contains subfolders from `01` to `06`, corresponding to the six experiment scenarios. Each of these folders contains six result subfolders. The name of each result subfolder is `run-` followed by a timestamp representing the run date and time.
 
