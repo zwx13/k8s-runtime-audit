@@ -19,6 +19,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Final
+import httpx
 
 import nats
 from fastapi import FastAPI, HTTPException, Request
@@ -33,6 +34,8 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 NATS_SERVER: Final[str] = env_str("NATS_URL", "nats://127.0.0.1:4222")
+FALCO_URL = env_str("FALCO_URL", "http://127.0.0.1:9765/k8s-audit",
+)
 JS_STREAM: Final[str] = env_str("JS_STREAM", "AUDIT")
 RAW_SUBJECT: Final[str] = env_str("RAW_SUBJECT", "audit.full")
 
@@ -83,23 +86,80 @@ async def nats_connect(app: FastAPI):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Startups and shutsdown code. `yield` keyword separates the two. On startup, we
-    attempt to connect to nats. When we shutdown, we attempt a "nice" close with
-    drain.
+    Startup and shutdown code.
+
+    Startup:
+    - connect to NATS
+    - create reusable HTTP client for Falco
+
+    Shutdown:
+    - close Falco HTTP client
+    - drain NATS connection
     """
+
     app.state.nc = None
     app.state.js = None
+    app.state.http = None
 
     await nats_connect(app)
 
+    app.state.http = httpx.AsyncClient(timeout=2.0,)
+
     try:
         yield
+
     finally:
+        if app.state.http:
+            await app.state.http.aclose()
+            log.info("Falco HTTP client closed")
+
         if app.state.nc:
             await app.state.nc.drain()
             log.info("NATS connection drained and closed")
 
 app = FastAPI(lifespan=lifespan)
+
+async def send_to_nats(js, items, published):
+    for item in items:
+            try:
+                # encode to bytes for NATS
+                payload = json.dumps(item, separators=(",", ":")).encode("utf-8")
+                await js.publish(RAW_SUBJECT, payload)  # returns PubAck; we don't use it here
+                published += 1
+            except Exception:
+                log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
+
+        # for debugging: we can send with curl a log to see the response
+    return {
+            "status": "ok", 
+            "published": published, 
+            "received": len(items), 
+            "errors": len(items) - published
+        }
+
+async def send_to_falco(
+        client: httpx.AsyncClient,
+        data: dict,
+    ) -> dict:
+    try:
+        response: httpx.Response = await client.post(
+            FALCO_URL,
+            json=data,
+        )
+
+        return {
+            "status": "ok" if response.is_success else "error",
+            "http_status": response.status_code
+        }
+
+    except httpx.RequestError as exc:
+        log.exception("Failed to send audit data to Falco")
+    
+        return {
+            "status": "error",
+            "error": str(exc),
+        }
+    
 
 # -----------------------------------------------------------------------------
 # Routes
@@ -152,20 +212,17 @@ async def receive_audit_log(request: Request):
 
     # reuse the connection created at startup
     js = request.app.state.js
-    published = 0
+    client: httpx.AsyncClient = request.app.state.http
 
-    for item in items:
-        try:
-            # encode to bytes for NATS
-            payload = json.dumps(item, separators=(",", ":")).encode("utf-8")
-            await js.publish(RAW_SUBJECT, payload)  # returns PubAck; we don't use it here
-            published += 1
-        except Exception:
-            log.exception("Failed to publish audit event to subject=%s", RAW_SUBJECT)
+    nats_response = await send_to_nats(js, items, published = 0)
+    falco_response = await send_to_falco(client, data,)
 
-    # for debugging: we can send with curl a log to see the response
-    return {"status": "ok", "published": published, 
-            "received": len(items), "errors": len(items) - published}
+    return {
+        "status" : "ok",
+        "received": len(items),
+        "nats" : nats_response,
+        "falco": falco_response,
+    }
 
 # -----------------------------------------------------------------------------
 # Main

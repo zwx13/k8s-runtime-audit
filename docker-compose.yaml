@@ -28,6 +28,7 @@ services:
       retries: 3
     environment:
       NATS_URL: "nats://nats:4222"
+      FALCO_URL: "http://falco-k8saudit-webhook.falco.svc.cluster.local:9765/k8s-audit"
     volumes:
       - ./python/python_audit:/app/python_audit
     

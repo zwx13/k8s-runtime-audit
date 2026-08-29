@@ -21,6 +21,8 @@ spec:
         env:
           - name: NATS_URL
             value: {{ .Values.envVars.natsUrl | quote }}
+          - name: FALCO_URL
+            value: {{ .Values.envVars.falcoUrl | quote }}
           - name: JS_STREAM
             value: {{ .Values.webhook.auditSettings.jsStream | quote }}
           - name: RAW_SUBJECT

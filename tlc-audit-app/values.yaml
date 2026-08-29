@@ -4,10 +4,11 @@
 image:
   pythonimage: zwx13/audit-python
   javaimage: zwx13/audit-java 
-  tag: dev
+  tag: "falco-1"
   imagePullPolicy: Always
 envVars:
   natsUrl: "nats://nats:4222"
+  falcoUrl: "http://falco-k8saudit-webhook.falco.svc.cluster.local:9765/k8s-audit"
 
 # webhook
 webhook:
