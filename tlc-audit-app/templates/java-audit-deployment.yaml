@@ -17,7 +17,7 @@ spec:
       serviceAccountName: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}
       initContainers:
       - name: {{ .Values.kv.initName }}
-        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.python_tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/mt_state_store.py"]
@@ -32,7 +32,7 @@ spec:
             value: {{ .Values.kv.kvSettings.retentionSeconds | quote }}
       containers:
       - name: {{ .Values.javarunner.name }}
-        image: {{ .Values.image.javaimage }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.javaimage }}:{{ .Values.image.java_tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         env:
           - name: NATS_URL

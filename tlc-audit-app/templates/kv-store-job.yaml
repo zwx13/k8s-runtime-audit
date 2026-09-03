@@ -18,7 +18,7 @@ spec:
       serviceAccountName: {{ .Values.kv.serviceAccountName | default .Values.kv.name }}
       containers:
       - name: {{ .Values.kv.name }}
-        image: {{ .Values.image.pythonimage }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.pythonimage }}:{{ .Values.image.python_tag }}
         imagePullPolicy: {{ .Values.image.imagePullPolicy }}
         command: ["python3"]
         args: ["python_audit/mt_state_store.py"]

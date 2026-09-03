@@ -4,7 +4,8 @@
 image:
   pythonimage: zwx13/audit-python
   javaimage: zwx13/audit-java 
-  tag: "falco-1"
+  python_tag: "falco-1"
+  java_tag: "dev"
   imagePullPolicy: Always
 envVars:
   natsUrl: "nats://nats:4222"
