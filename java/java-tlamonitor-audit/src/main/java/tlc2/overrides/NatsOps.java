@@ -55,11 +55,12 @@ import io.nats.client.api.*;
      */
     @TLAPlusOperator(identifier = "NatsConsume", module = "NatsOps")
     public static synchronized Value consume() throws Exception {
-        long t0 = System.nanoTime();
-        System.err.println(">>>>>> NatsConsume start " + Instant.now());
         if (fetchedMsgOnce) {
             return new TupleValue(cachedTlaValues.toArray(new Value[0]));
         }
+
+        long fetchStart = System.nanoTime();
+
         try {
             FetchConsumeOptions opts = FetchConsumeOptions.builder()
                 .maxMessages(MESSAGES_NO)
@@ -73,6 +74,11 @@ import io.nats.client.api.*;
                 currentMessages.put(msg.metaData().streamSequence(), msg);
             }
 
+            long fetchEnd = System.nanoTime();
+            double fetchMs = (fetchEnd - fetchStart) / 1_000_000.0;
+
+            int batchSize = currentMessages.size();
+
             for (Message m : currentMessages.values()) {
                 byte[] msgData = m.getData();
                 JsonNode jsonMessage = Utils.parseAndGetJson(msgData);
@@ -80,7 +86,13 @@ import io.nats.client.api.*;
                 cachedTlaValues.add(tlaValue);
             }
                 fetchedMsgOnce = true;
-                return new TupleValue(cachedTlaValues.toArray(new Value[0]));
+
+            System.out.println(
+                "MT_METRIC batchSize=" + batchSize
+                + " fetchMs=" + fetchMs
+            );
+
+            return new TupleValue(cachedTlaValues.toArray(new Value[0]));
         }
          catch (Exception e) {
             e.printStackTrace();
@@ -90,10 +102,6 @@ import io.nats.client.api.*;
             cachedTlaValues.clear();
             // return new StringValue("ERROR");
             throw new RuntimeException("NatsConsume failed", e);
-        }
-        finally {
-            System.err.println(">>>>>> NatsConsume end " + Instant.now()
-                        + " elapsedMs=" + (System.nanoTime() - t0)/1_000_000);
         }
     }
  

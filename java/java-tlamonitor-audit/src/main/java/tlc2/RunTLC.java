@@ -38,11 +38,35 @@ public class RunTLC {
     // System.out.println(String.join(" ", pb.command()));
 
     pb.redirectErrorStream(true);
+
+    long start = System.nanoTime();
+
     Process process = pb.start();
+
+    int batchSize = 0;
+    double fetchMs = 0.0;
 
     try (BufferedReader r = new BufferedReader (new InputStreamReader (process.getInputStream()))) {
         String line;
         while ((line = r.readLine()) != null) {
+            if (line.startsWith("MT_METRIC")) {
+                String[] parts = line.split("\\s+");
+
+                for (String part : parts) {
+                    if (part.startsWith("batchSize=")) {
+                        batchSize = Integer.parseInt(
+                            part.substring("batchSize=".length())
+                        );
+                    }
+                    else if (part.startsWith("fetchMs=")) {
+                        fetchMs = Double.parseDouble(
+                            part.substring("fetchMs=".length())
+                        );
+                    }
+                }
+
+                continue;
+            }
             if (line.startsWith("Parsing file ")) continue;
             if (line.startsWith("Semantic processing of module ")) continue;
             if (line.startsWith("Linting of module ")) continue;
@@ -52,6 +76,42 @@ public class RunTLC {
     }
 
     int exitCode = process.waitFor();
+
+    long end = System.nanoTime();
+
+    long durationNs = end - start;
+    double durationMs = durationNs / 1_000_000.0;
+
+    File marker = new File("/tmp/mt-experiment-active");
+
+    if (marker.exists() && batchSize > 0) {
+        String metricsFile = java.nio.file.Files
+        .readString(marker.toPath())
+        .trim();
+
+
+        File file = new File(metricsFile);
+
+        boolean newFile = !file.exists();
+
+        try (java.io.FileWriter fw = new java.io.FileWriter(file, true);
+             java.io.PrintWriter out = new java.io.PrintWriter(fw)) {
+
+            if (newFile) {
+                out.println("timestamp,batch_size,fetch_ms,tlc_duration_ms,exit_code");
+            }
+
+            out.printf(
+                java.util.Locale.US,
+                "%s,%d,%.3f,%.3f,%d%n",
+                java.time.Instant.now(),
+                batchSize,
+                fetchMs,
+                durationMs,
+                exitCode
+            );
+        }
+    }
 
     if (exitCode != 0) {
         System.out.println("TLC failed. Command: " + String.join(" ", pb.command()));
