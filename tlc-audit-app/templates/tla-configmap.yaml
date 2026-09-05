@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tla-specs
+data:
+  Utils.tla: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/Utils.tla" | indent 4 }}
+
+  NatsOps.tla: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/NatsOps.tla" | indent 4 }}
+
+  MT_Audit_RBAC_Base_1.tla: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/MT_Audit_RBAC_Base_1.tla" | indent 4 }}
+
+  MT_Audit_RBAC_Trace_1.tla: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/MT_Audit_RBAC_Trace_1.tla" | indent 4 }}
+
+  MC_MT_Audit_RBAC_Trace_1.tla: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.tla" | indent 4 }}
+
+  MC_MT_Audit_RBAC_Trace_1.cfg: |
+{{ .Files.Get "tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.cfg" | indent 4 }}

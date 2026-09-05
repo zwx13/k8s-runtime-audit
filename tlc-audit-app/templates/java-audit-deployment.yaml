@@ -49,6 +49,14 @@ spec:
             value: {{ .Values.javarunner.javaRunnerSettings.tlaKVName | quote }}
           - name: ALERTS_SUBJECT
             value: {{ .Values.javarunner.javaRunnerSettings.alertsSubj | quote }}
+          - name: TLA_META_DIR
+            value: {{ .Values.javarunner.javaRunnerSettings.tlaMetaDir | quote }}
+        volumeMounts:
+          - name: tla-spec-volume
+            mountPath: /app/tla_specs/UpdatedMTSpec
+            readOnly: true
+          - name: tla-state-volume
+            mountPath: {{ .Values.javarunner.javaRunnerSettings.tlaMetaDir }}
         readinessProbe:
           exec:
             command: {{ .Values.javarunner.probes.readiness.command | toJson }}
@@ -63,4 +71,10 @@ spec:
           periodSeconds: {{ .Values.javarunner.probes.liveness.periodSeconds }}
           timeoutSeconds: {{ .Values.javarunner.probes.liveness.timeoutSeconds }}
           failureThreshold: {{ .Values.javarunner.probes.liveness.failureThreshold }}
+      volumes:
+        - name: tla-spec-volume
+          configMap:
+            name: tla-specs
+        - name: tla-state-volume
+          emptyDir: {}
 

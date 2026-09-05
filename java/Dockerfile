@@ -17,15 +17,16 @@ WORKDIR /build/java/java-tlamonitor-audit/
 
 RUN mvn clean package -DskipTests
 
-# final runtime image
+# runtime
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-COPY --from=build /build/java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar ./app.jar
+COPY --from=build \
+    /build/java/java-tlamonitor-audit/target/java-tlamonitor-audit-1.0-SNAPSHOT.jar \
+    ./app.jar
 
 COPY tla2tools.jar ./
 COPY CommunityModules.jar ./
-COPY tla_specs/ ./tla_specs/
 
 CMD ["java", "-cp", "app.jar:CommunityModules.jar:tla2tools.jar", "tlc2.Main", \
      "tla_specs/UpdatedMTSpec/MC_MT_Audit_RBAC_Trace_1.tla", \
