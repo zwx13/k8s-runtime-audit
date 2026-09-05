@@ -23,14 +23,27 @@ public class RunTLC {
     String communityModulesAbs = new File(communityModules).getAbsolutePath();
     String cfgAbs = new File(cfgFile).getAbsolutePath();
     String specAbs = new File(specFile).getAbsolutePath();
+    String tlaMetaDir = System.getenv().getOrDefault(
+    "TLA_META_DIR",
+    "/app/tla_states"
+);
 
     ProcessBuilder pb = new ProcessBuilder(
     "java",
     "-XX:+UseParallelGC",
+
     "-cp", overridesAbs + sep + tlaToolsPathAbs + sep + communityModulesAbs,
+
     "-DTLA-Library=" + overridesAbs + sep + communityModulesAbs,
+
     "tlc2.TLC",
+
+    "-metadir", tlaMetaDir,
+
+    "-teSpecOutDir", tlaMetaDir,
+
     "-config", cfgAbs,
+
     specAbs
 );
 

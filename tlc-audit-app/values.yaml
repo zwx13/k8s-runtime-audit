@@ -4,8 +4,8 @@
 image:
   pythonimage: zwx13/audit-python
   javaimage: zwx13/audit-java 
-  python_tag: "falco-1"
-  java_tag: "dev"
+  python_tag: "falco-3"
+  java_tag: "scalability-debug-3"
   imagePullPolicy: Always
 envVars:
   natsUrl: "nats://nats:4222"
@@ -37,6 +37,7 @@ webhook:
 # multitenancy
 multitenancy:
   name: audit-mt
+  tenantCount: 2
   mtSettings:
     rawStream: "AUDIT"
     sourceSubj: "audit.full"
@@ -95,6 +96,7 @@ javarunner:
     tlaMessageNo: "50"
     tlaKVName: "MT_STATE_STORE"
     alertsSubj: "audit.mt.alerts"
+    tlaMetaDir: /app/tla_states
   replicas: 1
   probes:
     readiness:
