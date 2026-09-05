@@ -19,8 +19,6 @@ NatsPutCachedState(allocOut) == TRUE
 
 NatsPublishAlert(alertSet) == TRUE
 
-DebugAlertValue(alertSet) == TRUE
-
 =============================================================================
 \* Modification History
 \* Last modified Tue Sep 23 09:50:58 EEST 2025 by malina
