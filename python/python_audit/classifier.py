@@ -1,3 +1,5 @@
+from tenant_config import TENANTS
+
 """
 Classifier for audit events.
 
@@ -15,11 +17,11 @@ DEFAULT_CLUSTER_ROLES_PERMISSION_MAP.
 # HELPER VARS
 # -----------------------------------------------------------------------------
 
+MONITORED_NAMESPACES = TENANTS
+
 READ_VERBS = {"get", "list", "watch"}
 WRITE_VERBS = {"create", "update", "patch"}
 DELETE_VERBS = {"delete", "deletecollection"}
-
-MONITORED_NAMESPACES = {"tenant-a", "tenant-b"}
 
 SUCCESS_CODES= {200, 201}
 

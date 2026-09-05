@@ -35,6 +35,24 @@ info2file() { echo "[+]" "$*" && echo "[+]" "$*" >> "$RESULTS_FILE" ; }
 warn() { echo "[!]" "$*" >&2; }
 die() { echo "[x]" "$*" >&2; exit 1; }
 
+tenant_name()
+{
+  local n="$1"
+  echo "tenant-${n}"
+}
+
+tenant_group()
+{
+  local n="$1"
+  echo "tenant-${n}"
+}
+
+tenant_context()
+{
+  local n="$1"
+  echo "tenant-${n}-user@kubernetes"
+}
+
 admin() 
 {
   "$KUBECTL" --context="$ADMIN_CTX" "$@"
@@ -150,24 +168,26 @@ extract_audit_events_for_alerts()
   info "Saved $(wc -l < "$AUDIT_FILE") audit events to $AUDIT_FILE"
 }
 
-ensure_base_tenants() 
+ensure_tenant_namespace()
 {
-  info "Creating tenant namespaces ${TA} and ${TB}..."
+  local tenant="$1"
+
   cat <<EOF | admin apply -f -
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ${TA}
+  name: ${tenant}
   labels:
-    tenant: ${TA}
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${TB}
-  labels:
-    tenant: ${TB}
+    tenant: ${tenant}
 EOF
+}
+
+ensure_base_tenants()
+{
+  info "Creating tenant namespaces ${TA} and ${TB}..."
+
+  ensure_tenant_namespace "$TA"
+  ensure_tenant_namespace "$TB"
 }
 
 step() 

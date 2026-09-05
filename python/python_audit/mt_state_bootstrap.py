@@ -19,6 +19,7 @@ from classifier import (
     DEFAULT_CLUSTER_ROLES_PERMISSION_MAP,
     permission_from_rules,
     )
+from tenant_config import TENANTS
 
 log = logging.getLogger(__name__)
 
@@ -28,20 +29,18 @@ log = logging.getLogger(__name__)
 
 KUBECTL = os.getenv("KUBECTL", "kubectl")
 
-MONITORED_NAMESPACES = {"tenant-a", "tenant-b"}
+MONITORED_NAMESPACES = TENANTS
 
 MONITORED_CLUSTERROLES = {"dev"}
 
 MONITORED_ROLEBINDINGS = {
-    ("tenant-a", "tenant-a-binding"),
-    ("tenant-b", "tenant-b-binding"),
+    (tenant, "tenant-binding")
+    for tenant in TENANTS
 }
 
-MONITORED_CLUSTERROLEBINDING_SUBJECTS = {
-    "kubeadm:cluster-admins",
-    "tenant-a",
-    "tenant-b",
-}
+MONITORED_CLUSTERROLEBINDING_SUBJECTS = (
+    {"kubeadm:cluster-admins"} | TENANTS
+)
 
 async def kubectl_get_json(*args: str) -> dict[str, Any]:
     '''
