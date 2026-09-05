@@ -31,3 +31,5 @@ spec:
             value: {{ .Values.kv.kvSettings.storeSubj | quote }}
           - name: MT_RETENTION_SECONDS
             value: {{ .Values.kv.kvSettings.retentionSeconds | quote }}
+          - name: MT_TENANT_COUNT
+            value: {{ .Values.multitenancy.tenantCount | quote }}
