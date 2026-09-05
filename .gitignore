@@ -9,7 +9,7 @@ __pycache__/
 .venv/
 # TLA states
 MT_specs/states/*
-tla_specs/MTSpec/states/*
+tla_specs/MTSpec/*
 node_isolation_spec/states
 tla_specs/states
 *.tlc
