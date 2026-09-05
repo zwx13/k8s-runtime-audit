@@ -133,8 +133,16 @@ public class Utils {
         if (value instanceof RecordValue){
             return getObjectNode((RecordValue) value);
         }
+        if (value instanceof SetEnumValue) {
+            return getArrayNode((SetEnumValue) value);
+        }
         else{
-            throw new IOException("Cannot convert value, it is of unknown type");
+            throw new IOException(
+                "Cannot convert TLC value to JSON; type="
+                + value.getClass().getName()
+                + ", value="
+                + value
+            );
         }
     }
 
@@ -144,6 +152,17 @@ public class Utils {
             elements.add(getJsonFromValue(element));
         }
         return new ArrayNode(new JsonNodeFactory(false), elements);
+    }
+
+    public static ArrayNode getArrayNode(SetEnumValue set) throws IOException {
+        ArrayNode array = new ArrayNode(new JsonNodeFactory(false));
+
+        for (int i = 0; i < set.elems.size(); i++) {
+            Value element = set.elems.elementAt(i);
+            array.add(getJsonFromValue(element));
+        }
+
+        return array;
     }
 
     public static ObjectNode getObjectNode(RecordValue value) throws IOException{

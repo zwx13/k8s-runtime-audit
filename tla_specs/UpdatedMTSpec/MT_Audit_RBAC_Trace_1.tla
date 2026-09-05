@@ -360,21 +360,21 @@ allocOut ==
 *)
 SerializeAtEnd ==
   /\ idx > Len(LogEvents)
-  /\ NatsAckBatch
   /\ PrintT("allocOut = " \o ToString(allocOut))
   /\ IF alertOut # {} THEN
+        /\ NatsPublishAlert(SetToSeq(alertOut))
         /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         /\ PrintT("Bad event, alert(s) published in alert stream!")
         /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         /\ PrintT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        /\ NatsPublishAlert(SetToSeq(alertOut))
      ELSE
         /\ PrintT("================================================")
         /\ PrintT("In this batch, state of the MT cluster is    ok.")
         /\ PrintT("================================================")
         /\ TRUE
   /\ NatsPutCachedState(allocOut)
+  /\ NatsAckBatch
   /\ UNCHANGED << vars >>
 
 (*************************************************************************)
