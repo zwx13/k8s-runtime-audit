@@ -1,7 +1,7 @@
 /**
  * This file handles creation of TLC processes. It's responsible for
  * passing the right arguments and filtering the output to contain only
- * relevant information
+ * relevant information.
  */
 
 package tlc2;
@@ -14,121 +14,165 @@ import java.io.InputStreamReader;
 import io.nats.client.JetStreamApiException;
 
 public class RunTLC {
-    static int runTLC(String specFile, String cfgFile, String tlaToolsPath, String communityModules, String overridesJar) throws IOException, InterruptedException, JetStreamApiException{
-    
-    String sep = File.pathSeparator;
 
-    String tlaToolsPathAbs = new File(tlaToolsPath).getAbsolutePath();
-    String overridesAbs = new File(overridesJar).getAbsolutePath();
-    String communityModulesAbs = new File(communityModules).getAbsolutePath();
-    String cfgAbs = new File(cfgFile).getAbsolutePath();
-    String specAbs = new File(specFile).getAbsolutePath();
-    String tlaMetaDir = System.getenv().getOrDefault(
-    "TLA_META_DIR",
-    "/app/tla_states"
-);
+    static int runTLC(
+        String specFile,
+        String cfgFile,
+        String tlaToolsPath,
+        String communityModules,
+        String overridesJar
+    ) throws IOException, InterruptedException, JetStreamApiException {
 
-    ProcessBuilder pb = new ProcessBuilder(
-    "java",
-    "-XX:+UseParallelGC",
+        String sep = File.pathSeparator;
 
-    "-cp", overridesAbs + sep + tlaToolsPathAbs + sep + communityModulesAbs,
+        String tlaToolsPathAbs = new File(tlaToolsPath).getAbsolutePath();
+        String overridesAbs = new File(overridesJar).getAbsolutePath();
+        String communityModulesAbs = new File(communityModules).getAbsolutePath();
+        String cfgAbs = new File(cfgFile).getAbsolutePath();
+        String specAbs =new File(specFile).getAbsolutePath();
+        String tlaMetaDir =System.getenv().getOrDefault("TLA_META_DIR", "/app/tla_states");
 
-    "-DTLA-Library=" + overridesAbs + sep + communityModulesAbs,
+        ProcessBuilder pb = new ProcessBuilder(
+            "java",
+            "-XX:+UseParallelGC",
 
-    "tlc2.TLC",
+            "-cp",
+            overridesAbs
+                + sep
+                + tlaToolsPathAbs
+                + sep
+                + communityModulesAbs,
 
-    "-metadir", tlaMetaDir,
+            "-DTLA-Library="
+                + overridesAbs
+                + sep
+                + communityModulesAbs,
 
-    "-teSpecOutDir", tlaMetaDir,
+            "tlc2.TLC",
 
-    "-config", cfgAbs,
+            "-metadir",
+            tlaMetaDir,
 
-    specAbs
-);
+            "-teSpecOutDir",
+            tlaMetaDir,
 
-    // debug
-    // System.out.println(String.join(" ", pb.command()));
+            "-config",
+            cfgAbs,
 
-    pb.redirectErrorStream(true);
+            specAbs
+        );
 
-    long start = System.nanoTime();
+        pb.redirectErrorStream(true);
 
-    Process process = pb.start();
+        long start = System.nanoTime();
 
-    int batchSize = 0;
-    double fetchMs = 0.0;
+        Process process = pb.start();
 
-    try (BufferedReader r = new BufferedReader (new InputStreamReader (process.getInputStream()))) {
-        String line;
-        while ((line = r.readLine()) != null) {
-            if (line.startsWith("MT_METRIC")) {
-                String[] parts = line.split("\\s+");
+        int batchSize = 0;
+        double fetchMs = 0.0;
 
-                for (String part : parts) {
-                    if (part.startsWith("batchSize=")) {
-                        batchSize = Integer.parseInt(
-                            part.substring("batchSize=".length())
-                        );
+        String metricsFile = null;
+
+        File marker = new File("/experiment-results/.mt-experiment-active");
+
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+
+            while ((line = r.readLine()) != null) {
+
+                if (line.startsWith("MT_METRIC")) {
+
+                    String[] parts = line.split("\\s+");
+
+                    for (String part : parts) {
+
+                        if (part.startsWith("batchSize=")) {
+                            batchSize = Integer.parseInt(part.substring("batchSize=".length()));
+                        }
+                        else if (part.startsWith("fetchMs=")) {
+                            fetchMs = Double.parseDouble(part.substring("fetchMs=".length()));
+                        }
                     }
-                    else if (part.startsWith("fetchMs=")) {
-                        fetchMs = Double.parseDouble(
-                            part.substring("fetchMs=".length())
-                        );
+
+                    if (batchSize > 0) {
+                        try {
+                            String path = java.nio.file.Files.readString(marker.toPath()).trim();
+
+                            if (!path.isEmpty()) {
+                                metricsFile = path;
+                            }
+                        }
+                        catch (java.nio.file.NoSuchFileException e) {
+                            /*
+                             * No active experiment, or the experiment
+                             * ended between batch fetch and marker read.
+                             */
+                            metricsFile = null;
+                        }
                     }
+
+                    continue;
                 }
 
-                continue;
+                if (line.startsWith("Parsing file ")) {
+                    continue;
+                }
+
+                if (line.startsWith("Semantic processing of module ")) {
+                    continue;
+                }
+
+                if (line.startsWith("Linting of module ")) {
+                    continue;
+                }
+
+                if (line.startsWith("Loading ")) {
+                    continue;
+                }
+
+                System.out.println(line);
             }
-            if (line.startsWith("Parsing file ")) continue;
-            if (line.startsWith("Semantic processing of module ")) continue;
-            if (line.startsWith("Linting of module ")) continue;
-            if (line.startsWith("Loading ")) continue;
-            System.out.println(line);
         }
-    }
 
-    int exitCode = process.waitFor();
+        int exitCode = process.waitFor();
 
-    long end = System.nanoTime();
+        long end = System.nanoTime();
 
-    long durationNs = end - start;
-    double durationMs = durationNs / 1_000_000.0;
+        double durationMs = (end - start) / 1_000_000.0;
 
-    File marker = new File("/tmp/mt-experiment-active");
+        double nonFetchMs = durationMs - fetchMs;
 
-    if (marker.exists() && batchSize > 0) {
-        String metricsFile = java.nio.file.Files
-        .readString(marker.toPath())
-        .trim();
+        /*
+         * Write metrics even if the experiment marker has already been
+         * removed, because metricsFile was captured when the batch was
+         * fetched.
+         */
+        if (metricsFile != null && batchSize > 0) {
 
+            File file = new File(metricsFile);
 
-        File file = new File(metricsFile);
+            try (
+                java.io.FileWriter fw = new java.io.FileWriter(file, true);
 
-        boolean newFile = !file.exists();
-
-        try (java.io.FileWriter fw = new java.io.FileWriter(file, true);
-             java.io.PrintWriter out = new java.io.PrintWriter(fw)) {
-
-            if (newFile) {
-                out.println("timestamp,batch_size,fetch_ms,tlc_duration_ms,exit_code");
+                java.io.PrintWriter out = new java.io.PrintWriter(fw)
+            ) {
+                out.printf(
+                    java.util.Locale.US,
+                    "%s,%d,%.3f,%.3f,%.3f,%d%n",
+                    java.time.Instant.now(),
+                    batchSize,
+                    fetchMs,
+                    durationMs,
+                    nonFetchMs,
+                    exitCode
+                );
             }
-
-            out.printf(
-                java.util.Locale.US,
-                "%s,%d,%.3f,%.3f,%d%n",
-                java.time.Instant.now(),
-                batchSize,
-                fetchMs,
-                durationMs,
-                exitCode
-            );
         }
-    }
 
-    if (exitCode != 0) {
-        System.out.println("TLC failed. Command: " + String.join(" ", pb.command()));
-    }
-    return exitCode;
+        if (exitCode != 0) {
+            System.out.println("TLC failed. Command: " + String.join(" ", pb.command()));
+        }
+
+        return exitCode;
     }
 }

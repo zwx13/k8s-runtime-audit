@@ -5,7 +5,7 @@ image:
   pythonimage: zwx13/audit-python
   javaimage: zwx13/audit-java 
   python_tag: "falco-3"
-  java_tag: "scalability-debug-3"
+  java_tag: "scalability-experiment-1"
   imagePullPolicy: Always
 envVars:
   natsUrl: "nats://nats:4222"
