@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
+import java.io.File;
 import java.time.Instant;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -78,6 +78,12 @@ import io.nats.client.api.*;
             double fetchMs = (fetchEnd - fetchStart) / 1_000_000.0;
 
             int batchSize = currentMessages.size();
+
+            if (batchSize > 0) {
+                File markerActive = new File("/experiment-results/.mt-tlc-batch-active");
+                            
+                java.nio.file.Files.writeString(markerActive.toPath(), "active\n");
+            }
 
             for (Message m : currentMessages.values()) {
                 byte[] msgData = m.getData();

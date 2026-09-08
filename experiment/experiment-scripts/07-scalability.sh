@@ -46,6 +46,7 @@ TLC_METRICS_FILE_HOST="$RESULT_DIR_ABS/tlc-metrics.csv"
 TLC_METRICS_FILE_POD="/experiment-results/$REL_RESULT_DIR/tlc-metrics.csv"
 
 EXPERIMENT_MARKER="/srv/monitoring-experiments/.mt-experiment-active"
+TLC_ACTIVE_MARKER="/srv/monitoring-experiments/.mt-tlc-batch-active"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Workload configuration
@@ -600,9 +601,19 @@ info "Input generation duration: ${INPUT_GENERATION_DURATION_MS} ms"
 
 wait_for_pipeline_drain
 
-rm -f "$EXPERIMENT_MARKER"
+info "!! Waiting for active TLC batch to finish !!"
 
-info "TLC metric collection disabled."
+while true; do
+    if [ ! -f "$TLC_ACTIVE_MARKER" ]; then
+        info "No active TLC batch."
+        break
+    fi
+
+    sleep 1
+done
+
+rm -f "$EXPERIMENT_MARKER"
+info "TLC metric collection stopped for this run."
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Total experiment duration

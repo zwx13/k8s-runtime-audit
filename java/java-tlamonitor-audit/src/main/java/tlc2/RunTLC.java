@@ -168,6 +168,15 @@ public class RunTLC {
                 );
             }
         }
+        
+        /* 
+         * NatsOps creates this marker whenever it consumes,
+         * so we make sure to always delete it after TLC finishes
+        */
+        if (batchSize > 0) {
+            File markerActive = new File("/experiment-results/.mt-tlc-batch-active");
+            java.nio.file.Files.deleteIfExists(markerActive.toPath());
+        }
 
         if (exitCode != 0) {
             System.out.println("TLC failed. Command: " + String.join(" ", pb.command()));
