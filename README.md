@@ -9,9 +9,7 @@ The tool monitors Kubernetes audit logs, filters the relevant multitenancy event
 The repository is organized into the following main folders:
 - `experiment`
 - `java`
-- `k8s`
 - `python`
-- `tla_specs`
 - `tlc-audit-app`
 
 There is also the `.vscode` folder that contains the `settings.json` configured to match what the TLA+ VS Code extension expects. It's just a template, so it needs to be updated with the correct entries. 
@@ -55,32 +53,6 @@ The `python` folder also contains:
 
 The `docker-compose.yaml` file in the root of the repository can be used for running the main containers locally.
 
-## TLA+ specifications
-
-The `tla_specs` folder contains the TLA+ specifications used by the tool.
-
-The `NatsSmokeSpec` subfolder contains a small specification that can be run to test that the custom NATS operators work correctly.
-
-The `UpdatedMTSpec` subfolder contains the multitenancy specifications:
-
-- `MT_Audit_RBAC_Base_1.tla` is the base specification. It describes the desired state of the multitenant model;
-- `MC_MT_Audit_RBAC_Base_1.tla` and `MC_MT_Audit_RBAC_Base_1.cfg` are the model-checking module and configuration file for the base specification. They contain information about constants, invariants, and other TLC configuration;
-- `MT_Audit_RBAC_Trace_1.tla` is the trace specification. It ingests traces and uses predicates from the base specification to evaluate whether the observed behavior is valid;
-- `MC_MT_Audit_RBAC_Trace_1.tla` and `MC_MT_Audit_RBAC_Trace_1.cfg` play the same role for the trace specification as the `MC_MT_Audit_RBAC_Base_1.tla` and `MC_MT_Audit_RBAC_Base_1.cfg` files do for the base specification;
-- `NatsOps.tla` is a stub module used for loading the custom NATS operators. The actual definitions are implemented in `NatsOps.java`.
-
-The TLA+ specifications can be model checked manually from the TLA+ Toolbox or from VS Code. The trace specification can also be run manually, but the audit webhook and NATS setup need to be running first if live traces are expected.
-
-## TLA+ dependencies
-
-The repository also contains TLA+ dependencies required by the Java checker.
-
-The `tla2tools.jar` file is the TLC binary used to run the model checker. The `CommunityModules` folder contains additional TLA+ operators defined by the community. These modules are available from the TLA+ Community Modules repository:
-
-https://github.com/tlaplus/CommunityModules
-
-Both `tla2tools.jar` and the required community modules must be available when running the Java checker. They are kept in the repository so the checker can load the TLC binary and any additional operators needed by the specifications.
-
 ## Local execution with Docker Compose
 
 The root of the repository contains a `docker-compose.yaml` file.
@@ -123,28 +95,6 @@ The Java TLC runner can also be run manually, but it expects the TLA+ specificat
 
 This manual setup is useful when checking that traces are ingested correctly and that the custom TLC operators can communicate with NATS.
 
-## Kubernetes manifests
-
-The `k8s` folder contains the YAML files for deploying the application to a Kubernetes cluster. It is split into several subfolders:
-
-- `cluster-setup`
-- `java-runner`
-- `nats`
-- `python-runners`
-
-The `cluster-setup` subfolder contains files that are additional to the main application deployment. These are part of the actual cluster configuration that was applied in the local test cluster. A cluster where this tool is deployed should be configured in a similar way.
-
-The `java-runner` subfolder contains `java-audit-deployment.yaml`, which defines how the Java TLC runner is deployed.
-
-The `nats` subfolder contains the NATS JetStream setup. This is predefined, but it still needs a persistent volume and a `values.yaml` configuration.
-
-The `python-runners` subfolder contains the Kubernetes resources for the Python components:
-
-- a job for creating the alerts stream;
-- a `ClusterRole`, `ClusterRoleBinding`, `ServiceAccount`, and job for the Key/Value bootstrap, since it needs to read the cluster state when initialized;
-- a deployment for the multitenancy processor, since it needs to run continuously;
-- a deployment and service for the audit webhook, since the Kubernetes API server needs a stable address to send audit logs to.
-
 ## Helm deployment
 
 The `tlc-audit-app` folder contains the Helm chart for deploying the application.
@@ -164,6 +114,29 @@ Then, if you want to uninstall it:
 ```bash
 helm uninstall tlc-audit-release
 ```
+### TLA+ specifications
+
+The `tla_specs` subdirectory in this dir contains the TLA+ specifications used by the tool.
+
+The `UpdatedMTSpec` subfolder contains the multitenancy specifications:
+
+- `MT_Audit_RBAC_Base_1.tla` is the base specification. It describes the desired state of the multitenant model;
+- `MC_MT_Audit_RBAC_Base_1.tla` and `MC_MT_Audit_RBAC_Base_1.cfg` are the model-checking module and configuration file for the base specification. They contain information about constants, invariants, and other TLC configuration;
+- `MT_Audit_RBAC_Trace_1.tla` is the trace specification. It ingests traces and uses predicates from the base specification to evaluate whether the observed behavior is valid;
+- `MC_MT_Audit_RBAC_Trace_1.tla` and `MC_MT_Audit_RBAC_Trace_1.cfg` play the same role for the trace specification as the `MC_MT_Audit_RBAC_Base_1.tla` and `MC_MT_Audit_RBAC_Base_1.cfg` files do for the base specification;
+- `NatsOps.tla` is a stub module used for loading the custom NATS operators. The actual definitions are implemented in `NatsOps.java`.
+
+The TLA+ specifications can be model checked manually from the TLA+ Toolbox or from VS Code. The trace specification can also be run manually, but the audit webhook and NATS setup need to be running first if live traces are expected.
+
+## TLA+ dependencies
+
+The repository also contains TLA+ dependencies required by the Java checker.
+
+The `tla2tools.jar` file is the TLC binary used to run the model checker. The `CommunityModules` folder contains additional TLA+ operators defined by the community. These modules are available from the TLA+ Community Modules repository:
+
+https://github.com/tlaplus/CommunityModules
+
+Both `tla2tools.jar` and the required community modules must be available when running the Java checker. They are kept in the repository so the checker can load the TLC binary and any additional operators needed by the specifications.
 
 ## Experiments
 
@@ -186,6 +159,8 @@ The scripts are:
 - `04-clusterrolebinding-to-tenant-group.sh`
 - `05-dangling-clusterrolebinding.sh`
 - `06-combined-scenario.sh`
+- `07-scalability.sh`
+- `08-run-scalability-matrix.sh`
 
 The `common.sh` file contains helper functions used by the experiment scripts. These include functions for purging the alert stream, subscribing to it, ensuring that the required tenants exist, and other shared setup or cleanup logic.
 
@@ -193,7 +168,7 @@ Each experiment script creates or attempts a specific violating configuration. T
 
 ### Experiment results
 
-The `experiment-results` subfolder contains the collected results for the experiment runs. I ran the experiment on a `kubeadm` K8s cluster running locally, on 3 VMs: 1 control-plane node and 2 worker nodes.
+The `experiment-results` subfolder contains the collected results for the experiment runs. We ran the experiment on a `kubeadm` K8s cluster running locally, on 3 VMs: 1 control-plane node and 2 worker nodes.
 
 It contains subfolders from `01` to `06`, corresponding to the six experiment scenarios. Each of these folders contains six result subfolders. The name of each result subfolder is `run-` followed by a timestamp representing the run date and time.
 
@@ -207,6 +182,8 @@ The `audit-events.jsonl` file contains the actual violating audit events identif
 The `script-output-and-alerts.log` file contains both the output of the experiment script and the output read from the NATS alert stream. The scripts write their output to a temporary file and then print it so the user can inspect what happened during the run.
 
 The violating audit log entry is identified using the `auditID` from the alert. The full audit event is not stored directly in the alert stream because the complete audit log entry is too verbose. Instead, the alert contains enough information for the administrator to locate the corresponding audit event by its `auditID`.
+
+The `scalability` subdir contains the results described in the paper. For 2, 5, 10 tenants, we ran multiple runs that generate various workloads: 10, 50, 100, 1000 K8s events. The purpose was to measure how the pipeline scales in clusters with different tenant activity.
 
 ## Kubernetes audit logging requirements
 
