@@ -1,0 +1,1000 @@
+[1/1000] action=delete-clusterrole name=dev
+[2/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[3/1000] action=create-clusterrole name=dev resources=services,configmaps verbs=create,patch,deletecollection,update,watch
+[4/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[5/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[6/1000] action=delete-crb name=foo-global-binding
+[7/1000] action=create-clusterrole name=dev resources=configmaps,secrets verbs=deletecollection,list,get
+[8/1000] action=delete-clusterrole name=dev
+[9/1000] action=delete-clusterrole name=dev
+[10/1000] action=delete-clusterrole name=dev
+[11/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=dev
+[12/1000] action=create-clusterrole name=dev resources=secrets,configmaps verbs=get,deletecollection,delete,watch,patch
+[13/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[14/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[15/1000] action=delete-clusterrole name=dev
+[16/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[17/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[18/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[19/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[20/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[21/1000] action=delete-clusterrole name=dev
+[22/1000] action=delete-crb name=foo-global-binding
+[23/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[24/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[25/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=edit
+[26/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[27/1000] action=delete-clusterrole name=dev
+[28/1000] action=create-clusterrole name=dev resources=secrets,pods,services verbs=deletecollection,create
+[29/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[30/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[31/1000] action=delete-clusterrole name=dev
+[32/1000] action=delete-crb name=foo-global-binding
+[33/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[34/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=cluster-admin
+[35/1000] action=delete-crb name=foo-global-binding
+[36/1000] action=create-crb name=foo-global-binding group=tenant-1 role=edit
+[37/1000] action=create-clusterrole name=dev resources=configmaps,secrets verbs=create,watch,get,deletecollection,list
+[38/1000] action=delete-crb name=foo-global-binding
+[39/1000] action=create-clusterrole name=dev resources=secrets,pods verbs=get,watch,create
+[40/1000] action=delete-crb name=foo-global-binding
+[41/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[42/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[43/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[44/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=cluster-admin
+[45/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[46/1000] action=delete-crb name=foo-global-binding
+[47/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[48/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[49/1000] action=delete-clusterrole name=dev
+[50/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[51/1000] action=create-crb name=foo-global-binding group=tenant-4 role=admin
+[52/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[53/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[54/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[55/1000] action=create-crb name=foo-global-binding group=tenant-3 role=view
+[56/1000] action=create-crb name=foo-global-binding group=tenant-2 role=cluster-admin
+[57/1000] action=create-clusterrole name=dev resources=pods,secrets,services verbs=list,patch,update
+[58/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[59/1000] action=create-clusterrole name=dev resources=pods,secrets verbs=delete,create,update,list,patch
+[60/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[61/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[62/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[63/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[64/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[65/1000] action=delete-crb name=foo-global-binding
+[66/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[67/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[68/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[69/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=dev
+[70/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[71/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[72/1000] action=delete-clusterrole name=dev
+[73/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[74/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[75/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[76/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[77/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[78/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[79/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[80/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[81/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[82/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=cluster-admin
+[83/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[84/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[85/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[86/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[87/1000] action=delete-clusterrole name=dev
+[88/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=cluster-admin
+[89/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[90/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[91/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=dev
+[92/1000] action=delete-crb name=foo-global-binding
+[93/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[94/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[95/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[96/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[97/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[98/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[99/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[100/1000] action=create-crb name=foo-global-binding group=tenant-3 role=admin
+[101/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[102/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[103/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=edit
+[104/1000] action=create-clusterrole name=dev resources=pods verbs=list,update,create
+[105/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[106/1000] action=delete-crb name=foo-global-binding
+[107/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[108/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[109/1000] action=create-crb name=foo-global-binding group=tenant-4 role=cluster-admin
+[110/1000] action=delete-crb name=foo-global-binding
+[111/1000] action=create-clusterrole name=dev resources=configmaps verbs=patch
+[112/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=cluster-admin
+[113/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[114/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[115/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=admin
+[116/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[117/1000] action=delete-clusterrole name=dev
+[118/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[119/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[120/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[121/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[122/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[123/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[124/1000] action=delete-clusterrole name=dev
+[125/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[126/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[127/1000] action=create-crb name=foo-global-binding group=tenant-1 role=edit
+[128/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[129/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[130/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=edit
+[131/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[132/1000] action=delete-clusterrole name=dev
+[133/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[134/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[135/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[136/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[137/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[138/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=cluster-admin
+[139/1000] action=delete-clusterrole name=dev
+[140/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[141/1000] action=delete-crb name=foo-global-binding
+[142/1000] action=create-clusterrole name=dev resources=pods verbs=delete,deletecollection,create,update,patch
+[143/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[144/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[145/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[146/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[147/1000] action=create-crb name=foo-global-binding group=tenant-1 role=cluster-admin
+[148/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[149/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[150/1000] action=create-clusterrole name=dev resources=pods verbs=deletecollection,list,create,patch
+[151/1000] action=delete-clusterrole name=dev
+[152/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[153/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[154/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[155/1000] action=delete-clusterrole name=dev
+[156/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[157/1000] action=delete-clusterrole name=dev
+[158/1000] action=create-crb name=foo-global-binding group=tenant-5 role=view
+[159/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[160/1000] action=delete-crb name=foo-global-binding
+[161/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[162/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[163/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[164/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[165/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[166/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[167/1000] action=delete-crb name=foo-global-binding
+[168/1000] action=create-clusterrole name=dev resources=pods,secrets,configmaps verbs=create
+[169/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[170/1000] action=delete-clusterrole name=dev
+[171/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=edit
+[172/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[173/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[174/1000] action=create-clusterrole name=dev resources=pods,configmaps verbs=update,patch,deletecollection,get,create
+[175/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[176/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[177/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[178/1000] action=delete-clusterrole name=dev
+[179/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[180/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[181/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[182/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[183/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[184/1000] action=delete-crb name=foo-global-binding
+[185/1000] action=delete-clusterrole name=dev
+[186/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[187/1000] action=create-crb name=foo-global-binding group=tenant-2 role=cluster-admin
+[188/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[189/1000] action=delete-clusterrole name=dev
+[190/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[191/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[192/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[193/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[194/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[195/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[196/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[197/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[198/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[199/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[200/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[201/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[202/1000] action=create-clusterrole name=dev resources=services,secrets,configmaps verbs=list,deletecollection,watch
+[203/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[204/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[205/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[206/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[207/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[208/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[209/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[210/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[211/1000] action=create-clusterrole name=dev resources=secrets,services verbs=delete,get,watch
+[212/1000] action=delete-crb name=foo-global-binding
+[213/1000] action=create-crb name=foo-global-binding group=tenant-1 role=cluster-admin
+[214/1000] action=delete-clusterrole name=dev
+[215/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[216/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[217/1000] action=delete-crb name=foo-global-binding
+[218/1000] action=create-clusterrole name=dev resources=pods verbs=update,create,delete
+[219/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[220/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[221/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[222/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[223/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[224/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[225/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[226/1000] action=delete-clusterrole name=dev
+[227/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[228/1000] action=delete-clusterrole name=dev
+[229/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[230/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[231/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[232/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[233/1000] action=delete-crb name=foo-global-binding
+[234/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=cluster-admin
+[235/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[236/1000] action=create-clusterrole name=dev resources=secrets verbs=patch,deletecollection,get,list,create
+[237/1000] action=delete-clusterrole name=dev
+[238/1000] action=delete-clusterrole name=dev
+[239/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[240/1000] action=create-crb name=foo-global-binding group=tenant-4 role=edit
+[241/1000] action=create-crb name=foo-global-binding group=tenant-4 role=admin
+[242/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[243/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[244/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[245/1000] action=create-crb name=foo-global-binding group=tenant-5 role=admin
+[246/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[247/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[248/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[249/1000] action=create-crb name=foo-global-binding group=tenant-1 role=edit
+[250/1000] action=delete-clusterrole name=dev
+[251/1000] action=create-crb name=foo-global-binding group=tenant-4 role=edit
+[252/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[253/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[254/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[255/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[256/1000] action=delete-crb name=foo-global-binding
+[257/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[258/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[259/1000] action=create-clusterrole name=dev resources=pods verbs=delete,watch,create,list
+[260/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[261/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[262/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[263/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[264/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[265/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[266/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[267/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[268/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[269/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[270/1000] action=delete-crb name=foo-global-binding
+[271/1000] action=create-crb name=foo-global-binding group=tenant-1 role=dev
+[272/1000] action=create-clusterrole name=dev resources=secrets,configmaps verbs=delete
+[273/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[274/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[275/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[276/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[277/1000] action=delete-crb name=foo-global-binding
+[278/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[279/1000] action=delete-clusterrole name=dev
+[280/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[281/1000] action=delete-clusterrole name=dev
+[282/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[283/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[284/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[285/1000] action=delete-crb name=foo-global-binding
+[286/1000] action=create-crb name=foo-global-binding group=tenant-3 role=view
+[287/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[288/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[289/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[290/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[291/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[292/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[293/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[294/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[295/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[296/1000] action=delete-clusterrole name=dev
+[297/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[298/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[299/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[300/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[301/1000] action=delete-crb name=foo-global-binding
+[302/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[303/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[304/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[305/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[306/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[307/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[308/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[309/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[310/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[311/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[312/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[313/1000] action=delete-crb name=foo-global-binding
+[314/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[315/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[316/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[317/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[318/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[319/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[320/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[321/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[322/1000] action=create-clusterrole name=dev resources=pods,configmaps verbs=update,watch,patch
+[323/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[324/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[325/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[326/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[327/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[328/1000] action=create-crb name=foo-global-binding group=tenant-2 role=admin
+[329/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[330/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=edit
+[331/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[332/1000] action=create-crb name=foo-global-binding group=tenant-2 role=admin
+[333/1000] action=delete-crb name=foo-global-binding
+[334/1000] action=delete-crb name=foo-global-binding
+[335/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[336/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[337/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[338/1000] action=create-crb name=foo-global-binding group=tenant-4 role=admin
+[339/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[340/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[341/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[342/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[343/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[344/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[345/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[346/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[347/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[348/1000] action=create-crb name=foo-global-binding group=tenant-2 role=admin
+[349/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[350/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[351/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[352/1000] action=create-clusterrole name=dev resources=secrets verbs=create,update,patch,get,list
+[353/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[354/1000] action=create-clusterrole name=dev resources=pods,services verbs=delete,create,get,deletecollection
+[355/1000] action=create-crb name=foo-global-binding group=tenant-2 role=view
+[356/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[357/1000] action=delete-crb name=foo-global-binding
+[358/1000] action=delete-clusterrole name=dev
+[359/1000] action=create-clusterrole name=dev resources=services,pods,secrets verbs=patch,get,update,create
+[360/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[361/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[362/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[363/1000] action=delete-clusterrole name=dev
+[364/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[365/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[366/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[367/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[368/1000] action=delete-clusterrole name=dev
+[369/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[370/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[371/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[372/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=edit
+[373/1000] action=create-crb name=foo-global-binding group=tenant-1 role=dev
+[374/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[375/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[376/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[377/1000] action=delete-clusterrole name=dev
+[378/1000] action=delete-clusterrole name=dev
+[379/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=admin
+[380/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[381/1000] action=create-crb name=foo-global-binding group=tenant-1 role=edit
+[382/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[383/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[384/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[385/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[386/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[387/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[388/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[389/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[390/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[391/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[392/1000] action=delete-crb name=foo-global-binding
+[393/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[394/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[395/1000] action=delete-clusterrole name=dev
+[396/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[397/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[398/1000] action=delete-crb name=foo-global-binding
+[399/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[400/1000] action=create-clusterrole name=dev resources=services,configmaps verbs=watch,patch,get,deletecollection,create
+[401/1000] action=create-crb name=foo-global-binding group=tenant-2 role=admin
+[402/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[403/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[404/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[405/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[406/1000] action=create-crb name=foo-global-binding group=tenant-3 role=view
+[407/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[408/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[409/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[410/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[411/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[412/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[413/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[414/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[415/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[416/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[417/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[418/1000] action=delete-crb name=foo-global-binding
+[419/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[420/1000] action=create-crb name=foo-global-binding group=tenant-2 role=dev
+[421/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[422/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[423/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[424/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[425/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[426/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[427/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[428/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[429/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[430/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[431/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[432/1000] action=delete-crb name=foo-global-binding
+[433/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[434/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[435/1000] action=create-clusterrole name=dev resources=services,secrets,pods verbs=delete,get
+[436/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[437/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=admin
+[438/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[439/1000] action=delete-clusterrole name=dev
+[440/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[441/1000] action=create-crb name=foo-global-binding group=tenant-5 role=dev
+[442/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[443/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[444/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[445/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[446/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[447/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[448/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[449/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[450/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[451/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[452/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[453/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[454/1000] action=delete-clusterrole name=dev
+[455/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[456/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[457/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[458/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=edit
+[459/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[460/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=admin
+[461/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[462/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[463/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[464/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[465/1000] action=delete-crb name=foo-global-binding
+[466/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[467/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[468/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[469/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[470/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[471/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=dev
+[472/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[473/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[474/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[475/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[476/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[477/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[478/1000] action=create-crb name=foo-global-binding group=tenant-1 role=dev
+[479/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=dev
+[480/1000] action=delete-clusterrole name=dev
+[481/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[482/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[483/1000] action=delete-clusterrole name=dev
+[484/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[485/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[486/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=edit
+[487/1000] action=create-clusterrole name=dev resources=configmaps,pods,services verbs=create,update,deletecollection,patch,watch
+[488/1000] action=delete-crb name=foo-global-binding
+[489/1000] action=delete-crb name=foo-global-binding
+[490/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[491/1000] action=create-clusterrole name=dev resources=services,secrets verbs=get
+[492/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[493/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[494/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[495/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[496/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[497/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[498/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[499/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[500/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[501/1000] action=create-clusterrole name=dev resources=services,configmaps,secrets verbs=list,deletecollection
+[502/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[503/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[504/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[505/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[506/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[507/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[508/1000] action=delete-crb name=foo-global-binding
+[509/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[510/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[511/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[512/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[513/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[514/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[515/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[516/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[517/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[518/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[519/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[520/1000] action=delete-clusterrole name=dev
+[521/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[522/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[523/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[524/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[525/1000] action=delete-crb name=foo-global-binding
+[526/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[527/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[528/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[529/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[530/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[531/1000] action=create-clusterrole name=dev resources=configmaps,pods,secrets verbs=watch,create,delete,patch
+[532/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=view
+[533/1000] action=delete-clusterrole name=dev
+[534/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[535/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[536/1000] action=delete-crb name=foo-global-binding
+[537/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[538/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[539/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[540/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[541/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[542/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[543/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[544/1000] action=delete-crb name=foo-global-binding
+[545/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[546/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[547/1000] action=create-clusterrole name=dev resources=services verbs=watch,update,delete
+[548/1000] action=create-clusterrole name=dev resources=pods verbs=get,watch
+[549/1000] action=create-crb name=foo-global-binding group=tenant-5 role=dev
+[550/1000] action=create-crb name=foo-global-binding group=tenant-3 role=cluster-admin
+[551/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[552/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[553/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[554/1000] action=delete-crb name=foo-global-binding
+[555/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[556/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[557/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[558/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[559/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[560/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[561/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[562/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[563/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[564/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[565/1000] action=delete-crb name=foo-global-binding
+[566/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[567/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[568/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[569/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[570/1000] action=create-crb name=foo-global-binding group=tenant-4 role=edit
+[571/1000] action=delete-crb name=foo-global-binding
+[572/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[573/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[574/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[575/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[576/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=dev
+[577/1000] action=delete-clusterrole name=dev
+[578/1000] action=delete-clusterrole name=dev
+[579/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=cluster-admin
+[580/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[581/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[582/1000] action=delete-crb name=foo-global-binding
+[583/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[584/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[585/1000] action=create-clusterrole name=dev resources=pods,secrets verbs=get,create,list,update
+[586/1000] action=create-clusterrole name=dev resources=services,secrets,pods verbs=delete,deletecollection
+[587/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[588/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[589/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[590/1000] action=delete-clusterrole name=dev
+[591/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[592/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[593/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[594/1000] action=delete-crb name=foo-global-binding
+[595/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[596/1000] action=create-clusterrole name=dev resources=secrets,configmaps,services verbs=watch,update,patch
+[597/1000] action=delete-clusterrole name=dev
+[598/1000] action=delete-crb name=foo-global-binding
+[599/1000] action=create-crb name=foo-global-binding group=tenant-2 role=edit
+[600/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[601/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[602/1000] action=delete-clusterrole name=dev
+[603/1000] action=delete-crb name=foo-global-binding
+[604/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[605/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=admin
+[606/1000] action=delete-clusterrole name=dev
+[607/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[608/1000] action=delete-clusterrole name=dev
+[609/1000] action=create-crb name=foo-global-binding group=tenant-5 role=view
+[610/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[611/1000] action=create-crb name=foo-global-binding group=tenant-2 role=view
+[612/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[613/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[614/1000] action=create-clusterrole name=dev resources=pods,configmaps verbs=update,create,get
+[615/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[616/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[617/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[618/1000] action=create-crb name=foo-global-binding group=tenant-2 role=admin
+[619/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[620/1000] action=create-clusterrole name=dev resources=pods,configmaps,secrets verbs=patch,watch,delete
+[621/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[622/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[623/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[624/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[625/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=admin
+[626/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[627/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[628/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[629/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[630/1000] action=delete-clusterrole name=dev
+[631/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[632/1000] action=delete-crb name=foo-global-binding
+[633/1000] action=create-clusterrole name=dev resources=pods,secrets verbs=create
+[634/1000] action=create-clusterrole name=dev resources=secrets verbs=list,update
+[635/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[636/1000] action=delete-clusterrole name=dev
+[637/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[638/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[639/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[640/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[641/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[642/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[643/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[644/1000] action=delete-clusterrole name=dev
+[645/1000] action=delete-crb name=foo-global-binding
+[646/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[647/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[648/1000] action=delete-clusterrole name=dev
+[649/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[650/1000] action=delete-crb name=foo-global-binding
+[651/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[652/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[653/1000] action=delete-crb name=foo-global-binding
+[654/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[655/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[656/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[657/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[658/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[659/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[660/1000] action=delete-crb name=foo-global-binding
+[661/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[662/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[663/1000] action=create-crb name=foo-global-binding group=tenant-2 role=view
+[664/1000] action=create-crb name=foo-global-binding group=tenant-5 role=admin
+[665/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[666/1000] action=create-crb name=foo-global-binding group=tenant-1 role=cluster-admin
+[667/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[668/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[669/1000] action=create-clusterrole name=dev resources=pods verbs=update
+[670/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[671/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[672/1000] action=create-clusterrole name=dev resources=configmaps,secrets verbs=delete,update,watch,get
+[673/1000] action=create-clusterrole name=dev resources=pods verbs=delete
+[674/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[675/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[676/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[677/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[678/1000] action=create-clusterrole name=dev resources=services,configmaps,pods verbs=get,watch
+[679/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=dev
+[680/1000] action=create-clusterrole name=dev resources=configmaps verbs=watch,patch,update,create,delete
+[681/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[682/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=dev
+[683/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[684/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[685/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[686/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[687/1000] action=delete-crb name=foo-global-binding
+[688/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[689/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[690/1000] action=create-clusterrole name=dev resources=services,pods,secrets verbs=delete,watch,get,patch
+[691/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[692/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=admin
+[693/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[694/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[695/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=dev
+[696/1000] action=delete-crb name=foo-global-binding
+[697/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[698/1000] action=create-crb name=foo-global-binding group=tenant-1 role=view
+[699/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[700/1000] action=create-clusterrole name=dev resources=secrets,configmaps verbs=get,patch
+[701/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[702/1000] action=delete-clusterrole name=dev
+[703/1000] action=create-crb name=foo-global-binding group=tenant-5 role=cluster-admin
+[704/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[705/1000] action=create-crb name=foo-global-binding group=tenant-2 role=edit
+[706/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[707/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[708/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[709/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[710/1000] action=delete-crb name=foo-global-binding
+[711/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[712/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[713/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[714/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[715/1000] action=delete-crb name=foo-global-binding
+[716/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[717/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[718/1000] action=create-crb name=foo-global-binding group=tenant-3 role=edit
+[719/1000] action=delete-crb name=foo-global-binding
+[720/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[721/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[722/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[723/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[724/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[725/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=admin
+[726/1000] action=create-clusterrole name=dev resources=configmaps verbs=get,list,watch,patch,update
+[727/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[728/1000] action=create-clusterrole name=dev resources=configmaps,services verbs=create,get,update
+[729/1000] action=create-clusterrole name=dev resources=pods,secrets,configmaps verbs=patch,watch
+[730/1000] action=create-clusterrole name=dev resources=configmaps,secrets verbs=update,deletecollection,patch,delete
+[731/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[732/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[733/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[734/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[735/1000] action=delete-crb name=foo-global-binding
+[736/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=edit
+[737/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[738/1000] action=delete-crb name=foo-global-binding
+[739/1000] action=delete-crb name=foo-global-binding
+[740/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[741/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[742/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[743/1000] action=create-clusterrole name=dev resources=secrets,services verbs=get,deletecollection,watch,patch,update
+[744/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[745/1000] action=create-clusterrole name=dev resources=pods,secrets,services verbs=list,patch,watch
+[746/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[747/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[748/1000] action=create-crb name=foo-global-binding group=tenant-5 role=view
+[749/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[750/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[751/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[752/1000] action=create-clusterrole name=dev resources=services verbs=list,update,get,deletecollection,watch
+[753/1000] action=delete-clusterrole name=dev
+[754/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[755/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[756/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[757/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[758/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[759/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[760/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[761/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[762/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[763/1000] action=create-clusterrole name=dev resources=configmaps verbs=list,delete,deletecollection
+[764/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[765/1000] action=create-clusterrole name=dev resources=services,secrets,pods verbs=update,list,delete
+[766/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[767/1000] action=create-clusterrole name=dev resources=services,secrets,pods verbs=get,patch,watch,deletecollection,delete
+[768/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[769/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[770/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[771/1000] action=create-clusterrole name=dev resources=services verbs=get,create,deletecollection,update
+[772/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[773/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[774/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[775/1000] action=create-crb name=foo-global-binding group=tenant-4 role=admin
+[776/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[777/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[778/1000] action=create-clusterrole name=dev resources=pods,configmaps verbs=list
+[779/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[780/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[781/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[782/1000] action=create-clusterrole name=dev resources=configmaps,services verbs=patch
+[783/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=dev
+[784/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[785/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[786/1000] action=delete-clusterrole name=dev
+[787/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=cluster-admin
+[788/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[789/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[790/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[791/1000] action=create-crb name=foo-global-binding group=tenant-2 role=cluster-admin
+[792/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[793/1000] action=delete-crb name=foo-global-binding
+[794/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[795/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[796/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=edit
+[797/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[798/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[799/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[800/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[801/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[802/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[803/1000] action=create-crb name=foo-global-binding group=tenant-4 role=admin
+[804/1000] action=create-crb name=foo-global-binding group=tenant-4 role=cluster-admin
+[805/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[806/1000] action=delete-crb name=foo-global-binding
+[807/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[808/1000] action=create-crb name=foo-global-binding group=tenant-4 role=edit
+[809/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[810/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[811/1000] action=delete-clusterrole name=dev
+[812/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[813/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[814/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[815/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[816/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[817/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[818/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[819/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[820/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[821/1000] action=create-crb name=foo-global-binding group=tenant-1 role=cluster-admin
+[822/1000] action=delete-clusterrole name=dev
+[823/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[824/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[825/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=edit
+[826/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[827/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[828/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[829/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[830/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[831/1000] action=delete-crb name=foo-global-binding
+[832/1000] action=delete-crb name=foo-global-binding
+[833/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[834/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[835/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[836/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=cluster-admin
+[837/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[838/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[839/1000] action=create-clusterrole name=dev resources=configmaps,services verbs=get,list,patch,update,watch
+[840/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-5
+[841/1000] action=delete-clusterrole name=dev
+[842/1000] action=create-clusterrole name=dev resources=secrets,services verbs=list,get,patch
+[843/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[844/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=edit
+[845/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[846/1000] action=delete-clusterrole name=dev
+[847/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[848/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[849/1000] action=delete-crb name=foo-global-binding
+[850/1000] action=create-clusterrole name=dev resources=pods verbs=patch,update
+[851/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[852/1000] action=create-crb name=foo-global-binding group=tenant-1 role=edit
+[853/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[854/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[855/1000] action=create-clusterrole name=dev resources=pods,configmaps verbs=delete,get,deletecollection,update,list
+[856/1000] action=delete-crb name=foo-global-binding
+[857/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[858/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[859/1000] action=delete-crb name=foo-global-binding
+[860/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[861/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[862/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[863/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[864/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[865/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[866/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[867/1000] action=create-crb name=foo-global-binding group=tenant-1 role=dev
+[868/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[869/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[870/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[871/1000] action=create-crb name=foo-global-binding group=tenant-3 role=admin
+[872/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[873/1000] action=delete-clusterrole name=dev
+[874/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=dev
+[875/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=view
+[876/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[877/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[878/1000] action=create-crb name=foo-global-binding group=tenant-3 role=edit
+[879/1000] action=delete-rb ns=tenant-4 name=tenant-binding
+[880/1000] action=create-clusterrole name=dev resources=pods,configmaps,secrets verbs=delete,patch,deletecollection,update,list
+[881/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[882/1000] action=delete-crb name=foo-global-binding
+[883/1000] action=create-crb name=foo-global-binding group=tenant-4 role=dev
+[884/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[885/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[886/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[887/1000] action=create-crb name=foo-global-binding group=tenant-3 role=admin
+[888/1000] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[889/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[890/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[891/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[892/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[893/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[894/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[895/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=watch resource=configmap namespace=tenant-2
+[896/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[897/1000] action=delete-crb name=foo-global-binding
+[898/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[899/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=edit
+[900/1000] action=delete-crb name=foo-global-binding
+[901/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[902/1000] action=create-clusterrole name=dev resources=secrets,pods verbs=delete,deletecollection,patch,create,watch
+[903/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[904/1000] action=delete-clusterrole name=dev
+[905/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[906/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=edit
+[907/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[908/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-4
+[909/1000] action=create-crb name=foo-global-binding group=tenant-1 role=view
+[910/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[911/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[912/1000] action=create-clusterrole name=dev resources=secrets,pods verbs=patch,watch,update,create
+[913/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[914/1000] action=create-crb name=foo-global-binding group=tenant-1 role=admin
+[915/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-4
+[916/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[917/1000] action=delete-clusterrole name=dev
+[918/1000] action=delete-crb name=foo-global-binding
+[919/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[920/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[921/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[922/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[923/1000] action=delete-crb name=foo-global-binding
+[924/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[925/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=view
+[926/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[927/1000] action=delete-clusterrole name=dev
+[928/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[929/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[930/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-1
+[931/1000] action=delete-rb ns=tenant-1 name=tenant-binding
+[932/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-5
+[933/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[934/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[935/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=dev
+[936/1000] action=create-clusterrole name=dev resources=secrets verbs=update,delete,patch,create,get
+[937/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[938/1000] action=delete-rb ns=tenant-3 name=tenant-binding
+[939/1000] action=delete-clusterrole name=dev
+[940/1000] action=create-clusterrole name=dev resources=configmaps verbs=update,patch,get
+[941/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[942/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=edit
+[943/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[944/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[945/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[946/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[947/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=patch resource=configmap namespace=tenant-2
+[948/1000] action=delete-crb name=foo-global-binding
+[949/1000] action=create-crb name=foo-global-binding group=tenant-1 role=dev
+[950/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-3
+[951/1000] action=delete-clusterrole name=dev
+[952/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
+[953/1000] action=create-crb name=foo-global-binding group=tenant-4 role=view
+[954/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[955/1000] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=admin
+[956/1000] action=delete-crb name=foo-global-binding
+[957/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-3
+[958/1000] action=create-rb ns=tenant-3 name=tenant-binding group=tenant-3 role=cluster-admin
+[959/1000] action=create-crb name=foo-global-binding group=tenant-5 role=edit
+[960/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=watch resource=configmap namespace=tenant-4
+[961/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[962/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[963/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[964/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[965/1000] action=create-rb ns=tenant-4 name=tenant-binding group=tenant-4 role=admin
+[966/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-2
+[967/1000] action=delete-clusterrole name=dev
+[968/1000] action=create-crb name=foo-global-binding group=tenant-5 role=cluster-admin
+[969/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[970/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[971/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[972/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-3
+[973/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[974/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[975/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[976/1000] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=view
+[977/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[978/1000] action=create-crb name=foo-global-binding group=tenant-3 role=view
+[979/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[980/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-5
+[981/1000] action=delete-rb ns=tenant-5 name=tenant-binding
+[982/1000] action=create-clusterrole name=dev resources=configmaps verbs=get,delete
+[983/1000] action=delete-clusterrole name=dev
+[984/1000] action=delete-rb ns=tenant-2 name=tenant-binding
+[985/1000] action=delete-clusterrole name=dev
+[986/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=watch resource=configmap namespace=tenant-3
+[987/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=list resource=configmap namespace=tenant-4
+[988/1000] action=create-crb name=foo-global-binding group=tenant-3 role=dev
+[989/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[990/1000] action=cross-tenant-access context=tenant-4-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[991/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[992/1000] action=delete-crb name=foo-global-binding
+[993/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=patch resource=configmap namespace=tenant-5
+[994/1000] action=cross-tenant-access context=tenant-1-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[995/1000] action=delete-clusterrole name=dev
+[996/1000] action=delete-clusterrole name=dev
+[997/1000] action=delete-crb name=foo-global-binding
+[998/1000] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-3
+[999/1000] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[1000/1000] action=cross-tenant-access context=tenant-3-user@kubernetes operation=delete resource=configmap namespace=tenant-2

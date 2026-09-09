@@ -1,0 +1,28 @@
+tenants=5
+events=1000
+run=7
+started=2026-09-09T16:29:58+00:00
+tlc_metrics=/srv/monitoring-experiments/scalability/tenants-5/events-1000/run-7-20260909-162958/tlc-metrics.csv
+tenant_names=tenant-1 tenant-2 tenant-3 tenant-4 tenant-5 
+tenant_contexts=tenant-1-user@kubernetes tenant-2-user@kubernetes tenant-3-user@kubernetes tenant-4-user@kubernetes tenant-5-user@kubernetes 
+
+actions_performed:
+create_crb=81
+delete_crb=72
+cross_tenant_access=373
+delete_clusterrole=77
+create_clusterrole=85
+delete_rb=150
+create_rb=162
+
+timing:
+experiment_total_ms=85011
+post_generation_lag_ms=7039
+tlc_realtime_factor=0.268,
+end_to_end_factor=1.090,
+input_generation_duration_ms=77972
+pipeline_drain_ms=5708
+audit_consumer_drain_ms=125
+tlc_consumer_drain_ms=5579
+
+finished=2026-09-09T16:31:23+00:00

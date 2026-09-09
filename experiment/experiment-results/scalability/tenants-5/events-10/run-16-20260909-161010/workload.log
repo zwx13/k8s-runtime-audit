@@ -1,0 +1,10 @@
+[1/10] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=view
+[2/10] action=create-rb ns=tenant-2 name=tenant-binding group=tenant-2 role=cluster-admin
+[3/10] action=create-rb ns=tenant-5 name=tenant-binding group=tenant-5 role=admin
+[4/10] action=delete-clusterrole name=dev
+[5/10] action=cross-tenant-access context=tenant-4-user@kubernetes operation=list resource=configmap namespace=tenant-2
+[6/10] action=delete-rb ns=tenant-1 name=tenant-binding
+[7/10] action=delete-rb ns=tenant-3 name=tenant-binding
+[8/10] action=delete-clusterrole name=dev
+[9/10] action=delete-rb ns=tenant-5 name=tenant-binding
+[10/10] action=cross-tenant-access context=tenant-5-user@kubernetes operation=list resource=configmap namespace=tenant-1
