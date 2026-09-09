@@ -1,13 +1,13 @@
 ---- MODULE MC_MT_Audit_RBAC_Trace_1 ----
 EXTENDS MT_Audit_RBAC_Trace_1
 
-ConstTenantGroups == {"tenant-1", "tenant-2"}
+ConstTenantGroups == {"tenant-1", "tenant-2", "tenant-3", "tenant-4", "tenant-5", "tenant-6", "tenant-7", "tenant-8", "tenant-9", "tenant-10"}
 
-ConstPlatformGroups == {"kubeadm:cluster-admins"}
+ConstAdminGroups == {"kubeadm:cluster-admins"}
 
-ConstTenants == {"tenant-1", "tenant-2"}
+ConstTenants == {"tenant-1", "tenant-2", "tenant-3", "tenant-4", "tenant-5", "tenant-6", "tenant-7", "tenant-8", "tenant-9", "tenant-10"}
 
-ConstNamespaces == {"tenant-1", "tenant-2"}
+ConstNamespaces == {"tenant-1", "tenant-2", "tenant-3", "tenant-4", "tenant-5", "tenant-6", "tenant-7", "tenant-8", "tenant-9", "tenant-10"}
 
 ConstRBNames == {"tenant-binding"}
 
@@ -44,6 +44,14 @@ ConstGroupTenantMap ==
     [ g \in ConstTenantGroups |->
         IF g = "tenant-1" THEN "tenant-1"
         ELSE IF g = "tenant-2" THEN "tenant-2"
+        ELSE IF g = "tenant-3" THEN "tenant-3"
+        ELSE IF g = "tenant-4" THEN "tenant-4"
+        ELSE IF g = "tenant-5" THEN "tenant-5"
+        ELSE IF g = "tenant-6" THEN "tenant-6"
+        ELSE IF g = "tenant-7" THEN "tenant-7"
+        ELSE IF g = "tenant-8" THEN "tenant-8"
+        ELSE IF g = "tenant-9" THEN "tenant-9"
+        ELSE IF g = "tenant-10" THEN "tenant-10"
         ELSE ConstNoTenant
     ]
 

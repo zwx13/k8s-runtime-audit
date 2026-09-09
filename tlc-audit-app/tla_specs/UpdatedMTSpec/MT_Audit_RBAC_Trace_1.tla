@@ -6,7 +6,7 @@ EXTENDS Utils, NatsOps
 (*************************************************************************)
 CONSTANTS
     TenantGroups, 
-    PlatformGroups, 
+    AdminGroups, 
     Tenants,
     NoTenant, 
     Namespaces, 
@@ -267,10 +267,10 @@ Next ==
          /\ UNCHANGED << nsTenantMap, clusterRoles, roleBindings, accessAttempts >>
        ELSE IF l["tlaType"] = "access.attempt" THEN
          /\ accessAttempts' = IF <<TargetNS(l), ActorGroup(l), Permission(l)>> \in DOMAIN accessAttempts THEN
-                            [accessAttempts EXCEPT ![<<TargetNS(l), ActorGroup(l), Permission(l)>>].respectsNSTMapAtReqTime = (Model!SameTenant(TargetNS(l), ActorGroup(l)) \/ ActorGroup(l) \in PlatformGroups),
+                            [accessAttempts EXCEPT ![<<TargetNS(l), ActorGroup(l), Permission(l)>>].respectsNSTMapAtReqTime = (Model!SameTenant(TargetNS(l), ActorGroup(l)) \/ ActorGroup(l) \in AdminGroups),
                                                    ![<<TargetNS(l), ActorGroup(l), Permission(l)>>].matchingRBorCBR = (Model!MatchRoleBinding(TargetNS(l), ActorGroup(l), Permission(l)) \/ Model!MatchCRBinding(ActorGroup(l), Permission(l)))
                             ]
-                              ELSE <<TargetNS(l), ActorGroup(l), Permission(l)>>  :> [ respectsNSTMapAtReqTime |-> (Model!SameTenant(TargetNS(l), ActorGroup(l)) \/ ActorGroup(l) \in PlatformGroups),
+                              ELSE <<TargetNS(l), ActorGroup(l), Permission(l)>>  :> [ respectsNSTMapAtReqTime |-> (Model!SameTenant(TargetNS(l), ActorGroup(l)) \/ ActorGroup(l) \in AdminGroups),
                                                                                 matchingRBorCBR |-> (Model!MatchRoleBinding(TargetNS(l), ActorGroup(l), Permission(l)) \/ Model!MatchCRBinding(ActorGroup(l), Permission(l)))
                                                                               ] @@ accessAttempts
          /\ UNCHANGED << nsTenantMap, clusterRoles, roleBindings, clusterRoleBindings >>
