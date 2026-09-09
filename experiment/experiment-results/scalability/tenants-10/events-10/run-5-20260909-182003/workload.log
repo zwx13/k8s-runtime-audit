@@ -1,0 +1,10 @@
+[1/10] action=cross-tenant-access context=tenant-1-user@kubernetes operation=delete resource=configmap namespace=tenant-10
+[2/10] action=delete-crb name=foo-global-binding
+[3/10] action=create-rb ns=tenant-1 name=tenant-binding group=tenant-1 role=edit
+[4/10] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-8
+[5/10] action=cross-tenant-access context=tenant-9-user@kubernetes operation=watch resource=configmap namespace=tenant-6
+[6/10] action=cross-tenant-access context=tenant-3-user@kubernetes operation=get resource=configmap namespace=tenant-4
+[7/10] action=cross-tenant-access context=tenant-8-user@kubernetes operation=watch resource=configmap namespace=tenant-5
+[8/10] action=create-rb ns=tenant-9 name=tenant-binding group=tenant-9 role=edit
+[9/10] action=create-clusterrole name=dev resources=pods,services,configmaps verbs=create,delete,deletecollection
+[10/10] action=cross-tenant-access context=tenant-6-user@kubernetes operation=list resource=configmap namespace=tenant-4
