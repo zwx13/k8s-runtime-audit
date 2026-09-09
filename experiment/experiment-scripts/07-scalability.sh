@@ -624,6 +624,50 @@ EXPERIMENT_END_NS="$(date +%s%N)"
 EXPERIMENT_TOTAL_MS=$(( (EXPERIMENT_END_NS - EXPERIMENT_START_NS) / 1000000 ))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# More metrics
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# More metrics
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TOTAL_TLC_NON_FETCH_MS="$(
+    awk -F',' '
+        NR > 1 && $5 != "" {
+            sum += $5
+        }
+        END {
+            printf "%.0f", sum
+        }
+    ' "$TLC_METRICS_FILE_HOST"
+)"
+
+POST_GENERATION_LAG_MS=$(( EXPERIMENT_TOTAL_MS - INPUT_GENERATION_DURATION_MS ))
+
+TLC_REALTIME_FACTOR="$(
+    awk -v tlc="$TOTAL_TLC_NON_FETCH_MS" \
+        -v gen="$INPUT_GENERATION_DURATION_MS" '
+        BEGIN {
+            if (gen > 0)
+                printf "%.3f", tlc / gen
+            else
+                print "NA"
+        }
+    '
+)"
+
+END_TO_END_FACTOR="$(
+    awk -v total="$EXPERIMENT_TOTAL_MS" \
+        -v gen="$INPUT_GENERATION_DURATION_MS" '
+        BEGIN {
+            if (gen > 0)
+                printf "%.3f", total / gen
+            else
+                print "NA"
+        }
+    '
+)"
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Save summary
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -638,6 +682,8 @@ EXPERIMENT_TOTAL_MS=$(( (EXPERIMENT_END_NS - EXPERIMENT_START_NS) / 1000000 ))
   echo
   echo "timing:"
   echo "experiment_total_ms=${EXPERIMENT_TOTAL_MS}"
+  echo "post_generation_lag_ms=${POST_GENERATION_LAG_MS}"
+  echo "realtime_factor=${REALTIME_FACTOR}"
   echo "input_generation_duration_ms=${INPUT_GENERATION_DURATION_MS}"
   echo "pipeline_drain_ms=${PIPELINE_DRAIN_MS}"
   echo "audit_ingestion_grace_ms=${PIPELINE_INGEST_GRACE_MS}"

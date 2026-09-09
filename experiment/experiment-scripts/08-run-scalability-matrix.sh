@@ -11,11 +11,11 @@ EVENT_COUNTS=(10 50 100 1000)
 runs_for_events()
 {
   case "$1" in
-    10)   echo 10 ;;
-    50)   echo 10 ;;
+    10)   echo 30 ;;
+    50)   echo 20 ;;
     100)  echo 10 ;;
-    1000) echo 5 ;;
-    *)    echo 5 ;;
+    1000) echo 10 ;;
+    *)    echo 10 ;;
   esac
 }
 
