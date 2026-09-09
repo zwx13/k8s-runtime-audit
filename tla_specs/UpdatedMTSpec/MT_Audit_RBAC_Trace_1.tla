@@ -186,10 +186,10 @@ Init ==
              * variables we have defined, then use this as starting point.
             *)
             /\ nsTenantMap = IF HasEmptyNSTenantMap THEN [ ns \in Namespaces |-> NoTenant ]
-                             ELSE SeqToFun(AllocIn.nsTenant)
-            /\ clusterRoles = SeqToFun(AllocIn.clusterRoles)
-            /\ roleBindings = SeqToFun(AllocIn.roleBindings)
-            /\ clusterRoleBindings = SeqToFun(AllocIn.clusterRoleBindings)
+                             ELSE AllocIn.nsTenant
+            /\ clusterRoles = AllocIn.clusterRoles
+            /\ roleBindings = AllocIn.roleBindings
+            /\ clusterRoleBindings = AllocIn.clusterRoleBindings
 
 
 (* 
@@ -344,12 +344,12 @@ AlertIfBadState ==
 * picked up in the next batch. (checkpoint)
 *)
 allocOut ==
-  [
-    nsTenant |-> FunToSeq(nsTenantMap),
-    clusterRoles |-> FunToSeq(clusterRoles),
-    roleBindings |-> FunToSeq(roleBindings),
-    clusterRoleBindings |-> FunToSeq(clusterRoleBindings)
-  ]
+[
+    nsTenant |-> nsTenantMap,
+    clusterRoles |-> clusterRoles,
+    roleBindings |-> roleBindings,
+    clusterRoleBindings |-> clusterRoleBindings
+]
 
 (*
 * If publishing alerts fails, we want to not ack.

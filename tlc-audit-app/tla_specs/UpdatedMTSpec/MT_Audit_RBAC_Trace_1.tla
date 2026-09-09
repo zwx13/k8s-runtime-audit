@@ -151,7 +151,7 @@ HasEmptyMappings ==
 
 HasEmptyNSTenantMap ==
     /\ DOMAIN AllocIn # {}
-    /\ Len(AllocIn.nsTenant) = 0
+    /\ DOMAIN AllocIn.nsTenant = {}
 
 
 (*************************************************************************)
@@ -186,10 +186,10 @@ Init ==
              * variables we have defined, then use this as starting point.
             *)
             /\ nsTenantMap = IF HasEmptyNSTenantMap THEN [ ns \in Namespaces |-> NoTenant ]
-                             ELSE SeqToFun(AllocIn.nsTenant)
-            /\ clusterRoles = SeqToFun(AllocIn.clusterRoles)
-            /\ roleBindings = SeqToFun(AllocIn.roleBindings)
-            /\ clusterRoleBindings = SeqToFun(AllocIn.clusterRoleBindings)
+                             ELSE AllocIn.nsTenant
+            /\ clusterRoles = AllocIn.clusterRoles
+            /\ roleBindings = AllocIn.roleBindings
+            /\ clusterRoleBindings = AllocIn.clusterRoleBindings
 
 
 (* 
@@ -349,10 +349,10 @@ AlertIfBadState ==
 *)
 allocOut ==
   [
-    nsTenant |-> FunToSeq(nsTenantMap),
-    clusterRoles |-> FunToSeq(clusterRoles),
-    roleBindings |-> FunToSeq(roleBindings),
-    clusterRoleBindings |-> FunToSeq(clusterRoleBindings)
+    nsTenant |-> nsTenantMap,
+    clusterRoles |-> clusterRoles,
+    roleBindings |-> roleBindings,
+    clusterRoleBindings |-> clusterRoleBindings
   ]
 
 (*

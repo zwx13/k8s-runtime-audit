@@ -42,6 +42,19 @@ MONITORED_CLUSTERROLEBINDING_SUBJECTS = (
     {"kubeadm:cluster-admins"} | TENANTS
 )
 
+
+def tla_function(entries: list[list[Any]]) -> dict[str, Any]:
+    return {
+        "__tla_function": True,
+        "entries": [
+            {
+                "key": key,
+                "value": value,
+            }
+            for key, value in entries
+        ],
+    }
+
 async def kubectl_get_json(*args: str) -> dict[str, Any]:
     '''
     Creates a process that runs a kubectl command.
@@ -80,16 +93,16 @@ async def build_cached_state() -> dict[str, Any]:
     clusterrolebindings = await kubectl_get_json("get", "clusterrolebindings")
 
     cached_state = {
-        "nsTenant": build_ns_tenant(namespaces),
-        "clusterRoles": build_cluster_roles(clusterroles),
-        "roleBindings": build_role_bindings(rolebindings),
-        "clusterRoleBindings": build_cluster_role_bindings(clusterrolebindings),
-    }
+    "nsTenant": tla_function(build_ns_tenant(namespaces)),
+    "clusterRoles": tla_function(build_cluster_roles(clusterroles)),
+    "roleBindings": tla_function(build_role_bindings(rolebindings)),
+    "clusterRoleBindings": tla_function(build_cluster_role_bindings(clusterrolebindings)),
+}
 
     log.info(
         "Built cachedState: namespaces=%s clusterRoles=%s roleBindings=%s clusterRoleBindings=%s",
         len(cached_state["nsTenant"]),
-        len(cached_state["clusterRoles"]),
+        len(cached_state["clusterRoles"]["entries"]),
         len(cached_state["roleBindings"]),
         len(cached_state["clusterRoleBindings"]),
     )

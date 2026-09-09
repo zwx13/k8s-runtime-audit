@@ -9,25 +9,31 @@
 package tlc2;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import java.util.List;
-import java.util.ArrayList;
-
-import tlc2.value.IValue;
-import tlc2.value.impl.*;
-import util.UniqueString;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import tlc2.value.IValue;
+import tlc2.value.impl.BoolValue;
+import tlc2.value.impl.FcnRcdValue;
+import tlc2.value.impl.IntValue;
+import tlc2.value.impl.RecordValue;
+import tlc2.value.impl.SetEnumValue;
+import tlc2.value.impl.StringValue;
+import tlc2.value.impl.TupleValue;
+import tlc2.value.impl.Value;
+import util.UniqueString;
 
 public class Utils {
     public static JsonNode parseAndGetJson(byte[] msgData) throws IOException, StreamReadException, DatabindException
@@ -57,14 +63,23 @@ public class Utils {
     // } 
 
     /**
-     * Transforms a JSON entry to a datatype that TLA undestands based
-     * on a mapping.
-     * Call example: IValue root = getValueFromJson(jsonNodeRoot)
+     * 
+     * Transforms JSON into a datatype that TLA understands.
+     * Arrays become TupleValue. 
+     * Normal JSON objects become RecordValue. 
+     * Objects marked with:
+     *     "__tla_function": true
+     * become FcnRcdValue. 
      */
     public static IValue getValueFromJson(JsonNode json) throws IOException {
     return switch (json.getNodeType()) {
         case ARRAY   -> getTupleValue(json);
-        case OBJECT  -> getRecordValue(json);
+        case OBJECT  -> {
+            if (json.has("__tla_function") && json.get("__tla_function").asBoolean()) {
+                yield getFcnRcdValue(json);
+            }
+            yield getRecordValue(json);
+        }
         case NUMBER  -> IntValue.gen(json.asInt());
         case BOOLEAN -> new BoolValue(json.asBoolean());
         case STRING  -> new StringValue(json.asText());
@@ -110,6 +125,37 @@ public class Utils {
         UniqueString[] stringArr = keys.toArray(new UniqueString[0]);
         Value[] valArr = values.toArray(new Value[0]);
         return new RecordValue(stringArr, valArr, false);
+    }
+
+    public static FcnRcdValue getFcnRcdValue(JsonNode json) throws IOException {
+        JsonNode entries = json.get("entries");
+
+        if (entries == null || !entries.isArray()) {
+            throw new IOException("Invalid encoded TLA function: missing entries array");
+        }
+
+        List<Value> domain = new ArrayList<>();
+        List<Value> values = new ArrayList<>();
+
+        for (JsonNode entry : entries) {
+            JsonNode keyJson = entry.get("key");
+            JsonNode valueJson = entry.get("value");
+
+            if (keyJson == null || valueJson == null) {
+                throw new IOException("Invalid encoded TLA function entry");
+            }
+
+            IValue key = getValueFromJson(keyJson);
+            IValue value = getValueFromJson(valueJson);
+
+            domain.add((Value) key);
+            values.add((Value) value);
+        }
+
+        Value[] domainArr = domain.toArray(new Value[0]);
+        Value[] valueArr = values.toArray(new Value[0]);
+
+        return new FcnRcdValue(domainArr, valueArr, false);
     }
 
     public static JsonNode getJsonFromValue(IValue value) throws IOException{
@@ -204,10 +250,38 @@ public class Utils {
     }
 
     public static JsonNode getJsonFromFcn(FcnRcdValue f) throws IOException{
-        if (f.intv != null){
-            return getArrayNode(f);
+        ObjectNode obj = JsonNodeFactory.instance.objectNode();
+        ArrayNode entries = JsonNodeFactory.instance.arrayNode();
+
+        obj.put("__tla_function", true);
+
+        if (f.domain != null) {
+            for (int i = 0; i < f.domain.length; i++) {
+                ObjectNode entry = JsonNodeFactory.instance.objectNode();
+
+                entry.set("key", getJsonFromValue(f.domain[i]));
+                entry.set("value", getJsonFromValue(f.values[i]));
+
+                entries.add(entry);
+            }
         }
-        return getObjectNode(f);
+        else if (f.intv != null) {
+            for (int i = 0; i < f.values.length; i++) {
+                ObjectNode entry = JsonNodeFactory.instance.objectNode();
+
+                entry.set("key", IntNode.valueOf(f.intv.low + i));
+                entry.set("value", getJsonFromValue(f.values[i]));
+
+                entries.add(entry);
+            }
+        }
+        else {
+            throw new IOException("Cannot serialize FcnRcdValue: no domain or interval");
+        }
+
+        obj.set("entries", entries);
+
+        return obj;
     }
 
 
