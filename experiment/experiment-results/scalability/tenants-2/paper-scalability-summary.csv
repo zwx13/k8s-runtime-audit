@@ -1,0 +1,5 @@
+tenants,events,runs,input_generation_mean_ms,input_generation_std_ms,tlc_realtime_factor_mean,tlc_realtime_factor_std,end_to_end_factor_mean,end_to_end_factor_std,tlc_messages_mean,tlc_batches_mean,messages_per_batch,experiment_total_mean_ms,experiment_total_std_ms,tlc_duration_mean_ms,tlc_duration_std_ms,tlc_non_fetch_mean_ms,tlc_non_fetch_std_ms
+2,10,30,1046.500,188.604,1.263,0.473,7.375,1.516,15.767,1.267,12.447,7579.133,1251.389,7076.035,2495.511,1290.343,445.309
+2,50,20,4364.000,1129.396,0.520,0.172,2.609,0.645,56.100,2.050,27.366,11017.150,2338.046,9738.259,3153.373,2180.234,622.310
+2,100,10,8998.200,1158.964,0.366,0.077,1.763,0.186,107.100,3.000,35.700,15744.800,1621.099,13574.605,2416.055,3280.096,699.397
+2,1000,10,86005.100,4406.926,0.305,0.020,1.073,0.018,1071.200,22.300,48.036,92302.500,4752.894,71149.933,5019.345,26206.267,1062.202

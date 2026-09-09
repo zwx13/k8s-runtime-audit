@@ -1,0 +1,2 @@
+timestamp,batch_size,fetch_ms,tlc_duration_ms,tlc_non_fetch_ms,exit_code
+2026-09-09T14:54:18.534771411Z,19,4575.396,5663.554,1088.159,0

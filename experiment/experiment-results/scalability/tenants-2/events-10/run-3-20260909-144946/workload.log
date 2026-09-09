@@ -1,0 +1,10 @@
+[1/10] action=cross-tenant-access context=tenant-2-user@kubernetes operation=patch resource=configmap namespace=tenant-1
+[2/10] action=cross-tenant-access context=tenant-1-user@kubernetes operation=get resource=configmap namespace=tenant-2
+[3/10] action=create-clusterrole name=dev resources=pods,services,secrets verbs=update,get,delete
+[4/10] action=cross-tenant-access context=tenant-2-user@kubernetes operation=get resource=configmap namespace=tenant-1
+[5/10] action=delete-clusterrole name=dev
+[6/10] action=delete-clusterrole name=dev
+[7/10] action=cross-tenant-access context=tenant-2-user@kubernetes operation=watch resource=configmap namespace=tenant-1
+[8/10] action=delete-rb ns=tenant-1 name=tenant-binding
+[9/10] action=delete-crb name=foo-global-binding
+[10/10] action=delete-clusterrole name=dev
